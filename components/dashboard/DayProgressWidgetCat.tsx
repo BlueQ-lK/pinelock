@@ -14,159 +14,16 @@ import Animated, {
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Accelerometer } from 'expo-sensors';
-
-// --- Soot Sprite Component ---
-const SootSprite = ({
-    mood = 'neutral',
-    facing = 'front'
-}: {
-    mood?: 'neutral' | 'happy' | 'suspicious' | 'angry',
-    facing?: 'front' | 'back'
-}) => {
-    // Blinking State
-    const [isBlinking, setIsBlinking] = useState(false);
-
-    useEffect(() => {
-        // Random blinking loop
-        let timeout: ReturnType<typeof setTimeout>;
-        const blinkLoop = () => {
-            // Don't blink if angry (stare)
-            if (mood === 'angry') return;
-
-            const delay = 2000 + Math.random() * 4000;
-            timeout = setTimeout(() => {
-                setIsBlinking(true);
-                setTimeout(() => {
-                    setIsBlinking(false);
-                    blinkLoop();
-                }, 150);
-            }, delay);
-        };
-        blinkLoop();
-        return () => clearTimeout(timeout);
-    }, [mood]);
-
-    return (
-        <View
-            className="w-3.5 h-3.5 rounded-full bg-black items-center justify-center relative shadow-sm"
-            style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 2,
-                elevation: 3
-            }}
-        >
-            {/* 3D Depth Highlight (only visible on front) */}
-            {facing === 'front' && (
-                <View className="absolute top-[2px] left-[2px] w-[3px] h-[3px] rounded-full bg-white/10" />
-            )}
-
-            {facing === 'back' ? (
-                // The Backside (Butt)
-                // Just a plain black sphere, maybe a tiny tail puff? 
-                // Let's keep it minimal.
-                <View />
-            ) : (
-                // The Front (Face)
-                <>
-                    {mood === 'happy' ? (
-                        // Happy ^ ^ Eyes
-                        <View className="items-center justify-center mt-[1px]">
-                            <View className="flex-row gap-[3px]">
-                                <Svg width="4" height="3" viewBox="0 0 4 3">
-                                    <Path d="M0 2 Q 2 0 4 2" stroke="white" strokeWidth="0.8" fill="none" />
-                                </Svg>
-                                <Svg width="4" height="3" viewBox="0 0 4 3">
-                                    <Path d="M0 2 Q 2 0 4 2" stroke="white" strokeWidth="0.8" fill="none" />
-                                </Svg>
-                            </View>
-                            {/* Swiss Red Blush */}
-                            <View className="flex-row gap-[5px] mt-[1.5px]">
-                                <View className="w-[2px] h-[1px] rounded-full bg-swiss-red/90" />
-                                <View className="w-[2px] h-[1px] rounded-full bg-swiss-red/90" />
-                            </View>
-                        </View>
-                    ) : mood === 'suspicious' ? (
-                        // Suspicious < > Eyes (Side eye)
-                        <View className="flex-row gap-[3px] mt-[1px]">
-                            <View className="w-[1.5px] h-[1.5px] rounded-full bg-white" style={{ transform: [{ translateX: 1 }] }} />
-                            <View className="w-[1.5px] h-[1.5px] rounded-full bg-white" style={{ transform: [{ translateX: 1 }] }} />
-                        </View>
-                    ) : mood === 'angry' ? (
-                        // Angry \ / Eyes
-                        <View className="flex-row gap-[3px] mt-[1px]">
-                            <Svg width="4" height="3" viewBox="0 0 4 3">
-                                <Path d="M0 0 L 3 3" stroke="white" strokeWidth="0.8" fill="none" />
-                            </Svg>
-                            <Svg width="4" height="3" viewBox="0 0 4 3">
-                                <Path d="M4 0 L 1 3" stroke="white" strokeWidth="0.8" fill="none" />
-                            </Svg>
-                        </View>
-                    ) : isBlinking ? (
-                        // Closed - - Eyes
-                        <View className="flex-row gap-[3px] mt-[1px]">
-                            <View className="w-[3px] h-[0.5px] bg-white/70" />
-                            <View className="w-[3px] h-[0.5px] bg-white/70" />
-                        </View>
-                    ) : (
-                        // Open o o Eyes
-                        <View className="flex-row gap-[3px] mt-[0.5px]">
-                            <View className="w-[1.5px] h-[1.5px] rounded-full bg-white shadow-[0_0_2px_rgba(255,255,255,0.8)]" />
-                            <View className="w-[1.5px] h-[1.5px] rounded-full bg-white shadow-[0_0_2px_rgba(255,255,255,0.8)]" />
-                        </View>
-                    )}
-                </>
-            )}
-        </View>
-    );
-};
-
-// --- Fart Puff Particle ---
-const FartPuff = () => {
-    const opacity = useSharedValue(1);
-    const scale = useSharedValue(0.5);
-    const translateX = useSharedValue(0);
-
-    useEffect(() => {
-        opacity.value = withTiming(0, { duration: 800 });
-        scale.value = withTiming(1.5, { duration: 800 });
-        translateX.value = withTiming(-10, { duration: 800 });
-    }, []);
-
-    const style = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [
-            { scale: scale.value },
-            { translateX: translateX.value }
-        ] as any
-    }));
-
-    return (
-        <Animated.View style={style} className="absolute -left-2 top-0">
-            <Svg width="12" height="12" viewBox="0 0 24 24" fill="#10B981">
-                {/* Little green cloud */}
-                <Circle cx="12" cy="12" r="6" opacity={0.6} />
-                <Circle cx="8" cy="10" r="4" opacity={0.8} />
-                <Circle cx="16" cy="14" r="3" opacity={0.4} />
-            </Svg>
-        </Animated.View>
-    );
-};
+import { ScannerSprite } from './ScannerSprite';
 
 export function DayProgressWidgetCat() {
-    // --- Personality State ---
-    const [mood, setMood] = useState<'neutral' | 'happy' | 'suspicious' | 'angry'>('neutral');
-    const [facing, setFacing] = useState<'front' | 'back'>('front');
-    const [showPuff, setShowPuff] = useState(false);
+    // --- State Mapping ---
+    // IDLE -> Neutral
+    // SEARCHING -> Suspicious
+    // MOCKING -> Angry
+    // APPROVED -> Happy
+    const [scannerState, setScannerState] = useState<'IDLE' | 'ANALYZING' | 'HAPPY' | 'SEARCHING' | 'POINTING' | 'SEALING' | 'TYPING' | 'VALIDATING' | 'WITNESSING'>('IDLE');
     const [interactionText, setInteractionText] = useState<string | null>(null);
-
-    // Animations
-    const spriteX = useSharedValue(0);
-    const spriteY = useSharedValue(0);
-    const spriteRotate = useSharedValue(0);
-    const spriteScaleX = useSharedValue(1);
-    const spriteScaleY = useSharedValue(1);
 
     // Gravity Offset (Gyroscope)
     const gravityX = useSharedValue(0);
@@ -178,16 +35,7 @@ export function DayProgressWidgetCat() {
 
         const subscribe = async () => {
             subscription = Accelerometer.addListener(data => {
-                // Accelerometer data ranges roughly from -1 to 1 for x, y
-                // Multiply by a factor to get pixel offset within the box
-                // We want it to "fall" towards the tilt
-                // x: -1 is left, 1 is right
-                // y: -1 is top, 1 is bottom
-
-                // Sensitivity factors
-                const SENSITIVITY = 40;
-
-                // Use withSpring for smooth movement
+                const SENSITIVITY = 50; // Reduced sensitivity for larger sprite
                 gravityX.value = withSpring(-data.x * SENSITIVITY, { damping: 10, stiffness: 60 });
                 gravityY.value = withSpring(data.y * SENSITIVITY, { damping: 10, stiffness: 60 });
             });
@@ -204,108 +52,55 @@ export function DayProgressWidgetCat() {
 
     const handlePress = useCallback(() => {
         // Debounce if already active
-        if (mood !== 'neutral') return;
+        if (scannerState !== 'IDLE') return;
 
         // Randomly choose an interaction
         const rand = Math.random();
 
-        if (rand > 0.6) {
-            // --- ACTION 1: THE FART (Irreverent) ---
-            setMood('suspicious');
-            setInteractionText("EXCUSE ME.");
-
-            // 1. Turn around
-            spriteRotate.value = withTiming(180, { duration: 300 });
-
+        if (rand < 0.4) {
+            // --- ACTION 1: HAPPY/APPROVED (40%) ---
+            setScannerState('HAPPY');
+            setInteractionText("YAY!"); // Clear interaction text
             setTimeout(() => {
-                setFacing('back'); // Visual flip
-
-                // 2. Pause... then PUFF
-                setTimeout(() => {
-                    setShowPuff(true);
-
-                    // Little hop
-                    spriteY.value = withSequence(
-                        withTiming(-3, { duration: 100 }),
-                        withTiming(0, { duration: 100 })
-                    );
-
-                    // 3. Turn back slowly
-                    setTimeout(() => {
-                        setFacing('front');
-                        setShowPuff(false);
-                        spriteRotate.value = withTiming(360, { duration: 500 }); // Complete spin
-
-                        setTimeout(() => {
-                            setMood('neutral');
-                            setInteractionText(null);
-                            spriteRotate.value = 0; // Reset
-                        }, 550);
-                    }, 1500);
-
-                }, 400);
-            }, 150);
-
-        } else if (rand > 0.3) {
-            // --- ACTION 2: THE THREAT (Witty/Edgy) ---
-            setMood('angry');
-            setInteractionText(Math.random() > 0.5 ? "DO YOUR WORK." : "I'M STARVING.");
-
-            // Vibration/Shake
-            spriteRotate.value = withSequence(
-                withTiming(-10, { duration: 50 }),
-                withRepeat(withTiming(10, { duration: 100 }), 5, true),
-                withTiming(0, { duration: 50 })
-            );
-
-            // Scale up slightly (Intimidating)
-            spriteScaleX.value = withTiming(1.2, { duration: 200 });
-            spriteScaleY.value = withTiming(1.2, { duration: 200 });
-
-            setTimeout(() => {
-                spriteScaleX.value = withTiming(1, { duration: 200 });
-                spriteScaleY.value = withTiming(1, { duration: 200 });
-                setMood('neutral');
+                setScannerState('IDLE');
                 setInteractionText(null);
             }, 2000);
-
-        } else {
-            // --- ACTION 3: HAPPY JUMP (Classic) ---
-            setMood('happy');
-            setInteractionText("LET'S GO!");
-
-            // Squash
-            spriteScaleX.value = withTiming(1.3, { duration: 100 });
-            spriteScaleY.value = withTiming(0.7, { duration: 100 });
+        } else if (rand < 0.65) {
+            // --- ACTION 2: POINTING (25%) ---
+            setScannerState('POINTING');
+            setInteractionText("LOOK HERE.");
 
             setTimeout(() => {
-                // Jump
-                spriteY.value = withSequence(
-                    withTiming(-10, { duration: 300, easing: Easing.out(Easing.quad) }),
-                    withTiming(0, { duration: 400, easing: Easing.bounce })
-                );
-                spriteScaleX.value = withTiming(1, { duration: 300 });
-                spriteScaleY.value = withTiming(1, { duration: 300 });
+                setScannerState('IDLE');
+                setInteractionText(null);
+            }, 2000);
+        } else if (rand < 0.85) {
+            // --- ACTION 3: SUSPICIOUS (20%) ---
+            setScannerState('SEARCHING');
+            setInteractionText("EXCUSE ME?");
 
-                setTimeout(() => {
-                    setMood('neutral');
-                    setInteractionText(null);
-                }, 1000);
-            }, 100);
+            setTimeout(() => {
+                setScannerState('IDLE');
+                setInteractionText(null);
+            }, 2500);
+        } else {
+            // --- ACTION 4: MOCKING (15%) ---
+            setScannerState('WITNESSING');
+            setInteractionText("DO YOUR WORK"); // Clear interaction text
+
+            setTimeout(() => {
+                setScannerState('IDLE');
+                setInteractionText(null);
+            }, 3000);
         }
 
-    }, [mood]);
+    }, [scannerState]);
 
-    const SCALE_FACTOR = 6;
-
-    const animatedSpriteStyle = useAnimatedStyle(() => {
+    const animatedStyle = useAnimatedStyle(() => {
         return {
             transform: [
-                { translateX: (spriteX.value + gravityX.value) },
-                { translateY: (spriteY.value * SCALE_FACTOR) + gravityY.value },
-                { rotateY: `${spriteRotate.value}deg` }, // Y-axis rotation for flip
-                { scaleX: spriteScaleX.value * SCALE_FACTOR },
-                { scaleY: spriteScaleY.value * SCALE_FACTOR }
+                { translateX: gravityX.value },
+                { translateY: gravityY.value },
             ] as any
         };
     });
@@ -313,35 +108,37 @@ export function DayProgressWidgetCat() {
     return (
         <Animated.View
             entering={FadeIn.delay(200)}
-            className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100 shadow-sm"
+            className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100 shadow-sm overflow-hidden"
         >
             <TouchableOpacity
                 activeOpacity={1}
                 onPress={handlePress}
-                className="items-center justify-center relative"
-                style={{ width: '100%', height: '100%' }}
+                className="items-center justify-center relative w-full h-full"
             >
+                {/* Custom Text Bubble for states other than MOCKING/APPROVED which have built-in calls */}
                 {interactionText && (
                     <Animated.View
                         entering={FadeIn}
                         exiting={FadeOut}
-                        className="absolute -top-10 z-50 bg-black px-4 py-2 rounded-xl mb-4"
-                        style={{ pointerEvents: 'none' }} // Ensure clicks go through to sprite touchable if overlapping
+                        className="absolute -top-4 z-50 bg-black px-4 py-2 rounded-xl mb-4"
+                        style={{ pointerEvents: 'none' }}
                     >
                         <Text className="text-white font-bold text-sm tracking-wide">{interactionText}</Text>
-                        {/* Little triangle pointer for speech bubble */}
                         <View className="absolute -bottom-1 left-1/2 -ml-1 w-2 h-2 bg-black rotate-45" />
                     </Animated.View>
                 )}
 
                 <Animated.View
-                    style={animatedSpriteStyle}
-                    className="z-10 items-center justify-center overflow-visible"
+                    style={animatedStyle}
+                    className="items-center justify-center pointer-events-none"
                 >
-                    <View className="-mt-0.5">
-                        <SootSprite mood={mood} facing={facing} />
+                    <View>
+                        {/* Scaled down slightly to fit the widget comfortable */}
+                        <ScannerSprite
+                            state={scannerState}
+                            showLabels={false}
+                        />
                     </View>
-                    {showPuff && <FartPuff />}
                 </Animated.View>
             </TouchableOpacity>
         </Animated.View>

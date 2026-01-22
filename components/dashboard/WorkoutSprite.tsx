@@ -42,6 +42,8 @@ export function WorkoutSprite({ isActive }: WorkoutSpriteProps) {
 
 function IdleSprite() {
     const breath = useSharedValue(1);
+    const pupilX = useSharedValue(0);
+    const pupilY = useSharedValue(0);
 
     useEffect(() => {
         breath.value = withRepeat(
@@ -52,10 +54,21 @@ function IdleSprite() {
             -1,
             true
         );
+
+        // Idle pupil movement
+        const interval = setInterval(() => {
+            pupilX.value = withSpring(Math.random() * 4 - 2);
+            pupilY.value = withSpring(Math.random() * 4 - 2);
+        }, 2500);
+        return () => clearInterval(interval);
     }, []);
 
     const style = useAnimatedStyle(() => ({
-        transform: [{ scaleY: breath.value }]
+        transform: [{ scaleY: breath.value }] as any
+    }));
+
+    const pupilStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: pupilX.value }, { translateY: pupilY.value }] as any
     }));
 
     return (
@@ -63,8 +76,14 @@ function IdleSprite() {
             <Animated.View style={style} className="w-20 h-20 bg-black rounded-full items-center justify-center shadow-lg">
                 <View className="absolute top-4 w-full h-3 opacity-90" style={{ backgroundColor: '#FF3B30' }} />
                 <View className="flex-row gap-3 mt-1">
-                    <View className="w-2 h-2 bg-white rounded-full" />
-                    <View className="w-2 h-2 bg-white rounded-full" />
+                    <View className="w-7 h-7 bg-white rounded-full items-center justify-center overflow-hidden border border-gray-100 relative">
+                        <Animated.View style={pupilStyle} className="w-3.5 h-3.5 bg-black rounded-full" />
+                        <View className="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full opacity-60" />
+                    </View>
+                    <View className="w-7 h-7 bg-white rounded-full items-center justify-center overflow-hidden border border-gray-100 relative">
+                        <Animated.View style={pupilStyle} className="w-3.5 h-3.5 bg-black rounded-full" />
+                        <View className="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full opacity-60" />
+                    </View>
                 </View>
             </Animated.View>
             <Text className="text-gray-400 text-[10px] font-black mt-6 tracking-[0.3em] uppercase">Ready to focus</Text>
@@ -177,6 +196,9 @@ function DinoGame() {
 }
 
 function DinoSpriteVisual({ spriteY, spriteHover }: { spriteY: SharedValue<number>, spriteHover: SharedValue<number> }) {
+    const pupilX = useSharedValue(0);
+    const pupilY = useSharedValue(0);
+
     // Eyes animation: widen when jumping
     const eyeStyle = useAnimatedStyle(() => {
         const isJumping = spriteY.value < -10;
@@ -187,6 +209,10 @@ function DinoSpriteVisual({ spriteY, spriteHover }: { spriteY: SharedValue<numbe
             ] as any
         };
     });
+
+    const pupilStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: pupilX.value }, { translateY: pupilY.value }] as any
+    }));
 
     // Mouth animation: open "O" when jumping, breathing when hovering
     const mouthStyle = useAnimatedStyle(() => {
@@ -207,9 +233,15 @@ function DinoSpriteVisual({ spriteY, spriteHover }: { spriteY: SharedValue<numbe
     return (
         <View className="w-14 h-14 bg-black rounded-full items-center justify-center shadow-lg">
             <View className="absolute top-3 w-full h-2 opacity-90" style={{ backgroundColor: '#FF3B30' }} />
-            <View className="flex-row gap-2 mt-1">
-                <Animated.View style={eyeStyle} className="w-2 h-2 bg-white rounded-full" />
-                <Animated.View style={eyeStyle} className="w-2 h-2 bg-white rounded-full" />
+            <View className="flex-row gap-1 mt-1">
+                <Animated.View style={eyeStyle} className="w-4 h-4 bg-white rounded-full items-center justify-center overflow-hidden border border-gray-100 relative">
+                    <Animated.View style={pupilStyle} className="w-2 h-2 bg-black rounded-full" />
+                    <View className="absolute top-0.5 right-0.5 w-1 h-1 bg-white rounded-full opacity-60" />
+                </Animated.View>
+                <Animated.View style={eyeStyle} className="w-4 h-4 bg-white rounded-full items-center justify-center overflow-hidden border border-gray-100 relative">
+                    <Animated.View style={pupilStyle} className="w-2 h-2 bg-black rounded-full" />
+                    <View className="absolute top-0.5 right-0.5 w-1 h-1 bg-white rounded-full opacity-60" />
+                </Animated.View>
             </View>
             <Animated.View style={mouthStyle} className="bg-white mt-1" />
         </View>

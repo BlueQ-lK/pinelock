@@ -200,7 +200,10 @@ export default function FocusTimerScreen() {
                         </Animated.View>
 
                         <View className="mb-10">
-                            <WorkoutSprite isActive={false} />
+                            <ScannerSprite
+                                state={'IDLE'}
+                                items={{ bandana: true }}
+                            />
                         </View>
 
                         {goal && (

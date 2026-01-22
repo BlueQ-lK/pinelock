@@ -15,7 +15,7 @@ import Animated, {
 import { useEffect, useState } from 'react';
 import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 
-type ScannerState = 'IDLE' | 'ANALYZING' | 'MOCKING' | 'APPROVED' | 'SEARCHING' | 'POINTING' | 'SEALING' | 'TYPING' | 'VALIDATING' | 'WITNESSING';
+type ScannerState = 'IDLE' | 'ANALYZING' | 'MOCKING' | 'APPROVED' | 'SEARCHING' | 'POINTING' | 'SEALING' | 'TYPING' | 'VALIDATING' | 'WITNESSING' | 'HAPPY';
 type MockingPhase = 'LAUGH' | 'SHOUT' | 'CLAP';
 
 interface ScannerSpriteProps {
@@ -25,11 +25,14 @@ interface ScannerSpriteProps {
     disableHover?: boolean;
     reactionTrigger?: number; // Increment to trigger a small reaction
     excitementLevel?: number; // 0 to 4
+    items?: {
+        bandana?: boolean;
+    };
 }
 
 const DEFAULT_INSULTS = ["Bruh.", "Seriously?", "Nah.", "Try Again.", "Weak."];
 
-export function ScannerSprite({ state, mockeryText, showLabels = true, disableHover = false, reactionTrigger = 0, excitementLevel = 0 }: ScannerSpriteProps) {
+export function ScannerSprite({ state, mockeryText, showLabels = true, disableHover = false, reactionTrigger = 0, excitementLevel = 0, items }: ScannerSpriteProps) {
     // Shared Values
     const float = useSharedValue(0);
     const pupilX = useSharedValue(0);
@@ -283,6 +286,14 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
             );
         }
 
+        if (state === 'HAPPY') {
+            float.value = withRepeat(
+                withSequence(withTiming(-15, { duration: 200 }), withTiming(0, { duration: 200 })),
+                3,
+                true
+            );
+        }
+
         if (state === 'VALIDATING') {
             // Subtle hover
             float.value = withRepeat(
@@ -474,6 +485,14 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
                 )
             }
 
+            {/* Happy Text */}
+            {
+                showLabels && state === 'HAPPY' && (
+                    <Animated.View entering={ZoomIn} className="absolute -top-6 w-full items-center z-0">
+                    </Animated.View>
+                )
+            }
+
             {/* Searchlight removed */}
 
             {/* Celebration Glow Ring (WITNESSING level 3+) */}
@@ -491,6 +510,11 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
                         <Animated.View style={[{ position: 'absolute', top: 10, left: 10, opacity: 0.6 }, fireStyle2]} className="w-3 h-3 bg-red-500 rounded-full blur-sm" />
                         <Animated.View style={[{ position: 'absolute', top: 5, right: 10, opacity: 0.6 }, fireStyle3]} className="w-3 h-3 bg-red-400 rounded-full blur-sm" />
                     </>
+                )}
+
+                {/* Optional Items: Bandana */}
+                {items?.bandana && (
+                    <View className="absolute top-4 w-full h-3 opacity-90 z-10" style={{ backgroundColor: '#FF3B30' }} />
                 )}
 
                 {/* Black Body Background */}
@@ -529,6 +553,10 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
                                 {mockingPhase === 'SHOUT' && <Path d="M6 15 L12 9 L18 15" transform="rotate(90 12 12)" />}
                             </Svg>
                         ) : state === 'APPROVED' ? (
+                            <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ translateY: 4 }] }}>
+                                <Path d="M6 15 L12 9 L18 15" />
+                            </Svg>
+                        ) : state === 'HAPPY' ? (
                             <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ translateY: 4 }] }}>
                                 <Path d="M6 15 L12 9 L18 15" />
                             </Svg>
@@ -595,6 +623,10 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
                                 {mockingPhase === 'SHOUT' && <Path d="M6 15 L12 9 L18 15" transform="rotate(-90 12 12)" />}
                             </Svg>
                         ) : state === 'APPROVED' ? (
+                            <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ translateY: 4 }] }}>
+                                <Path d="M6 15 L12 9 L18 15" />
+                            </Svg>
+                        ) : state === 'HAPPY' ? (
                             <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ translateY: 4 }] }}>
                                 <Path d="M6 15 L12 9 L18 15" />
                             </Svg>
