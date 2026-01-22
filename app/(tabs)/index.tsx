@@ -6,7 +6,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { DateWidget } from '../../components/dashboard/DateWidget';
 import { DayProgressWidgetCat } from '../../components/dashboard/DayProgressWidgetCat';
+import { YearProgressWidgetCat } from '../../components/dashboard/YearProgressWidgetCat';
+import { MotivationCard } from '../../components/dashboard/MotivationCard';
+import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
+import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
+import { Milestone } from '../../types';
+import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
+import { useAI } from '../../contexts/AIContext';
 // ... imports
+
 
 // Inside the component return:
 {/* Top Row Widgets */ }
@@ -18,13 +26,7 @@ import { DayProgressWidgetCat } from '../../components/dashboard/DayProgressWidg
 <View className="mb-8">
   <YearProgressWidgetCat />
 </View>
-import { YearProgressWidgetCat } from '../../components/dashboard/YearProgressWidgetCat';
-import { MotivationCard } from '../../components/dashboard/MotivationCard';
-import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
-import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
-import { Milestone } from '../../types';
-import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
-import { useAI } from '../../contexts/AIContext';
+
 
 export default function Dashboard() {
   const router = useRouter();
@@ -217,12 +219,6 @@ export default function Dashboard() {
               className="bg-black rounded-full p-3"
             >
               <Ionicons name="timer-outline" size={20} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/shiny-object')}
-              className="bg-gray-50 rounded-full p-3"
-            >
-              <Ionicons name="scan-outline" size={20} color="black" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/focus-zone')}

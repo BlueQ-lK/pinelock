@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, {
     FadeIn,
+    FadeOut,
     useSharedValue,
     useAnimatedStyle,
     withSequence,
@@ -10,8 +11,9 @@ import Animated, {
     Easing,
     runOnJS
 } from 'react-native-reanimated';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { Accelerometer } from 'expo-sensors';
 
 // --- Soot Sprite Component ---
 const SootSprite = ({
@@ -153,12 +155,6 @@ const FartPuff = () => {
 };
 
 export function DayProgressWidgetCat() {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const hoursLeft = 24 - currentHour;
-
-    const dots = Array.from({ length: 24 }, (_, i) => i);
-
     // --- Personality State ---
     const [mood, setMood] = useState<'neutral' | 'happy' | 'suspicious' | 'angry'>('neutral');
     const [facing, setFacing] = useState<'front' | 'back'>('front');
@@ -166,10 +162,45 @@ export function DayProgressWidgetCat() {
     const [interactionText, setInteractionText] = useState<string | null>(null);
 
     // Animations
+    const spriteX = useSharedValue(0);
     const spriteY = useSharedValue(0);
     const spriteRotate = useSharedValue(0);
     const spriteScaleX = useSharedValue(1);
     const spriteScaleY = useSharedValue(1);
+
+    // Gravity Offset (Gyroscope)
+    const gravityX = useSharedValue(0);
+    const gravityY = useSharedValue(0);
+
+    // Accelerometer logic
+    useEffect(() => {
+        let subscription: any;
+
+        const subscribe = async () => {
+            subscription = Accelerometer.addListener(data => {
+                // Accelerometer data ranges roughly from -1 to 1 for x, y
+                // Multiply by a factor to get pixel offset within the box
+                // We want it to "fall" towards the tilt
+                // x: -1 is left, 1 is right
+                // y: -1 is top, 1 is bottom
+
+                // Sensitivity factors
+                const SENSITIVITY = 40;
+
+                // Use withSpring for smooth movement
+                gravityX.value = withSpring(-data.x * SENSITIVITY, { damping: 10, stiffness: 60 });
+                gravityY.value = withSpring(data.y * SENSITIVITY, { damping: 10, stiffness: 60 });
+            });
+
+            Accelerometer.setUpdateInterval(50);
+        };
+
+        subscribe();
+
+        return () => {
+            subscription?.remove();
+        };
+    }, []);
 
     const handlePress = useCallback(() => {
         // Debounce if already active
@@ -265,13 +296,16 @@ export function DayProgressWidgetCat() {
 
     }, [mood]);
 
+    const SCALE_FACTOR = 6;
+
     const animatedSpriteStyle = useAnimatedStyle(() => {
         return {
             transform: [
-                { translateY: spriteY.value },
+                { translateX: (spriteX.value + gravityX.value) },
+                { translateY: (spriteY.value * SCALE_FACTOR) + gravityY.value },
                 { rotateY: `${spriteRotate.value}deg` }, // Y-axis rotation for flip
-                { scaleX: spriteScaleX.value },
-                { scaleY: spriteScaleY.value }
+                { scaleX: spriteScaleX.value * SCALE_FACTOR },
+                { scaleY: spriteScaleY.value * SCALE_FACTOR }
             ] as any
         };
     });
@@ -279,52 +313,37 @@ export function DayProgressWidgetCat() {
     return (
         <Animated.View
             entering={FadeIn.delay(200)}
-            className="bg-white rounded-[32px] p-6 flex-1 aspect-square justify-between border border-gray-100 shadow-sm"
+            className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100 shadow-sm"
         >
             <TouchableOpacity
                 activeOpacity={1}
                 onPress={handlePress}
-                className="flex-1"
+                className="items-center justify-center relative"
+                style={{ width: '100%', height: '100%' }}
             >
-                <View className="flex-row flex-wrap gap-2 justify-center content-start mt-2">
-                    {dots.map((hour) => {
-                        if (hour < currentHour) {
-                            return (
-                                <View
-                                    key={hour}
-                                    className="w-3 h-3 rounded-full bg-black/20"
-                                />
-                            );
-                        } else if (hour === currentHour) {
-                            return (
-                                <Animated.View
-                                    key={hour}
-                                    style={animatedSpriteStyle}
-                                    className="z-10 w-3 h-3 items-center justify-center overflow-visible"
-                                >
-                                    <View className="-mt-0.5">
-                                        <SootSprite mood={mood} facing={facing} />
-                                    </View>
-                                    {showPuff && <FartPuff />}
-                                </Animated.View>
-                            );
-                        } else {
-                            return (
-                                <View
-                                    key={hour}
-                                    className="w-3 h-3 rounded-full bg-gray-100"
-                                />
-                            );
-                        }
-                    })}
-                </View>
-            </TouchableOpacity>
+                {interactionText && (
+                    <Animated.View
+                        entering={FadeIn}
+                        exiting={FadeOut}
+                        className="absolute -top-10 z-50 bg-black px-4 py-2 rounded-xl mb-4"
+                        style={{ pointerEvents: 'none' }} // Ensure clicks go through to sprite touchable if overlapping
+                    >
+                        <Text className="text-white font-bold text-sm tracking-wide">{interactionText}</Text>
+                        {/* Little triangle pointer for speech bubble */}
+                        <View className="absolute -bottom-1 left-1/2 -ml-1 w-2 h-2 bg-black rotate-45" />
+                    </Animated.View>
+                )}
 
-            <View pointerEvents="none">
-                <Text className={`font-bold text-xs text-center tracking-widest uppercase ${interactionText ? 'text-swiss-red' : 'text-gray-400'}`}>
-                    {interactionText || `${hoursLeft} HRS LEFT`}
-                </Text>
-            </View>
+                <Animated.View
+                    style={animatedSpriteStyle}
+                    className="z-10 items-center justify-center overflow-visible"
+                >
+                    <View className="-mt-0.5">
+                        <SootSprite mood={mood} facing={facing} />
+                    </View>
+                    {showPuff && <FartPuff />}
+                </Animated.View>
+            </TouchableOpacity>
         </Animated.View>
     );
 }
