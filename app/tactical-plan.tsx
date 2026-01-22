@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Milestone, Todo } from '../types';
 import { BoatingSprite } from '../components/dashboard/BoatingSprite';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TacticalPlanScreen() {
   const router = useRouter();
@@ -13,9 +14,35 @@ export default function TacticalPlanScreen() {
   const [newTodo, setNewTodo] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Check if this milestone is the active one
   const isSessionActive = milestone?.status === 'ACTIVE';
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setTimeout(() => {
+          scrollRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (params.milestone) {
@@ -69,6 +96,10 @@ export default function TacticalPlanScreen() {
     const updatedTodos = [...(milestone.todos || []), newTodoItem];
     saveMilestone({ ...milestone, todos: updatedTodos });
     setNewTodo('');
+    // Small delay to allow list to update before scrolling
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 300);
   };
 
   const handleDeleteTodo = (todoId: string) => {
@@ -107,120 +138,157 @@ export default function TacticalPlanScreen() {
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
-      {/* Header */}
-      <View className="px-6 py-4 border-b border-gray-100 flex-row justify-between items-center bg-white">
-        <View>
-          <Text className="font-black text-xl tracking-tighter">FOCUS SESSION</Text>
-          <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">PRIORITY TASKS</Text>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        {/*  Header */}
+        <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
+          <TouchableOpacity onPress={() => router.back()} className="p-2">
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          <View className="items-center">
+            <Text className="font-black text-lg tracking-tight">TACTICAL PLAN</Text>
+          </View>
+          <View />
         </View>
-        <TouchableOpacity onPress={() => router.back()} className="bg-gray-100 p-2 rounded-full">
-          <Ionicons name="close" size={20} color="black" />
-        </TouchableOpacity>
-      </View>
 
-      {/* Progress Bar */}
-      <View className="px-6 py-4 bg-gray-50">
-        <Text className="font-bold text-xs text-gray-500 mb-2">MOMENTUM</Text>
-        <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
-          <View className="h-full bg-swiss-red" style={{ width: `${progress}%` }} />
-        </View>
-        <Text className="text-right text-[10px] font-bold text-gray-400 mt-1">
-          {completedCount}/{totalCount} STEPS COMPLETE
-        </Text>
-      </View>
 
-      <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 160 }}>
-        {milestone.todos?.map((todo) => (
-          <View
-            key={todo.id}
-            className={`flex-row items-start gap-4 mb-6 ${todo.completed && editingId !== todo.id ? 'opacity-50' : ''}`}
-          >
-            {/* Checkbox */}
-            <TouchableOpacity
-              onPress={() => handleToggleTodo(todo.id)}
-              disabled={!isSessionActive}
-              className={`w-6 h-6 rounded-lg border-2 items-center justify-center mt-0.5 ${todo.completed
-                ? 'bg-black border-black'
-                : 'border-gray-300 bg-white'
-                } ${!isSessionActive ? 'opacity-40' : ''}`}
-            >
-              {todo.completed && <Ionicons name="checkmark" size={16} color="white" />}
-            </TouchableOpacity>
-
-            {/* Content */}
-            <View className="flex-1">
-              {editingId === todo.id ? (
-                <View className="flex-row gap-2">
-                  <TextInput
-                    value={editingText}
-                    onChangeText={setEditingText}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 font-bold text-sm"
-                    autoFocus
-                    onSubmitEditing={saveEdit}
-                  />
-                  <TouchableOpacity onPress={saveEdit} className="bg-black p-1 rounded">
-                    <Ionicons name="checkmark" size={16} color="white" />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={cancelEdit} className="bg-gray-200 p-1 rounded">
-                    <Ionicons name="close" size={16} color="black" />
-                  </TouchableOpacity>
+        <ScrollView
+          ref={scrollRef}
+          className="flex-1 "
+          contentContainerStyle={{ padding: 16, paddingBottom: Math.max(220, keyboardHeight + 100) }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Bento Momentum & Metadata */}
+          <View className="flex-row gap-3 mb-4">
+            {/* Momentum Card - Large */}
+            <View className="flex-1 bg-white p-6 rounded-[24px] border border-gray-200">
+              <Text className="text-zinc-600 text-[10px] font-black tracking-[0.2em] uppercase mb-2">Momentum Status</Text>
+              <View className="flex-row items-baseline gap-2">
+                <Text className="text-black text-6xl font-black tracking-tighter leading-none">
+                  {Math.round(progress)}%
+                </Text>
+                <View className="bg-swiss-red/10 px-2 py-0.5 rounded">
+                  <Text className="text-swiss-red text-[10px] font-black uppercase">Active</Text>
                 </View>
-              ) : (
+              </View>
+              {/* Visual Progress Bar */}
+              <View className="h-2 bg-gray-100 rounded-full overflow-hidden mt-4">
+                <View className="h-full bg-swiss-red" style={{ width: `${progress}%` }} />
+              </View>
+              <Text className="text-[10px] font-bold text-gray-600 mt-2 uppercase">
+                {completedCount}/{totalCount} STEPS COMPLETE
+              </Text>
+            </View>
+          </View>
+
+          {/* Task List Header */}
+          <View className="px-1 mb-4 flex-row justify-between items-center">
+            <Text className="font-black text-sm tracking-[0.2em] uppercase text-black">Target Objectives</Text>
+            <View className="h-[2px] flex-1 bg-black ml-4" />
+          </View>
+
+          <View className="px-6 space-y-0">
+            {milestone.todos?.map((todo, index) => (
+              <View
+                key={todo.id}
+                className={`flex-row items-center gap-4 py-4 ${index !== (milestone.todos?.length || 0) - 1 ? 'border-b border-gray-100' : ''
+                  }`}
+              >
+                {/* Minimal Checkbox */}
                 <TouchableOpacity
-                  onPress={isSessionActive ? () => handleToggleTodo(todo.id) : undefined}
-                  onLongPress={() => startEditing(todo)}
+                  onPress={() => handleToggleTodo(todo.id)}
+                  disabled={!isSessionActive}
+                  className={`w-6 h-6 rounded-sm border-2 items-center justify-center ${todo.completed ? 'bg-black border-black' : 'border-gray-300'
+                    } ${!isSessionActive && !todo.completed ? 'opacity-40' : ''}`}
                 >
-                  <Text className={`font-bold text-sm leading-5 ${todo.completed ? 'text-gray-400 line-through' : 'text-black'
-                    }`}>
-                    {todo.task}
-                  </Text>
+                  {todo.completed && (
+                    <Ionicons name="checkmark" size={14} color="white" />
+                  )}
+                </TouchableOpacity>
+
+                {/* Task Content */}
+                <View className="flex-1">
+                  {editingId === todo.id ? (
+                    <View className="flex-row items-center gap-2">
+                      <TextInput
+                        value={editingText}
+                        onChangeText={setEditingText}
+                        className="flex-1 font-bold text-base text-black"
+                        autoFocus
+                        multiline
+                        onSubmitEditing={saveEdit}
+                      />
+                      <View className="flex-row gap-2">
+                        <TouchableOpacity onPress={saveEdit}>
+                          <Ionicons name="checkmark-circle" size={24} color="black" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={cancelEdit}>
+                          <Ionicons name="close-circle" size={24} color="#9CA3AF" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={isSessionActive ? () => handleToggleTodo(todo.id) : undefined}
+                      onLongPress={() => startEditing(todo)}
+                      className="flex-1 py-1 justify-center"
+                    >
+                      <Text className={`font-bold text-base tracking-tight ${todo.completed ? 'text-gray-600 line-through font-medium' : 'text-black'
+                        }`}>
+                        {todo.task}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Minimal Actions */}
+                {editingId !== todo.id && (
+                  <View className="flex-row-reverse gap-3">
+                    <TouchableOpacity onPress={() => handleDeleteTodo(todo.id)} className="opacity-100">
+                      <Ionicons name="trash-outline" size={18} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+
+            {/* Google Keep style Add Input */}
+            <View className="mt-8 flex-row items-center border-t border-gray-100 pt-6">
+              <View className="w-6 h-6 items-center justify-center mr-4">
+                <Ionicons name="add" size={24} color="#9CA3AF" />
+              </View>
+              <TextInput
+                value={newTodo}
+                onChangeText={setNewTodo}
+                placeholder="List item"
+                multiline
+                placeholderTextColor="#9CA3AF"
+                className="flex-1 font-bold text-base text-black"
+                onSubmitEditing={handleAddTodo}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollRef.current?.scrollToEnd({ animated: true });
+                  }, 400);
+                }}
+              />
+              {newTodo.length > 0 && (
+                <TouchableOpacity onPress={handleAddTodo} className="ml-4 p-3 bg-black rounded-full">
+                  <Text className="font-black text-sm text-white uppercase tracking-widest">Add</Text>
                 </TouchableOpacity>
               )}
             </View>
-
-            {/* Actions (only show if not editing) */}
-            {editingId !== todo.id && (
-              <View className="flex-row gap-2">
-                <TouchableOpacity onPress={() => startEditing(todo)}>
-                  <Ionicons name="pencil" size={16} color="#9CA3AF" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteTodo(todo.id)}>
-                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
-        ))}
+        </ScrollView>
 
-        {/* Add New Todo Input */}
-        <View className="flex-row items-center gap-3 mt-2 mb-10">
-          <View className="w-6 h-6 rounded-lg border-2 border-gray-200 border-dashed items-center justify-center">
-            <Ionicons name="add" size={14} color="#D1D5DB" />
-          </View>
-          <TextInput
-            value={newTodo}
-            onChangeText={setNewTodo}
-            placeholder="Add next step..."
-            className="flex-1 font-bold text-sm py-2"
-            onSubmitEditing={handleAddTodo}
-          />
-          {newTodo.length > 0 && (
-            <TouchableOpacity onPress={handleAddTodo} className="bg-black px-3 py-1.5 rounded-full">
-              <Text className="text-white text-xs font-bold">ADD</Text>
-            </TouchableOpacity>
-          )}
+        {/* The Supervisor at the bottom */}
+        <View className="absolute bottom-0 left-0 right-0 items-center">
+          <BoatingSprite isBoat={true} />
         </View>
-
-      </ScrollView>
-
-      {/* The Supervisor at the bottom */}
-      <View className="absolute bottom-0 left-0 right-0 items-center">
-        <BoatingSprite isBoat={true} />
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

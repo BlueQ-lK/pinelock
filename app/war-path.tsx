@@ -90,10 +90,10 @@ export default function WarPathScreen() {
     const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+        <SafeAreaView className="flex-1" edges={['top']}>
             {/* Header */}
-            <View className="px-6 py-4 bg-white border-b border-gray-100 flex-row justify-between items-center z-10 shadow-sm">
-                <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+            <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
+                <TouchableOpacity onPress={() => router.back()} className="p-2">
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
                 <View className="items-center">
@@ -102,7 +102,7 @@ export default function WarPathScreen() {
                 <View />
             </View>
 
-            <ScrollView className="flex-1 bg-[#F2F2F2]" contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView className="flex-1 " contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
                 {/* Bento Summary Grid */}
                 <View className="flex-row flex-wrap gap-3 mb-8">
                     {/* Progress Card - Large */}
@@ -119,7 +119,7 @@ export default function WarPathScreen() {
                     </View>
 
                     {/* Stats Cards - Half Width */}
-                    <View className="flex-1 bg-white p-5 rounded-[24px] border border-gray-200">
+                    <View className="flex-1 bg-gray-50 p-5 rounded-[24px] border border-gray-100">
                         <Text className="text-gray-700 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Cleared</Text>
                         <View className="flex-row items-baseline gap-1">
                             <Text className="text-black text-6xl font-black">{completedCount}</Text>
@@ -151,7 +151,7 @@ export default function WarPathScreen() {
                                 key={`${milestone.id}-${milestone.order}`}
                                 className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/40 shadow-lg shadow-swiss-red/20' :
                                     isCompleted ? 'bg-gray-50 border-gray-100' :
-                                        'bg-white border-gray-200'
+                                        ' border-gray-200 bg-gray-100'
                                     }`}
                                 onPress={() => router.push({
                                     pathname: '/tactical-plan',
@@ -164,11 +164,11 @@ export default function WarPathScreen() {
                             >
                                 <View className="flex-row justify-between items-start">
                                     <View className="flex-1">
-                                        <Text className={`text-[10px] font-black tracking-[0.3em] uppercase mb-2 ${isActive ? 'text-swiss-red' : 'text-gray-400'
+                                        <Text className={`text-[10px] font-black tracking-[0.3em] uppercase mb-2 ${isActive ? 'text-swiss-red' : 'text-gray-600'
                                             }`}>
                                             // {milestone.deadline ? format(new Date(milestone.deadline), 'MMM d, yyyy') : '00.00.00'}
                                         </Text>
-                                        <Text className={`text-2xl font-black tracking-tighter uppercase leading-none ${isCompleted ? 'text-gray-300' : 'text-black'
+                                        <Text className={`text-2xl font-black tracking-tighter uppercase leading-none ${isCompleted ? 'text-gray-500' : 'text-black'
                                             }`}>
                                             {milestone.title}
                                         </Text>
