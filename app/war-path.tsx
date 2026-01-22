@@ -99,115 +99,122 @@ export default function WarPathScreen() {
                 <View className="items-center">
                     <Text className="font-black text-lg tracking-tight">FOCUS LOG</Text>
                 </View>
-                <TouchableOpacity onPress={() => router.push('/edit-focus-plan')} className="p-2 -mr-2">
-                    <Text className="font-bold text-xs text-swiss-red tracking-widest">EDIT</Text>
-                </TouchableOpacity>
+                <View />
             </View>
 
-            <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
-                {/* Summary Card */}
-                <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-200">
-                    <View className="flex-row justify-between items-end mb-4">
-                        <View>
-                            <Text className="text-gray-400 text-xs font-bold tracking-widest mb-1">FOCUS PROGRESS</Text>
-                            <Text className="text-black text-4xl font-black">
+            <ScrollView className="flex-1 bg-[#F2F2F2]" contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+                {/* Bento Summary Grid */}
+                <View className="flex-row flex-wrap gap-3 mb-8">
+                    {/* Progress Card - Large */}
+                    <View className="w-full bg-swiss-red p-6 rounded-[24px] flex-row justify-between items-center">
+                        <View className="flex-1">
+                            <Text className="text-white text-[10px] font-black tracking-[0.2em] uppercase mb-2">Completion Status</Text>
+                            <Text className="text-white text-6xl font-black tracking-tighter leading-none">
                                 {Math.round(progress)}%
                             </Text>
                         </View>
-                        <View className="bg-red-50 px-3 py-1 rounded-full">
-                            <Text className="text-swiss-red text-xs font-bold">{completedCount} / {totalCount} MILESTONES</Text>
+                        <View className="w-20 h-20 items-center justify-center bg-white/20 rounded-full">
+                            <Ionicons name="analytics" size={40} color="white" />
                         </View>
                     </View>
-                    {/* Progress Bar */}
-                    <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <View
-                            style={{ width: `${progress}%` }}
-                            className="h-full bg-swiss-red rounded-full"
-                        />
+
+                    {/* Stats Cards - Half Width */}
+                    <View className="flex-1 bg-white p-5 rounded-[24px] border border-gray-200">
+                        <Text className="text-gray-700 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Cleared</Text>
+                        <View className="flex-row items-baseline gap-1">
+                            <Text className="text-black text-6xl font-black">{completedCount}</Text>
+                            <Text className="text-gray-600 text-3xl font-bold">/ {totalCount}</Text>
+                        </View>
                     </View>
+
+                    <TouchableOpacity
+                        className="flex-1 bg-black p-5 rounded-[24px] flex justify-center items-center"
+                        onPress={() => router.push('/edit-focus-plan')}
+                    >
+                        <Text className="text-white text-lg font-black tracking-[0.2em] uppercase mb-1">EDIT</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Timeline */}
-                <View className="pl-4">
+                {/* Timeline Header */}
+                <View className="px-1 mb-4 flex-row justify-between items-center">
+                    <Text className="font-black text-sm tracking-[0.2em] uppercase text-black">Milestones</Text>
+                    <View className="h-[2px] flex-1 bg-black ml-4" />
+                </View>
+                <View className="gap-3">
                     {sortedMilestones.map((milestone, index) => {
-                        const isLast = index === sortedMilestones.length - 1;
                         const isActive = milestone.status === 'ACTIVE';
                         const isCompleted = milestone.status === 'COMPLETED';
 
                         return (
-                            <View key={`${milestone.id}-${milestone.order}`} className="flex-row gap-6 mb-2">
-                                {/* Timeline Spine */}
-                                <View className="items-center">
-                                    {/* Node */}
-                                    {isActive ? (
-                                        <FocusLogSprite key={`sprite-${milestone.id}-${milestone.order}`} index={index} />
-                                    ) : (
-                                        <View className={`w-8 h-8 rounded-full items-center justify-center border-2 z-10 ${isCompleted ? 'bg-swiss-red border-swiss-red' : 'bg-white border-gray-200'
-                                            }`}>
-                                            {isCompleted ? (
-                                                <Ionicons name="checkmark" size={16} color="white" />
-                                            ) : (
-                                                <Text className="font-bold text-xs text-gray-400">
-                                                    {index + 1}
-                                                </Text>
-                                            )}
-                                        </View>
-                                    )}
-                                    {/* Line */}
-                                    {!isLast && (
-                                        <View className={`w-0.5 flex-1 my-1 ${isCompleted ? 'bg-swiss-red' : 'bg-gray-200'
-                                            }`} />
-                                    )}
-                                </View>
 
-                                {/* Content Card */}
-                                <TouchableOpacity
-                                    className={`flex-1 mb-6 p-5 rounded-2xl border ${isActive ? 'bg-white border-swiss-red shadow-md' :
-                                        isCompleted ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'
-                                        }`}
-                                    onPress={() => router.push({
-                                        pathname: '/tactical-plan',
-                                        params: {
-                                            milestone: JSON.stringify(milestone),
-                                            isActive: isActive.toString()
-                                        }
-                                    })}
-                                    activeOpacity={0.7}
-                                >
-                                    <View className="flex-row justify-between items-start mb-2">
-                                        <View className="flex-1 mr-2">
-                                            <Text className={`text-[10px] font-bold tracking-widest mb-1 ${isActive ? 'text-swiss-red' : 'text-gray-400'
-                                                }`}>
-                                                {milestone.deadline ? format(new Date(milestone.deadline), 'MMM d, yyyy') : 'NO DATE'}
-                                            </Text>
-                                            <Text className="text-lg font-black leading-6 text-black">
-                                                {milestone.title}
-                                            </Text>
-                                        </View>
+                            <TouchableOpacity
+                                key={`${milestone.id}-${milestone.order}`}
+                                className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/40 shadow-lg shadow-swiss-red/20' :
+                                    isCompleted ? 'bg-gray-50 border-gray-100' :
+                                        'bg-white border-gray-200'
+                                    }`}
+                                onPress={() => router.push({
+                                    pathname: '/tactical-plan',
+                                    params: {
+                                        milestone: JSON.stringify(milestone),
+                                        isActive: isActive.toString()
+                                    }
+                                })}
+                                activeOpacity={0.9}
+                            >
+                                <View className="flex-row justify-between items-start">
+                                    <View className="flex-1">
+                                        <Text className={`text-[10px] font-black tracking-[0.3em] uppercase mb-2 ${isActive ? 'text-swiss-red' : 'text-gray-400'
+                                            }`}>
+                                            // {milestone.deadline ? format(new Date(milestone.deadline), 'MMM d, yyyy') : '00.00.00'}
+                                        </Text>
+                                        <Text className={`text-2xl font-black tracking-tighter uppercase leading-none ${isCompleted ? 'text-gray-300' : 'text-black'
+                                            }`}>
+                                            {milestone.title}
+                                        </Text>
+                                    </View>
+                                    <View className="flex-row items-center gap-2">
                                         {isCompleted && (
-                                            <TouchableOpacity onPress={(e) => {
-                                                e.stopPropagation();
-                                                handleShare(milestone, index);
-                                            }}>
-                                                <View className="bg-gray-100 p-2 rounded-full">
-                                                    <Ionicons name="share-social" size={18} color="black" />
-                                                </View>
+                                            <TouchableOpacity
+                                                onPress={(e) => {
+                                                    e.stopPropagation();
+                                                    handleShare(milestone, index);
+                                                }}
+                                                className="bg-black/5 w-8 h-8 items-center justify-center rounded-full"
+                                            >
+                                                <Ionicons name="share-social-outline" size={18} color="black" />
                                             </TouchableOpacity>
                                         )}
+                                        {isActive ? (
+                                            <FocusLogSprite key={`sprite-${milestone.id}-${milestone.order}`} index={index} />
+                                        ) : (
+                                            <View className={`w-8 h-8 rounded-full items-center justify-center border-2 z-10 ${isCompleted ? 'bg-swiss-red border-swiss-red' : 'bg-white border-gray-200'
+                                                }`}>
+                                                {isCompleted ? (
+                                                    <Ionicons name="checkmark" size={16} color="white" />
+                                                ) : (
+                                                    <Text className="font-bold text-xs text-gray-400">
+                                                        {index + 1}
+                                                    </Text>
+                                                )}
+                                            </View>
+                                        )}
                                     </View>
+                                </View>
 
-                                    {/* Details (Simplified) */}
-                                    <Text className="text-sm leading-5 text-gray-500">
-                                        {milestone.description}
-                                    </Text>
+                                <Text className="text-sm mt-4 text-zinc-950 font-bold leading-tight uppercase opacity-60">
+                                    {milestone.description || 'Target objectives pending deployment.'}
+                                </Text>
 
-                                    {isActive && (
-                                        <View className="mt-4 bg-red-50 py-2 px-3 rounded-lg self-start">
-                                            <Text className="text-swiss-red text-xs font-bold">IN PROGRESS</Text>
+                                {isActive && (
+                                    <View className="mt-4 flex-row items-center gap-2">
+                                        <View className="bg-swiss-red px-3 py-1 rounded-full">
+                                            <Text className="text-white text-[9px] font-black tracking-widest uppercase">ENGAGED</Text>
                                         </View>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
+                                        <View className="flex-1 h-[2px] bg-swiss-red" />
+                                    </View>
+                                )}
+                            </TouchableOpacity>
                         );
                     })}
                 </View>
@@ -290,6 +297,6 @@ export default function WarPathScreen() {
                     </View>
                 </View>
             </View>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
