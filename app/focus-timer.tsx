@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, AppState, AppStateStatus, Platform } from
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
     useSharedValue,
@@ -20,6 +20,7 @@ import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { WorkoutSprite } from '../components/dashboard/WorkoutSprite';
 import { ScannerSprite } from '../components/dashboard/ScannerSprite';
+import { MusicPlayer } from '../components/dashboard/MusicPlayer';
 
 type TimerState = 'idle' | 'active' | 'complete';
 
@@ -179,6 +180,11 @@ export default function FocusTimerScreen() {
                         </View>
                     )}
                 </View>
+                {(timerState === 'idle' || timerState === 'active') && (
+                    <View className='flex-row justify-center items-center'>
+                        <MusicPlayer />
+                    </View>
+                )}
 
                 {/* IDLE STATE */}
                 {timerState === 'idle' && (
@@ -206,10 +212,9 @@ export default function FocusTimerScreen() {
                         <Animated.View entering={ZoomIn.delay(600)}>
                             <TouchableOpacity
                                 onPress={handleStart}
-                                className="bg-swiss-red w-40 h-40 rounded-full items-center justify-center shadow-lg shadow-swiss-red/30"
+                                className="bg-swiss-red h-40 w-40 rounded-full items-center justify-center shadow-lg shadow-swiss-red/30"
                             >
-                                <Ionicons name="play" size={60} color="white" />
-                                <Text className="text-white font-black text-xs tracking-widest mt-2">START</Text>
+                                <MaterialCommunityIcons name="play" size={90} color="white" />
                             </TouchableOpacity>
                         </Animated.View>
                     </View>

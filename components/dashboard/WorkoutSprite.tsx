@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -10,48 +10,37 @@ import Animated, {
     runOnJS,
     cancelAnimation,
     SharedValue,
-    interpolate
+    interpolate,
+    withDelay
 } from 'react-native-reanimated';
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
-import { useEffect, useState } from 'react';
-
-type WorkoutType = 'TREADMILL' | 'DUMBBELLS' | 'JUMPROPE' | 'BOXING' | 'KETTLEBELL';
+import { useEffect, useState, useRef } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface WorkoutSpriteProps {
     isActive: boolean;
 }
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 export function WorkoutSprite({ isActive }: WorkoutSpriteProps) {
-    const [workout, setWorkout] = useState<WorkoutType>('TREADMILL');
-
-    // Cycle workouts
-    useEffect(() => {
-        if (!isActive) return;
-
-        const workouts: WorkoutType[] = ['TREADMILL', 'DUMBBELLS', 'JUMPROPE', 'BOXING', 'KETTLEBELL'];
-        let currentIndex = 0;
-
-        const interval = setInterval(() => {
-            currentIndex = (currentIndex + 1) % workouts.length;
-            setWorkout(workouts[currentIndex]);
-        }, 8000); // Change every 8s
-
-        return () => clearInterval(interval);
-    }, [isActive]);
+    // We use a slightly smaller width than full screen to account for paddings
+    const containerWidth = SCREEN_WIDTH - 64;
 
     return (
-        <View className="items-center justify-center h-40 w-40">
+        <View
+            style={{ width: containerWidth }}
+            className="items-center justify-center h-48 rounded-3xl overflow-hidden bg-gray-50/50 border border-gray-100"
+        >
             {!isActive ? (
                 <IdleSprite />
             ) : (
-                <ActiveWorkout type={workout} />
+                <DinoGame />
             )}
         </View>
     );
 }
 
 function IdleSprite() {
-    // Breathing/Stretching
     const breath = useSharedValue(1);
 
     useEffect(() => {
@@ -71,260 +60,244 @@ function IdleSprite() {
 
     return (
         <View className="items-center">
-            <Animated.View style={style} className="w-16 h-16 bg-black rounded-full items-center justify-center">
-                {/* Headband */}
-                <View className="absolute top-3 w-full h-2 bg-swiss-red opacity-90" />
-                {/* Calm Eyes */}
-                <View className="flex-row gap-2 mt-1">
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
+            <Animated.View style={style} className="w-20 h-20 bg-black rounded-full items-center justify-center shadow-lg">
+                <View className="absolute top-4 w-full h-3 opacity-90" style={{ backgroundColor: '#FF3B30' }} />
+                <View className="flex-row gap-3 mt-1">
+                    <View className="w-2 h-2 bg-white rounded-full" />
+                    <View className="w-2 h-2 bg-white rounded-full" />
                 </View>
             </Animated.View>
-            <Text className="text-gray-500 text-[10px] font-bold mt-4 tracking-widest">READY TO TRAIN</Text>
+            <Text className="text-gray-400 text-[10px] font-black mt-6 tracking-[0.3em] uppercase">Ready to focus</Text>
         </View>
     );
 }
 
-function ActiveWorkout({ type }: { type: WorkoutType }) {
-    const sweat = useSharedValue(0);
+// --- DINO GAME ---
+
+const OBSTACLE_SPEED = 100; // Even slower for maximum relaxation
+
+function DinoGame() {
+    const spriteY = useSharedValue(0);
+    const spriteHover = useSharedValue(0);
+    const [obstacles, setObstacles] = useState<{ id: number; type: 'CACTUS_SMALL' | 'CACTUS_LARGE' | 'ROCK'; x: number }[]>([]);
+    const nextObstacleId = useRef(0);
+    const lastSpawnTime = useRef(0);
+    const nextSpawnDelay = useRef(2000);
 
     useEffect(() => {
-        sweat.value = withRepeat(
+        let lastTime = Date.now();
+        const loop = setInterval(() => {
+            const now = Date.now();
+            const dt = (now - lastTime) / 1000;
+            lastTime = now;
+
+            setObstacles(prev => {
+                const moved = prev.map(o => ({ ...o, x: o.x - (OBSTACLE_SPEED * dt) }));
+                const valid = moved.filter(o => o.x > -100);
+
+                if (now - lastSpawnTime.current > nextSpawnDelay.current) {
+                    lastSpawnTime.current = now;
+                    nextSpawnDelay.current = Math.random() * 2000 + 2000; // Set next delay: 2s to 4s
+
+                    const rand = Math.random();
+                    let type: 'CACTUS_SMALL' | 'CACTUS_LARGE' | 'ROCK';
+                    if (rand < 0.33) type = 'CACTUS_SMALL';
+                    else if (rand < 0.66) type = 'CACTUS_LARGE';
+                    else type = 'ROCK';
+
+                    valid.push({
+                        id: nextObstacleId.current++,
+                        type,
+                        x: SCREEN_WIDTH
+                    });
+                }
+                return valid;
+            });
+        }, 16);
+        return () => clearInterval(loop);
+    }, []);
+
+    useEffect(() => {
+        spriteHover.value = withRepeat(
             withSequence(
-                withTiming(1, { duration: 500 }),
-                withTiming(0, { duration: 0 })
+                withTiming(-3, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
+                withTiming(3, { duration: 1200, easing: Easing.inOut(Easing.sin) })
             ),
-            -1
+            -1,
+            true
         );
     }, []);
 
-    const sweatStyle = useAnimatedStyle(() => ({
-        opacity: sweat.value,
-        transform: [{ translateY: sweat.value * 10 }]
+    useEffect(() => {
+        const spriteX = 50;
+        const threats = obstacles.filter(o => o.x > spriteX);
+        if (threats.length > 0) {
+            const nearest = threats.sort((a, b) => a.x - b.x)[0];
+            const distance = nearest.x - spriteX;
+            if (distance < 40 && spriteY.value === 0) {
+                runOnJS(triggerJump)();
+            }
+        }
+    }, [obstacles]);
+
+    const triggerJump = () => {
+        spriteY.value = withSequence(
+            withTiming(-70, { duration: 550, easing: Easing.out(Easing.cubic) }),
+            withTiming(0, { duration: 550, easing: Easing.in(Easing.cubic) })
+        );
+    };
+
+    const spriteStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: spriteY.value + spriteHover.value }]
     }));
 
     return (
-        <View className="items-center justify-center w-full h-full">
-            {/* The Sprite Character (Common) */}
-            {type === 'TREADMILL' && <TreadmillAnim sweatStyle={sweatStyle} />}
-            {type === 'DUMBBELLS' && <DumbbellAnim sweatStyle={sweatStyle} />}
-            {type === 'JUMPROPE' && <JumpRopeAnim sweatStyle={sweatStyle} />}
-            {type === 'BOXING' && <BoxingAnim sweatStyle={sweatStyle} />}
-            {type === 'KETTLEBELL' && <KettlebellAnim sweatStyle={sweatStyle} />}
-        </View>
-    );
-}
+        <View className="w-full h-full relative">
+            <ParallaxCloud top={20} speed={15} scale={1} delay={0} />
+            <ParallaxCloud top={40} speed={25} scale={0.6} delay={2000} />
+            <ParallaxCloud top={15} speed={10} scale={0.8} delay={4000} />
 
-// --- EXERCISES ---
+            <View className="absolute bottom-10 w-full h-1">
+                <MovingGround />
+            </View>
 
-function TreadmillAnim({ sweatStyle }: any) {
-    const run = useSharedValue(0);
-    useEffect(() => {
-        run.value = withRepeat(
-            withSequence(withTiming(-2, { duration: 150 }), withTiming(2, { duration: 150 })),
-            -1, true
-        );
-    }, []);
+            <View className="absolute bottom-10 w-full">
+                {obstacles.map(o => (
+                    <Obstacle key={o.id} type={o.type} x={o.x} />
+                ))}
+            </View>
 
-    const bodyStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: Math.abs(run.value) }, { rotate: '5deg' }]
-    } as any));
-
-    const legL = useAnimatedStyle(() => ({ transform: [{ translateX: run.value * 2 }] }));
-    const legR = useAnimatedStyle(() => ({ transform: [{ translateX: -run.value * 2 }] }));
-
-    return (
-        <View className="items-center">
-            {/* Sweat */}
-            <Animated.View style={sweatStyle} className="absolute -right-4 top-0">
-                <Text>💦</Text>
-            </Animated.View>
-
-            <Animated.View style={bodyStyle} className="w-14 h-14 bg-black rounded-full items-center justify-center z-10">
-                <View className="absolute top-2 w-full h-2 bg-swiss-red" />
-                {/* Determined Eyes */}
-                <View className="flex-row gap-2 mt-1">
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                </View>
-            </Animated.View>
-
-            {/* Treadmill Base */}
-            <View className="w-24 h-2 bg-gray-500 mt-2 rounded-full overflow-hidden">
-                <Animated.View style={legL} className="w-4 h-full bg-gray-300 absolute left-2" />
-                <Animated.View style={legR} className="w-4 h-full bg-gray-300 absolute left-10" />
-                <Animated.View style={legL} className="w-4 h-full bg-gray-300 absolute left-16" />
+            <View className="absolute left-8 bottom-10 z-30">
+                <Animated.View style={spriteStyle}>
+                    <DinoSpriteVisual spriteY={spriteY} spriteHover={spriteHover} />
+                </Animated.View>
             </View>
         </View>
     );
 }
 
-function DumbbellAnim({ sweatStyle }: any) {
-    const lift = useSharedValue(0);
-    useEffect(() => {
-        lift.value = withRepeat(
-            withSequence(withTiming(10, { duration: 800 }), withTiming(0, { duration: 800 })),
-            -1, true
-        );
-    }, []);
-
-    const armStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: -lift.value }]
-    }));
-
-    // Shake when holding up
-    const shake = useAnimatedStyle(() => ({
-        transform: [{ translateX: lift.value > 5 ? Math.sin(Date.now()) : 0 }]
-    }));
-
-    return (
-        <View className="items-center">
-            <Animated.View style={sweatStyle} className="absolute -left-4 top-0"><Text>💦</Text></Animated.View>
-
-            {/* Arms & Dumbbells */}
-            <Animated.View style={[armStyle, shake]} className="absolute -left-6 z-20 flex-row items-center">
-                <View className="w-4 h-8 bg-gray-400 rounded-sm" />
-                <View className="w-6 h-2 bg-gray-800" />
-                <View className="w-4 h-8 bg-gray-400 rounded-sm" />
-            </Animated.View>
-            <Animated.View style={[armStyle, shake]} className="absolute -right-6 z-20 flex-row items-center">
-                <View className="w-4 h-8 bg-gray-400 rounded-sm" />
-                <View className="w-6 h-2 bg-gray-800" />
-                <View className="w-4 h-8 bg-gray-400 rounded-sm" />
-            </Animated.View>
-
-            <View className="w-16 h-16 bg-black rounded-full items-center justify-center z-10">
-                <View className="absolute top-3 w-full h-2 bg-swiss-red" />
-                {/* Strained Eyes (> <) */}
-                <View className="flex-row gap-1 mt-1">
-                    <Svg width="6" height="6" viewBox="0 0 4 4"><Path d="M0 0 L 2 2 L 0 4" stroke="white" strokeWidth="1" fill="none" /></Svg>
-                    <Svg width="6" height="6" viewBox="0 0 4 4"><Path d="M4 0 L 2 2 L 4 4" stroke="white" strokeWidth="1" fill="none" /></Svg>
-                </View>
-            </View>
-        </View>
-    );
-}
-
-function JumpRopeAnim({ sweatStyle }: any) {
-    const jump = useSharedValue(0);
-    const rope = useSharedValue(0);
-
-    useEffect(() => {
-        jump.value = withRepeat(
-            withSequence(withTiming(-15, { duration: 300, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 300, easing: Easing.in(Easing.quad) })),
-            -1, true
-        );
-        rope.value = withRepeat(
-            withTiming(1, { duration: 600, easing: Easing.linear }),
-            -1
-        );
-    }, []);
-
-    const bodyStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: jump.value }]
-    }));
-
-    // Rope Visual: It's an oval that scales Y from 1 to -1 to simulate looping around?
-    // Or just visible when down.
-    const ropeStyle = useAnimatedStyle(() => {
-        const r = rope.value; // 0 to 1
-        // Simulate rope swing: 
-        // 0: below feet
-        // 0.5: above head
-        // 1: below feet
-        const scaleY = Math.cos(r * Math.PI * 2);
+function DinoSpriteVisual({ spriteY, spriteHover }: { spriteY: SharedValue<number>, spriteHover: SharedValue<number> }) {
+    // Eyes animation: widen when jumping
+    const eyeStyle = useAnimatedStyle(() => {
+        const isJumping = spriteY.value < -10;
         return {
-            transform: [{ scaleY: scaleY * 1.5 }],
-            zIndex: scaleY > 0 ? 20 : 0 // Front when down, back when up
+            transform: [
+                { scaleY: withTiming(isJumping ? 1.4 : 1, { duration: 100 }) },
+                { scaleX: withTiming(isJumping ? 1.2 : 1, { duration: 100 }) }
+            ] as any
+        };
+    });
+
+    // Mouth animation: open "O" when jumping, breathing when hovering
+    const mouthStyle = useAnimatedStyle(() => {
+        const isJumping = spriteY.value < -10;
+        // Interpolate hover for breathing effect (-3 to 3)
+        const hoverScale = interpolate(spriteHover.value, [-3, 3], [0.9, 1.1]);
+
+        return {
+            height: withTiming(isJumping ? 10 : 3, { duration: 100 }), // Open mouth
+            width: withTiming(isJumping ? 10 : 8, { duration: 100 }), // Narrower when open
+            borderRadius: withTiming(isJumping ? 10 : 2, { duration: 100 }), // Round when open
+            transform: [
+                { scaleX: isJumping ? 1 : hoverScale }
+            ] as any,
         };
     });
 
     return (
-        <View className="items-center justify-end h-full py-4">
-            <Animated.View style={bodyStyle} className="w-14 h-14 bg-black rounded-full items-center justify-center z-10">
-                <View className="absolute top-2 w-full h-2 bg-swiss-red" />
-                <View className="flex-row gap-2 mt-1">
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                </View>
-            </Animated.View>
-
-            {/* Rope */}
-            <Animated.View style={[ropeStyle, { position: 'absolute', bottom: 10 }]} className="w-32 h-20 border-b-4 border-gray-400 rounded-[50%]" />
+        <View className="w-14 h-14 bg-black rounded-full items-center justify-center shadow-lg">
+            <View className="absolute top-3 w-full h-2 opacity-90" style={{ backgroundColor: '#FF3B30' }} />
+            <View className="flex-row gap-2 mt-1">
+                <Animated.View style={eyeStyle} className="w-2 h-2 bg-white rounded-full" />
+                <Animated.View style={eyeStyle} className="w-2 h-2 bg-white rounded-full" />
+            </View>
+            <Animated.View style={mouthStyle} className="bg-white mt-1" />
         </View>
     );
 }
 
-function BoxingAnim({ sweatStyle }: any) {
-    const punch = useSharedValue(0);
-    useEffect(() => {
-        punch.value = withRepeat(
-            withSequence(withTiming(1, { duration: 200 }), withTiming(-1, { duration: 200 })),
-            -1, true
-        );
-    }, []);
-
-    const leftGlove = useAnimatedStyle(() => ({
-        transform: [{ translateX: punch.value > 0 ? 20 : 0 }]
-    }));
-    const rightGlove = useAnimatedStyle(() => ({
-        transform: [{ translateX: punch.value < 0 ? 20 : 0 }]
-    }));
-
+function Obstacle({ type, x }: { type: 'CACTUS_SMALL' | 'CACTUS_LARGE' | 'ROCK', x: number }) {
+    const bottomOffset = type === 'ROCK' ? -12 : -6;
     return (
-        <View className="flex-row items-center">
-            <View className="w-14 h-14 bg-black rounded-full items-center justify-center z-10">
-                <View className="absolute top-2 w-full h-2 bg-swiss-red" />
-                {/* Angry/Focused Eyes */}
-                <View className="flex-row gap-1 mt-1">
-                    <View className="w-2 h-0.5 bg-white rotate-12" />
-                    <View className="w-2 h-0.5 bg-white -rotate-12" />
-                </View>
-            </View>
-
-            {/* Gloves */}
-            {/* Left Glove (Guard Position - Raised) */}
-            <Animated.View style={[leftGlove]} className="absolute -left-6 -top-2 w-8 h-8 bg-red-600 rounded-full border-2 border-white z-20" />
-            <Animated.View style={[rightGlove]} className="absolute -right-6 w-8 h-8 bg-red-600 rounded-full border-2 border-white" />
-
-            {/* Bag (imaginary target) */}
-            {/* Spark removed */}
-
+        <View className="absolute" style={{ left: x, bottom: bottomOffset }}>
+            {type === 'ROCK' ? (
+                <MaterialCommunityIcons name="image-filter-hdr" size={55} color="#6B7280" />
+            ) : type === 'CACTUS_LARGE' ? (
+                <MaterialCommunityIcons name="cactus" size={55} color="#059669" />
+            ) : (
+                <MaterialCommunityIcons name="cactus" size={55} color="#10B981" />
+            )}
         </View>
     );
 }
 
-function KettlebellAnim({ sweatStyle }: any) {
-    const swing = useSharedValue(0);
+function MovingGround() {
+    const offset = useSharedValue(0);
+
     useEffect(() => {
-        swing.value = withRepeat(
-            withSequence(withTiming(45, { duration: 600, easing: Easing.inOut(Easing.quad) }), withTiming(-45, { duration: 600, easing: Easing.inOut(Easing.quad) })),
-            -1, true
+        // Seamless loop matching the pattern width
+        offset.value = withRepeat(
+            withTiming(-100, { duration: 1000, easing: Easing.linear }),
+            -1,
+            false
         );
     }, []);
 
-    const armStyle = useAnimatedStyle(() => ({
-        transform: [{ rotate: `${swing.value}deg` }, { translateY: 25 }] // Pivot point logic approx
-    } as any));
+    const style = useAnimatedStyle(() => ({
+        transform: [{ translateX: offset.value }]
+    }));
+
+    // Generate random ground texture dots like Chrome Dino
+    const groundDots = Array.from({ length: 30 }, (_, i) => ({
+        id: i,
+        x: i * 100 + Math.random() * 60,
+        width: Math.random() > 0.5 ? 2 : 4,
+    }));
 
     return (
-        <View className="items-center">
-            <View className="w-16 h-16 bg-black rounded-full items-center justify-center z-10">
-                <View className="absolute top-3 w-full h-2 bg-swiss-red" />
-                <View className="flex-row gap-2 mt-1">
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                </View>
-            </View>
+        <View className="w-full h-4 overflow-hidden relative">
+            {/* Main road line */}
+            <View className="absolute top-0 w-full h-[2px] bg-gray-400" />
 
-            {/* Swinging Kettlebell (Refactored for perfect centering) */}
-            <Animated.View style={[armStyle, { position: 'absolute', top: 20, zIndex: 20, alignItems: 'center' } as any]}>
-                <View className="w-1 h-12 bg-black" />
-                {/* Ball flows naturally below handle, centered by parent items-center */}
-                <View className="w-10 h-10 bg-gray-800 rounded-full -mt-1 border border-gray-600" />
+            {/* Moving ground texture */}
+            <Animated.View style={[style, { flexDirection: 'row', width: 3000, height: 4 }]}>
+                {groundDots.map(dot => (
+                    <View
+                        key={dot.id}
+                        className="absolute top-2 h-[2px] bg-gray-300"
+                        style={{
+                            left: dot.x,
+                            width: dot.width,
+                        }}
+                    />
+                ))}
             </Animated.View>
-
-            <Animated.View style={sweatStyle} className="absolute -right-4 top-0"><Text>💦</Text></Animated.View>
         </View>
+    );
+}
+
+function ParallaxCloud({ top, speed, scale, delay }: { top: number, speed: number, scale: number, delay: number }) {
+    const x = useSharedValue(SCREEN_WIDTH + 100);
+
+    useEffect(() => {
+        const duration = 20000 + (Math.random() * 10000); // 20-30s per pass
+        x.value = withDelay(delay, withRepeat(
+            withTiming(-150, { duration: duration / (speed / 10), easing: Easing.linear }),
+            -1,
+            false
+        ));
+    }, []);
+
+    const style = useAnimatedStyle(() => ({
+        transform: [
+            { translateX: x.value },
+            { scale }
+        ] as any
+    }));
+
+    return (
+        <Animated.View style={[style as any, { position: 'absolute', top, left: 0 }]}>
+            <MaterialCommunityIcons name="cloud" size={40} color="#e5e7eb" style={{ opacity: 0.8 } as any} />
+        </Animated.View>
     );
 }

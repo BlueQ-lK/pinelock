@@ -47,6 +47,7 @@ export default function OnboardingScreen() {
       await AsyncStorage.setItem('durationUnit', data.durationUnit);
       await AsyncStorage.setItem('durationValue', data.durationValue.toString());
       await AsyncStorage.setItem('motivation', data.motivation);
+      await AsyncStorage.setItem('goalStartDate', new Date().toISOString());
       await AsyncStorage.setItem('hasOnboarded', 'true');
 
       // Small delay to let the animation finish

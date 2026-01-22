@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, AppState } from 'react-native';
 import Animated, {
     FadeIn,
     useSharedValue,
@@ -9,9 +9,10 @@ import Animated, {
     Easing,
     withDelay
 } from 'react-native-reanimated';
-import { differenceInDays, endOfYear, startOfYear } from 'date-fns';
+import { differenceInDays, endOfYear, startOfYear, addYears, addMonths, addDays, parseISO } from 'date-fns';
 import { useState, useEffect, useCallback } from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- Sweat Drop Particle ---
 const SweatDrop = () => {
@@ -96,14 +97,73 @@ const TrekkerSprite = ({ running = true, exhausted = false }: { running?: boolea
 };
 
 export function YearProgressWidgetCat() {
-    const now = new Date();
-    const start = startOfYear(now);
-    const end = endOfYear(now);
-    const totalDays = differenceInDays(end, start) + 1;
-    const daysPassed = differenceInDays(now, start);
-    const daysLeft = totalDays - daysPassed;
+    const [progressData, setProgressData] = useState<{
+        start: Date;
+        end: Date;
+        totalDays: number;
+        daysPassed: number;
+        daysLeft: number;
+        year: number;
+        isCustom: boolean;
+    } | null>(null);
 
-    const dots = Array.from({ length: totalDays }, (_, i) => i);
+    const loadProgress = async () => {
+        const savedStart = await AsyncStorage.getItem('goalStartDate');
+        const unit = await AsyncStorage.getItem('durationUnit');
+        const valueStr = await AsyncStorage.getItem('durationValue');
+        const value = parseInt(valueStr || '1', 10);
+
+        const now = new Date();
+        let start: Date;
+        let end: Date;
+
+        if (savedStart && unit && valueStr) {
+            start = parseISO(savedStart);
+            start.setHours(0, 0, 0, 0);
+
+            if (unit === 'year') {
+                end = addYears(start, value);
+            } else if (unit === 'months') {
+                end = addMonths(start, value);
+            } else {
+                end = addDays(start, value);
+            }
+            end.setHours(23, 59, 59, 999);
+        } else {
+            // Fallback to calendar year if no goal is set
+            start = startOfYear(now);
+            end = endOfYear(now);
+        }
+
+        const totalDays = differenceInDays(end, start) + 1;
+        const daysPassed = Math.max(0, differenceInDays(now, start));
+        const daysLeft = Math.max(0, differenceInDays(end, now));
+        const isCustom = !!(savedStart && unit && valueStr);
+
+        setProgressData({
+            start,
+            end,
+            totalDays,
+            daysPassed,
+            daysLeft,
+            year: start.getFullYear(),
+            isCustom
+        });
+    };
+
+    useEffect(() => {
+        loadProgress();
+
+        const subscription = AppState.addEventListener('change', (nextAppState) => {
+            if (nextAppState === 'active') {
+                loadProgress();
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
 
     // Interaction State
     const [isExhausted, setIsExhausted] = useState(false);
@@ -137,22 +197,26 @@ export function YearProgressWidgetCat() {
         }, 1500);
     }, [isExhausted]);
 
+    if (!progressData) return null;
+
+    const dots = Array.from({ length: progressData.totalDays }, (_, i) => i);
+
     return (
         <Animated.View
             entering={FadeIn.delay(300)}
-            className="bg-gray-50 rounded-[32px] p-8 w-full aspect-[4/3] justify-between border border-gray-100"
+            className="bg-gray-50 rounded-[32px] p-8 w-full border border-gray-100"
         >
-            <TouchableOpacity activeOpacity={1} onPress={handlePress} className="flex-1">
+            <TouchableOpacity activeOpacity={1} onPress={handlePress}>
                 <View className="flex-row flex-wrap gap-[6px] justify-center content-start">
                     {dots.map((day) => {
-                        if (day < daysPassed) {
+                        if (day < progressData.daysPassed) {
                             return (
                                 <View
                                     key={day}
                                     className="w-[6px] h-[6px] rounded-full bg-black opacity-20"
                                 />
                             );
-                        } else if (day === daysPassed) {
+                        } else if (day === progressData.daysPassed) {
                             // THE TREKKER
                             // Slightly larger than grid to pop out
                             return (
@@ -167,7 +231,7 @@ export function YearProgressWidgetCat() {
                             return (
                                 <View
                                     key={day}
-                                    className="w-[6px] h-[6px] rounded-full bg-gray-200 opacity-50"
+                                    className="w-[6px] h-[6px] rounded-full bg-gray-400 opacity-50"
                                 />
                             );
                         }
@@ -176,11 +240,11 @@ export function YearProgressWidgetCat() {
             </TouchableOpacity>
 
             <View className="flex-row justify-between items-end mt-4">
-                <Text className="text-gray-400 font-bold text-xs tracking-widest">
-                    {now.getFullYear()} PROGRESS
+                <Text className="text-gray-400 font-bold text-xs tracking-widest uppercase">
+                    {progressData.isCustom ? "GOAL PROGRESS" : `${progressData.year} PROGRESS`}
                 </Text>
                 <Text className={`font-black text-xl tracking-tighter ${message ? 'text-black' : 'text-swiss-red'}`}>
-                    {message || `${daysLeft} DAYS LEFT`}
+                    {message || `${progressData.daysLeft} DAYS LEFT`}
                 </Text>
             </View>
         </Animated.View>
