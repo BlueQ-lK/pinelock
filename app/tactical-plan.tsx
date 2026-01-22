@@ -205,7 +205,7 @@ export default function TacticalPlanScreen() {
 
       {/* The Supervisor at the bottom */}
       <View className="absolute bottom-0 left-0 right-0 items-center">
-        <BoatingSprite />
+        <BoatingSprite isBoat={true} />
       </View>
     </KeyboardAvoidingView>
   );

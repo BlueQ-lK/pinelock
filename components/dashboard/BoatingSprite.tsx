@@ -22,7 +22,7 @@ const MESSAGES = [
     "STAY LOCKED IN"
 ];
 
-export function BoatingSprite() {
+export function BoatingSprite({ isBoat }: { isBoat: boolean }) {
     const { width } = useWindowDimensions();
     // Wave Animation Values for 3 layers
     const wave1 = useSharedValue(0);
@@ -249,28 +249,30 @@ export function BoatingSprite() {
             </Svg>
 
             {/* Boat Container */}
-            <Animated.View className="absolute z-50 items-center justify-center left-0" style={boatStyle}>
-                {/* Speech Bubble (Nested inside to move with boat) */}
-                {showMessage && (
-                    <View className="absolute bottom-[50px] z-20 bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm min-w-[100px] items-center">
-                        <Text className="font-bold text-[10px] text-swiss-red tracking-widest whitespace-nowrap">{MESSAGES[msgIndex]}</Text>
-                        <View className="absolute bottom-[-4px] left-1/2 -ml-1 w-2 h-2 bg-white rotate-45 border-b border-r border-gray-100" />
+            {isBoat &&
+                <Animated.View className="absolute z-50 items-center justify-center left-0" style={boatStyle}>
+                    {/* Speech Bubble (Nested inside to move with boat) */}
+                    {showMessage && (
+                        <View className="absolute bottom-[50px] z-20 bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm min-w-[100px] items-center">
+                            <Text className="font-bold text-[10px] text-swiss-red tracking-widest whitespace-nowrap">{MESSAGES[msgIndex]}</Text>
+                            <View className="absolute bottom-[-4px] left-1/2 -ml-1 w-2 h-2 bg-white rotate-45 border-b border-r border-gray-100" />
+                        </View>
+                    )}
+
+                    {/* The Sprite (Head) */}
+                    <View className="w-6 h-6 bg-black rounded-full items-center justify-center relative mb-[-8px] z-10">
+                        {renderEyes()}
                     </View>
-                )}
 
-                {/* The Sprite (Head) */}
-                <View className="w-6 h-6 bg-black rounded-full items-center justify-center relative mb-[-8px] z-10">
-                    {renderEyes()}
-                </View>
-
-                {/* The Boat */}
-                <Svg width="40" height="20" viewBox="0 0 40 20">
-                    <Path
-                        d="M0 5 Q 20 20 40 5 L 35 15 Q 20 20 5 15 Z"
-                        fill="#1F2937"
-                    />
-                </Svg>
-            </Animated.View>
+                    {/* The Boat */}
+                    <Svg width="40" height="20" viewBox="0 0 40 20">
+                        <Path
+                            d="M0 5 Q 20 20 40 5 L 35 15 Q 20 20 5 15 Z"
+                            fill="#1F2937"
+                        />
+                    </Svg>
+                </Animated.View>
+            }
         </View>
     );
 }

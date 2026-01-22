@@ -21,6 +21,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { WorkoutSprite } from '../components/dashboard/WorkoutSprite';
 import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 import { MusicPlayer } from '../components/dashboard/MusicPlayer';
+import { BoatingSprite } from '../components/dashboard/BoatingSprite';
 
 type TimerState = 'idle' | 'active' | 'complete';
 
@@ -170,18 +171,18 @@ export default function FocusTimerScreen() {
         <View className="flex-1 bg-white">
             <SafeAreaView className="flex-1">
                 {/* Header */}
-                <View className="flex-row justify-between items-center px-6 py-4">
-                    <TouchableOpacity onPress={handleClose} className="p-2 -ml-2">
+                <View className="flex-row justify-between items-center px-6 py-4 z-10">
+                    <TouchableOpacity onPress={handleClose} className="p-2 -ml-2 bg-white rounded-full">
                         <Ionicons name="close" size={28} color="black" />
                     </TouchableOpacity>
                     {timerState === 'active' && (
-                        <View className="bg-swiss-red/10 px-3 py-1 rounded-full">
+                        <View className="bg-white px-3 py-1 rounded-full">
                             <Text className="text-swiss-red font-bold text-xs tracking-widest">LOCKED IN</Text>
                         </View>
                     )}
                 </View>
                 {(timerState === 'idle' || timerState === 'active') && (
-                    <View className='flex-row justify-center items-center'>
+                    <View className='flex-row justify-center items-center z-10'>
                         <MusicPlayer />
                     </View>
                 )}
@@ -312,6 +313,11 @@ export default function FocusTimerScreen() {
                                 <Text className="text-white font-black tracking-widest">NEW SESSION</Text>
                             </TouchableOpacity>
                         </Animated.View>
+                    </View>
+                )}
+                {(timerState === 'idle' || timerState === 'active') && (
+                    <View className="absolute top-0 left-0 right-0 items-center" style={{ transform: [{ scaleY: -1 }] }}>
+                        <BoatingSprite isBoat={false} />
                     </View>
                 )}
             </SafeAreaView>
