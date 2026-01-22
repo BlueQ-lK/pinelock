@@ -1,6 +1,9 @@
 export interface LockedGoal {
   title: string;
   motivation: string;
+  durationUnit?: 'year' | 'months' | 'days';
+  durationValue?: number;
+  startDate?: string;
 }
 
 export type MilestoneStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'FAILED';

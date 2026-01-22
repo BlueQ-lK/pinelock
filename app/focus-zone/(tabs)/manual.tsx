@@ -1,32 +1,97 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format, subHours } from 'date-fns';
+import { format, subHours, addYears, addMonths, addDays } from 'date-fns';
 import { useWarRoom } from '../_context';
 import { Milestone } from '../../../types';
 import { schedulePushNotification, scheduleNotificationAtDate } from '../../../services/notifications';
 import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
+import { Ionicons } from '@expo/vector-icons';
+import { Todo } from '../../../types';
 
 export default function ManualEntry() {
-    const { draftStack, setDraftStack } = useWarRoom();
+    const { draftStack, setDraftStack, goal, deployedStack } = useWarRoom();
     const [manualTitle, setManualTitle] = useState('');
     const [manualDesc, setManualDesc] = useState('');
     const [manualDeadline, setManualDeadline] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [manualImpact, setManualImpact] = useState<'HIGH' | 'CRITICAL'>('HIGH');
+    const [manualTodos, setManualTodos] = useState<Todo[]>([]);
+    const [newTodo, setNewTodo] = useState('');
+    const [deadlineError, setDeadlineError] = useState('');
+
+    // Calculate goal end date
+    const getGoalEndDate = () => {
+        if (!goal?.startDate || !goal?.durationValue || !goal?.durationUnit) return undefined;
+        const start = new Date(goal.startDate);
+        switch (goal.durationUnit) {
+            case 'year': return addYears(start, goal.durationValue);
+            case 'months': return addMonths(start, goal.durationValue);
+            case 'days': return addDays(start, goal.durationValue);
+            default: return undefined;
+        }
+    };
+    const goalEndDate = getGoalEndDate();
+
+    const handleAddTodo = () => {
+        if (!newTodo.trim()) return;
+        const todo: Todo = {
+            id: Date.now().toString(),
+            task: newTodo.trim(),
+            completed: false
+        };
+        setManualTodos([...manualTodos, todo]);
+        setNewTodo('');
+    };
+
+    const handleDeleteTodo = (id: string) => {
+        setManualTodos(manualTodos.filter(t => t.id !== id));
+    };
 
     const handleManualSubmit = async () => {
         if (!manualTitle.trim()) return;
+
+        // Use ISO format for storage
+        const isoDeadline = manualDeadline.toISOString().split('T')[0];
+        const formattedDeadline = format(manualDeadline, 'MMM d, yyyy');
+
+        // Extra validation for goal range
+        if (goalEndDate && manualDeadline > goalEndDate) {
+            setDeadlineError(`Mission deadline must be within your goal duration (before ${format(goalEndDate, 'MMM d, yyyy')}).`);
+            return;
+        }
+
+        // Check if a milestone with this deadline already exists in draft OR deployed
+        const normalizedNewDeadline = new Date(isoDeadline).toISOString().split('T')[0];
+
+        const inDraft = draftStack.find(m => {
+            try { return new Date(m.deadline).toISOString().split('T')[0] === normalizedNewDeadline; }
+            catch (e) { return false; }
+        });
+
+        const inDeployed = deployedStack.find(m => {
+            try { return new Date(m.deadline).toISOString().split('T')[0] === normalizedNewDeadline; }
+            catch (e) { return false; }
+        });
+
+        if (inDraft || inDeployed) {
+            const displayDate = format(new Date(isoDeadline), 'MMM d, yyyy');
+            setDeadlineError(`TOTAL FOCUS REQUIRED. You already have a mission locked for ${displayDate}. Consolidate your steps or choose a different window.`);
+            return;
+        }
+
+        // Clear any previous error
+        setDeadlineError('');
 
         const newMilestone: Milestone = {
             id: Date.now().toString(),
             title: manualTitle,
             description: manualDesc,
-            deadline: format(manualDeadline, 'MMM d, yyyy'),
+            deadline: isoDeadline, // Store in ISO format
             impact: manualImpact,
             status: 'PENDING',
             daysLeft: 14,
-            todos: [],
+            todos: manualTodos,
             order: draftStack.length + 1
         };
 
@@ -56,6 +121,8 @@ export default function ManualEntry() {
         setManualDesc('');
         setManualDeadline(new Date());
         setManualImpact('HIGH');
+        setManualTodos([]);
+        setNewTodo('');
     };
 
     const onDateChange = (event: any, selectedDate?: Date) => {
@@ -63,7 +130,17 @@ export default function ManualEntry() {
         if (Platform.OS === 'android') {
             setShowDatePicker(false);
         }
-        setManualDeadline(currentDate);
+
+        // Final safety check against goal end date
+        if (goalEndDate && currentDate > goalEndDate) {
+            setManualDeadline(goalEndDate);
+            setDeadlineError(`Date outside goal range. Limit: ${format(goalEndDate, 'MMM d, yyyy')}`);
+        } else {
+            setManualDeadline(currentDate);
+            if (deadlineError) {
+                setDeadlineError('');
+            }
+        }
     };
 
     return (
@@ -109,12 +186,21 @@ export default function ManualEntry() {
                 <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">DEADLINE</Text>
                 <TouchableOpacity
                     onPress={() => setShowDatePicker(true)}
-                    className="bg-gray-50 p-4 rounded-xl mb-6"
+                    className={`bg-gray-50 p-4 rounded-xl ${deadlineError ? 'mb-2 border-2 border-red-500' : 'mb-6'}`}
                 >
                     <Text className="font-medium text-sm text-black">
                         {format(manualDeadline, 'MMMM d, yyyy')}
                     </Text>
                 </TouchableOpacity>
+
+                {deadlineError && (
+                    <View className="bg-red-50 p-3 rounded-lg mb-6 flex-row items-start gap-2">
+                        <Ionicons name="warning" size={16} color="#EF4444" />
+                        <Text className="flex-1 text-xs font-bold text-red-500 leading-4">
+                            {deadlineError}
+                        </Text>
+                    </View>
+                )}
 
                 {showDatePicker && (
                     <View className="w-full items-center justify-center">
@@ -124,6 +210,7 @@ export default function ManualEntry() {
                             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                             onChange={onDateChange}
                             minimumDate={new Date()}
+                            maximumDate={goalEndDate}
                         />
                     </View>
                 )}
@@ -154,6 +241,48 @@ export default function ManualEntry() {
                             </Text>
                         </TouchableOpacity>
                     ))}
+                </View>
+
+                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">TACTICAL MOMENTUM</Text>
+                <View className="bg-gray-50 rounded-xl p-4 mb-8">
+                    {/* Input */}
+                    <View className="flex-row items-center gap-3 mb-4">
+                        <View className="w-8 h-8 rounded-full bg-white border border-gray-200 items-center justify-center">
+                            <Ionicons name="add" size={16} color="black" />
+                        </View>
+                        <TextInput
+                            className="flex-1 font-bold text-sm"
+                            placeholder="Add actionable step..."
+                            value={newTodo}
+                            onChangeText={setNewTodo}
+                            onSubmitEditing={handleAddTodo}
+                        />
+                        {newTodo.length > 0 && (
+                            <TouchableOpacity onPress={handleAddTodo} className="bg-black px-3 py-1.5 rounded-lg">
+                                <Text className="text-white text-[10px] font-bold tracking-wider">ADD</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    {/* List */}
+                    {manualTodos.map((todo, index) => (
+                        <View key={todo.id} className="flex-row items-center justify-between py-3 border-t border-gray-100">
+                            <View className="flex-row items-center gap-4 flex-1">
+                                <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center">
+                                    <Text className="text-sm font-bold text-gray-500">{index + 1}</Text>
+                                </View>
+                                <Text className="font-bold text-base text-gray-800 flex-1">{todo.task}</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => handleDeleteTodo(todo.id)} className="p-2 opacity-50">
+                                <Ionicons name="close" size={14} color="black" />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                    {manualTodos.length === 0 && (
+                        <View className="py-4 items-center">
+                            <Text className="text-[10px] font-bold text-gray-300 tracking-widest uppercase">No steps defined</Text>
+                        </View>
+                    )}
                 </View>
             </ScrollView>
 

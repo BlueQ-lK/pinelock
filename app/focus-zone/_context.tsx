@@ -18,6 +18,7 @@ interface WarRoomContextType {
   draftStack: Milestone[];
   setDraftStack: React.Dispatch<React.SetStateAction<Milestone[]>>;
   goal: LockedGoal | null;
+  deployedStack: Milestone[];
   deployStack: () => Promise<void>;
   draftOptions: Milestone[];
   setDraftOptions: React.Dispatch<React.SetStateAction<Milestone[]>>;
@@ -30,6 +31,7 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draftStack, setDraftStack] = useState<Milestone[]>([]);
   const [goal, setGoal] = useState<LockedGoal | null>(null);
+  const [deployedStack, setDeployedStack] = useState<Milestone[]>([]);
   const [draftOptions, setDraftOptions] = useState<Milestone[]>([]);
 
   useEffect(() => {
@@ -39,12 +41,25 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
   const initializeRoom = async () => {
     const title = await AsyncStorage.getItem('mainGoal');
     const motivation = await AsyncStorage.getItem('motivation');
+    const unit = await AsyncStorage.getItem('durationUnit');
+    const value = await AsyncStorage.getItem('durationValue');
+    const startDate = await AsyncStorage.getItem('goalStartDate');
     const stackStr = await AsyncStorage.getItem('milestoneStack');
 
     let currentGoal: LockedGoal | null = null;
     if (title) {
-      currentGoal = { title, motivation: motivation || '' };
+      currentGoal = {
+        title,
+        motivation: motivation || '',
+        durationUnit: unit as any,
+        durationValue: value ? parseInt(value) : undefined,
+        startDate: startDate || undefined
+      };
       setGoal(currentGoal);
+    }
+
+    if (stackStr) {
+      setDeployedStack(JSON.parse(stackStr));
     }
 
     // Context-aware greeting
@@ -79,11 +94,13 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
     }
 
     await AsyncStorage.setItem('milestoneStack', JSON.stringify(finalStack));
+    setDeployedStack(finalStack);
+    setDraftStack([]);
     router.replace('/(tabs)');
   };
 
   return (
-    <WarRoomContext.Provider value={{ messages, setMessages, draftStack, setDraftStack, goal, deployStack, draftOptions, setDraftOptions }}>
+    <WarRoomContext.Provider value={{ messages, setMessages, draftStack, setDraftStack, goal, deployedStack, deployStack, draftOptions, setDraftOptions }}>
       {children}
     </WarRoomContext.Provider>
   );

@@ -7,12 +7,14 @@ import { Ionicons } from '@expo/vector-icons';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Milestone } from '../types';
+import { format, addYears, addMonths, addDays } from 'date-fns';
+import { Milestone, LockedGoal } from '../types';
 
 export default function EditFocusPlanScreen() {
     const router = useRouter();
     const [lockedMilestones, setLockedMilestones] = useState<Milestone[]>([]);
     const [editableMilestones, setEditableMilestones] = useState<Milestone[]>([]);
+    const [goal, setGoal] = useState<LockedGoal | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Date Picker State
@@ -38,6 +40,23 @@ export default function EditFocusPlanScreen() {
                 setLockedMilestones(locked);
                 setEditableMilestones(editable);
             }
+
+            // Load Goal for date constraints
+            const title = await AsyncStorage.getItem('mainGoal');
+            if (title) {
+                const motivation = await AsyncStorage.getItem('motivation');
+                const unit = await AsyncStorage.getItem('durationUnit');
+                const value = await AsyncStorage.getItem('durationValue');
+                const startDate = await AsyncStorage.getItem('goalStartDate');
+
+                setGoal({
+                    title,
+                    motivation: motivation || '',
+                    durationUnit: unit as any,
+                    durationValue: value ? parseInt(value) : undefined,
+                    startDate: startDate || undefined
+                });
+            }
         } catch (e) {
             console.error('Failed to load milestones', e);
         } finally {
@@ -46,21 +65,9 @@ export default function EditFocusPlanScreen() {
     };
 
     const handleDragEnd = ({ data }: { data: Milestone[] }) => {
-        // "Swap Deadlines" Logic
-        // 1. Get all original deadlines from the editable set and sort them
-        const originalDeadlines = editableMilestones
-            .map(m => m.deadline)
-            .filter(d => d) // Filter out any undefined/null
-            .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-        // 2. Apply sorted deadlines to the new order of items
-        const updatedData = data.map((item, index) => ({
-            ...item,
-            // Use original deadline if index is out of bounds, or a default date
-            deadline: originalDeadlines[index] || item.deadline || new Date().toISOString().split('T')[0]
-        }));
-
-        setEditableMilestones(updatedData);
+        // Simply update the data array - preserve original deadlines
+        // Users can manually adjust deadlines via date picker if needed
+        setEditableMilestones(data);
     };
 
     const handleTextChange = (id: string, field: 'title' | 'description', text: string) => {
@@ -79,7 +86,35 @@ export default function EditFocusPlanScreen() {
             // Prevent picking a past date directly
             if (selectedDate < today) return;
 
+            // Prevent picking a date beyond goal duration
+            const goalEndDate = (() => {
+                if (!goal?.startDate || !goal?.durationValue || !goal?.durationUnit) return undefined;
+                const start = new Date(goal.startDate);
+                switch (goal.durationUnit) {
+                    case 'year': return addYears(start, goal.durationValue);
+                    case 'months': return addMonths(start, goal.durationValue);
+                    case 'days': return addDays(start, goal.durationValue);
+                    default: return undefined;
+                }
+            })();
+
+            if (goalEndDate && selectedDate > goalEndDate) return;
+
             const newDateStr = selectedDate.toISOString().split('T')[0];
+
+            // --- NEW: Check for date collision across all milestones ---
+            const allMilestones = [...lockedMilestones, ...editableMilestones];
+            const collision = allMilestones.find(m => m.id !== activeDateId && m.deadline === newDateStr);
+
+            if (collision) {
+                Alert.alert(
+                    "COLLISION DETECTED",
+                    `Total focus required. You already have a milestone ("${collision.title}") locked for this date.`,
+                    [{ text: "UNDERSTOOD" }]
+                );
+                return;
+            }
+            // --- END NEW ---
 
             setEditableMilestones(prev => {
                 const index = prev.findIndex(m => m.id === activeDateId);
@@ -278,6 +313,16 @@ export default function EditFocusPlanScreen() {
                             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                             onChange={onDateChange}
                             minimumDate={new Date()}
+                            maximumDate={(() => {
+                                if (!goal?.startDate || !goal?.durationValue || !goal?.durationUnit) return undefined;
+                                const start = new Date(goal.startDate);
+                                switch (goal.durationUnit) {
+                                    case 'year': return addYears(start, goal.durationValue);
+                                    case 'months': return addMonths(start, goal.durationValue);
+                                    case 'days': return addDays(start, goal.durationValue);
+                                    default: return undefined;
+                                }
+                            })()}
                             style={Platform.OS === 'ios' ? { width: '100%', height: 160 } : undefined}
                             textColor="black"
                         />

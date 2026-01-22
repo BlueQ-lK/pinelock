@@ -57,7 +57,7 @@ export default function EditMilestone() {
             ...milestone,
             title,
             description,
-            deadline: format(deadline, 'MMM d, yyyy'),
+            deadline: deadline.toISOString().split('T')[0], // Store in ISO format
             impact
         };
 

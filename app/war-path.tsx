@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Milestone } from '../types';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { format } from 'date-fns';
 import { FocusLogSprite } from '../components/dashboard/FocusLogSprite';
 import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 
@@ -160,21 +161,34 @@ export default function WarPathScreen() {
                                 </View>
 
                                 {/* Content Card */}
-                                <View className={`flex-1 mb-6 p-5 rounded-2xl border ${isActive ? 'bg-white border-swiss-red shadow-md' :
-                                    isCompleted ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'
-                                    }`}>
+                                <TouchableOpacity
+                                    className={`flex-1 mb-6 p-5 rounded-2xl border ${isActive ? 'bg-white border-swiss-red shadow-md' :
+                                        isCompleted ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'
+                                        }`}
+                                    onPress={() => router.push({
+                                        pathname: '/tactical-plan',
+                                        params: {
+                                            milestone: JSON.stringify(milestone),
+                                            isActive: isActive.toString()
+                                        }
+                                    })}
+                                    activeOpacity={0.7}
+                                >
                                     <View className="flex-row justify-between items-start mb-2">
                                         <View className="flex-1 mr-2">
                                             <Text className={`text-[10px] font-bold tracking-widest mb-1 ${isActive ? 'text-swiss-red' : 'text-gray-400'
                                                 }`}>
-                                                {milestone.deadline || 'NO DATE'}
+                                                {milestone.deadline ? format(new Date(milestone.deadline), 'MMM d, yyyy') : 'NO DATE'}
                                             </Text>
                                             <Text className="text-lg font-black leading-6 text-black">
                                                 {milestone.title}
                                             </Text>
                                         </View>
                                         {isCompleted && (
-                                            <TouchableOpacity onPress={() => handleShare(milestone, index)}>
+                                            <TouchableOpacity onPress={(e) => {
+                                                e.stopPropagation();
+                                                handleShare(milestone, index);
+                                            }}>
                                                 <View className="bg-gray-100 p-2 rounded-full">
                                                     <Ionicons name="share-social" size={18} color="black" />
                                                 </View>
@@ -192,7 +206,7 @@ export default function WarPathScreen() {
                                             <Text className="text-swiss-red text-xs font-bold">IN PROGRESS</Text>
                                         </View>
                                     )}
-                                </View>
+                                </TouchableOpacity>
                             </View>
                         );
                     })}

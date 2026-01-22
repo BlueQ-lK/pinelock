@@ -14,6 +14,9 @@ export default function TacticalPlanScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
 
+  // Check if this milestone is the active one
+  const isSessionActive = milestone?.status === 'ACTIVE';
+
   useEffect(() => {
     if (params.milestone) {
       try {
@@ -33,8 +36,13 @@ export default function TacticalPlanScreen() {
 
   const saveMilestone = async (updatedMilestone: Milestone) => {
     setMilestone(updatedMilestone);
-    await AsyncStorage.setItem('activeMilestone', JSON.stringify(updatedMilestone));
 
+    // Only save to activeMilestone if this is actually the active milestone
+    if (updatedMilestone.status === 'ACTIVE') {
+      await AsyncStorage.setItem('activeMilestone', JSON.stringify(updatedMilestone));
+    }
+
+    // Always update the milestone stack
     const stackStr = await AsyncStorage.getItem('milestoneStack');
     if (stackStr) {
       const stack: Milestone[] = JSON.parse(stackStr);
@@ -44,7 +52,7 @@ export default function TacticalPlanScreen() {
   };
 
   const handleToggleTodo = (todoId: string) => {
-    if (!milestone) return;
+    if (!milestone || !isSessionActive) return;
     const updatedTodos = milestone.todos?.map(t =>
       t.id === todoId ? { ...t, completed: !t.completed } : t
     ) || [];
@@ -134,8 +142,11 @@ export default function TacticalPlanScreen() {
             {/* Checkbox */}
             <TouchableOpacity
               onPress={() => handleToggleTodo(todo.id)}
-              className={`w-6 h-6 rounded-lg border-2 items-center justify-center mt-0.5 ${todo.completed ? 'bg-black border-black' : 'border-gray-300 bg-white'
-                }`}
+              disabled={!isSessionActive}
+              className={`w-6 h-6 rounded-lg border-2 items-center justify-center mt-0.5 ${todo.completed
+                ? 'bg-black border-black'
+                : 'border-gray-300 bg-white'
+                } ${!isSessionActive ? 'opacity-40' : ''}`}
             >
               {todo.completed && <Ionicons name="checkmark" size={16} color="white" />}
             </TouchableOpacity>
@@ -159,7 +170,10 @@ export default function TacticalPlanScreen() {
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity onPress={() => handleToggleTodo(todo.id)} onLongPress={() => startEditing(todo)}>
+                <TouchableOpacity
+                  onPress={isSessionActive ? () => handleToggleTodo(todo.id) : undefined}
+                  onLongPress={() => startEditing(todo)}
+                >
                   <Text className={`font-bold text-sm leading-5 ${todo.completed ? 'text-gray-400 line-through' : 'text-black'
                     }`}>
                     {todo.task}
