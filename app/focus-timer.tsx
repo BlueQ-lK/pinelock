@@ -40,8 +40,6 @@ const MOTIVATIONAL_QUOTES = [
     "This is how champions are made.",
 ];
 
-
-
 export default function FocusTimerScreen() {
     const router = useRouter();
     const [timerState, setTimerState] = useState<TimerState>('idle');
@@ -80,7 +78,6 @@ export default function FocusTimerScreen() {
         setTimerState('complete');
     }, []);
 
-    // Initial setup
     useEffect(() => {
         loadGoal();
         checkActiveSession();
@@ -89,7 +86,6 @@ export default function FocusTimerScreen() {
         };
     }, []);
 
-    // Timer interval - runs only when active
     useEffect(() => {
         if (timerState === 'active' && startTime) {
             intervalRef.current = setInterval(() => {
@@ -125,7 +121,6 @@ export default function FocusTimerScreen() {
         setStartTime(now);
         setTimerState('active');
         setElapsedSeconds(0);
-        // Save start time for background survival
         await AsyncStorage.setItem('focusStartTime', now.toString());
     };
 
@@ -170,7 +165,7 @@ export default function FocusTimerScreen() {
     return (
         <View className="flex-1 bg-white">
             <SafeAreaView className="flex-1">
-                {/* Header */}
+                {/* Common Header */}
                 <View className="flex-row justify-between items-center px-6 py-4 z-10">
                     <TouchableOpacity onPress={handleClose} className="p-2 -ml-2 bg-white rounded-full">
                         <Ionicons name="close" size={28} color="black" />
@@ -181,45 +176,65 @@ export default function FocusTimerScreen() {
                         </View>
                     )}
                 </View>
+
                 {(timerState === 'idle' || timerState === 'active') && (
                     <View className='flex-row justify-center items-center z-10'>
                         <MusicPlayer />
                     </View>
                 )}
 
-                {/* IDLE STATE */}
+                {/* IDLE STATE (Swiss-Bento Redesign) */}
                 {timerState === 'idle' && (
-                    <View className="flex-1 justify-center items-center px-8">
-                        <Animated.View entering={FadeInDown.delay(200)} className="items-center">
-                            <Text className="text-gray-400 font-bold text-xs tracking-[0.3em] text-center mb-4">
-                                FOCUS SESSION
-                            </Text>
-                            <Text className="text-black font-black text-5xl text-center mb-8">
+                    <View className="flex-1 px-6 justify-center">
+                        <Animated.View entering={FadeInDown.delay(200)} className="mb-12">
+                            <View className="flex-row items-center gap-2 bg-black self-start px-3 py-1 rounded-full mb-4">
+                                <View className="w-1.5 h-1.5 rounded-full bg-swiss-red animate-pulse" />
+                                <Text className="text-white font-black text-[10px] tracking-[0.3em] uppercase">READY</Text>
+                            </View>
+                            <Text className="text-black font-black text-6xl tracking-tighter uppercase leading-[54px] italic">
                                 LOCK IN
                             </Text>
                         </Animated.View>
 
-                        <View className="mb-10">
-                            <ScannerSprite
-                                state={'IDLE'}
-                                items={{ bandana: true }}
-                            />
-                        </View>
+                        {/* Sprite Bento Card */}
+                        <Animated.View
+                            entering={FadeInDown.delay(400)}
+                            className="bg-gray-50 border-2 border-gray-200 rounded-[40px] p-8 mb-8 items-center relative overflow-hidden"
+                        >
+                            <View className="scale-110">
+                                <ScannerSprite
+                                    state={'IDLE'}
+                                    items={{ bandana: true }}
+                                />
+                            </View>
+                        </Animated.View>
 
+                        {/* Goal Bento Badge */}
                         {goal && (
-                            <Animated.View entering={FadeInDown.delay(400)} className="bg-gray-50 rounded-2xl px-6 py-4 mb-12 border border-gray-100">
-                                <Text className="text-gray-400 font-bold text-[10px] tracking-widest mb-1">WORKING ON</Text>
-                                <Text className="text-black font-bold text-base" numberOfLines={2}>{goal}</Text>
+                            <Animated.View
+                                entering={FadeInDown.delay(500)}
+                                className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4"
+                            >
+                                <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
+                                    <Ionicons name="flash" size={20} color="white" />
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="text-gray-400 font-black text-[10px] tracking-[0.2em] uppercase mb-1">WORKING ON</Text>
+                                    <Text className="text-black font-black text-lg uppercase tracking-tight" numberOfLines={1}>{goal}</Text>
+                                </View>
                             </Animated.View>
                         )}
 
-                        <Animated.View entering={ZoomIn.delay(600)}>
+                        {/* Start Button */}
+                        <Animated.View entering={ZoomIn.delay(600)} className="items-center">
                             <TouchableOpacity
                                 onPress={handleStart}
-                                className="bg-swiss-red h-40 w-40 rounded-full items-center justify-center shadow-lg shadow-swiss-red/30"
+                                className="bg-swiss-red w-full h-20 rounded-[24px] flex-row items-center justify-center shadow-xl shadow-swiss-red/20 gap-4"
                             >
-                                <MaterialCommunityIcons name="play" size={90} color="white" />
+                                <MaterialCommunityIcons name="power" size={28} color="white" />
+                                <Text className="text-white font-black text-xl tracking-[0.2em] uppercase">START</Text>
                             </TouchableOpacity>
+                            <Text className="text-gray-300 font-bold text-[10px] tracking-widest uppercase mt-4">Start your focus session</Text>
                         </Animated.View>
                     </View>
                 )}
@@ -230,7 +245,7 @@ export default function FocusTimerScreen() {
                         {/* Timer centered */}
                         <View className="items-center justify-center flex-1">
                             <Animated.View entering={FadeIn}>
-                                <Text className="text-black font-black text-6xl tracking-tight">
+                                <Text className="text-black font-black text-8xl tracking-tighter leading-none italic">
                                     {formatTime(elapsedSeconds)}
                                 </Text>
                             </Animated.View>
@@ -241,10 +256,16 @@ export default function FocusTimerScreen() {
                         </View>
 
                         {goal && (
-                            <View className="bg-gray-50 rounded-xl px-4 py-2 mb-8 border border-gray-100">
-                                <Text className="text-gray-500 text-xs text-center" numberOfLines={1}>
-                                    {goal}
-                                </Text>
+                            <View
+                                className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4"
+                            >
+                                <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
+                                    <Ionicons name="flash" size={20} color="white" />
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="text-gray-400 font-black text-[10px] tracking-[0.2em] uppercase mb-1">WORKING ON</Text>
+                                    <Text className="text-black font-black text-lg uppercase tracking-tight" numberOfLines={1}>{goal}</Text>
+                                </View>
                             </View>
                         )}
 

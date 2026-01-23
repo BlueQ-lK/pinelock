@@ -202,40 +202,9 @@ Contributions welcome! Whether it's:
 
 ---
 
-## Sponsor
-
-<div align="center">
-
-### Support LockIn Development
-
-If this project helps you achieve your goals, consider supporting its development.
-
-<a href="https://github.com/sponsors/adhdpaws">
-  <img src="https://img.shields.io/badge/GitHub_Sponsors-EA4AAA?style=for-the-badge&logo=github-sponsors&logoColor=white" alt="GitHub Sponsors" />
-</a>
-
-<br /><br />
-
-**Your sponsorship supports:**
-
-📱 Device testing · ☕ Late-night coding fuel · 🎨 Design assets · 🖥️ Infrastructure
-
-</div>
-
----
-
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
----
-
-<div align="center">
-
-**Built with discipline, frustration, and a little digital friend who believes in you.**
-
-Made by [adhd.dev](https://x.com/adhd_paws)
-
-⭐ Star this repo if LockIn helps you lock in.
 
 </div>

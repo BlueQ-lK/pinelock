@@ -120,6 +120,7 @@ export function useOnDeviceAI() {
     }
   };
 
+  //
   const generateTodosForMilestone = async (milestoneTitle: string, goalTitle: string): Promise<string[]> => {
     if (!isReady) {
       await initialize();
@@ -143,6 +144,8 @@ export function useOnDeviceAI() {
     }
   };
 
+
+  //this is the one i need to change
   const generateTacticalOptions = async (goal: LockedGoal, completedMilestones: string[]): Promise<Milestone[]> => {
     if (!isReady) {
       await initialize();

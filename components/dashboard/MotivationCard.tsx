@@ -19,7 +19,7 @@ export function MotivationCard({ goal, motivation, onEdit }: MotivationCardProps
         </View>
         <Ionicons name="lock-closed" size={16} color="#000" />
       </View>
-      
+
       {/* The Goal (North Star) */}
       <Text className="text-black font-black text-3xl leading-9 mb-8 tracking-tight">
         {goal}

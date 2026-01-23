@@ -90,7 +90,7 @@ export default function WarPathScreen() {
     const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
     return (
-        <SafeAreaView className="flex-1" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
             {/* Header */}
             <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
                 <TouchableOpacity onPress={() => router.back()} className="p-2">
@@ -150,8 +150,8 @@ export default function WarPathScreen() {
                             <TouchableOpacity
                                 key={`${milestone.id}-${milestone.order}`}
                                 className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/40 shadow-lg shadow-swiss-red/20' :
-                                    isCompleted ? 'bg-gray-50 border-gray-100' :
-                                        ' border-gray-200 bg-gray-100'
+                                    isCompleted ? 'bg-gray-50 border-gray-200' :
+                                        'border-gray-200'
                                     }`}
                                 onPress={() => router.push({
                                     pathname: '/tactical-plan',
@@ -164,11 +164,11 @@ export default function WarPathScreen() {
                             >
                                 <View className="flex-row justify-between items-start">
                                     <View className="flex-1">
-                                        <Text className={`text-[10px] font-black tracking-[0.3em] uppercase mb-2 ${isActive ? 'text-swiss-red' : 'text-gray-600'
+                                        <Text className={`text-[10px] font-black  uppercase mb-2 ${isActive ? 'text-swiss-red' : 'text-gray-600'
                                             }`}>
-                                            // {milestone.deadline ? format(new Date(milestone.deadline), 'MMM d, yyyy') : '00.00.00'}
+                                            {milestone.deadline ? format(new Date(milestone.deadline), 'MMM d, yyyy') : '00.00.00'}
                                         </Text>
-                                        <Text className={`text-2xl font-black tracking-tighter uppercase leading-none ${isCompleted ? 'text-gray-500' : 'text-black'
+                                        <Text className={`text-2xl font-black tracking-tighter leading-none ${isCompleted ? 'text-gray-500' : 'text-black'
                                             }`}>
                                             {milestone.title}
                                         </Text>
@@ -202,14 +202,14 @@ export default function WarPathScreen() {
                                     </View>
                                 </View>
 
-                                <Text className="text-sm mt-4 text-zinc-950 font-bold leading-tight uppercase opacity-60">
+                                <Text className="text-sm mt-4 text-zinc-950 font-bold leading-tight opacity-60">
                                     {milestone.description || 'Target objectives pending deployment.'}
                                 </Text>
 
                                 {isActive && (
                                     <View className="mt-4 flex-row items-center gap-2">
                                         <View className="bg-swiss-red px-3 py-1 rounded-full">
-                                            <Text className="text-white text-[9px] font-black tracking-widest uppercase">ENGAGED</Text>
+                                            <Text className="text-white text-[9px] font-black tracking-widest uppercase">IN PROGRESS</Text>
                                         </View>
                                         <View className="flex-1 h-[2px] bg-swiss-red" />
                                     </View>
@@ -224,8 +224,8 @@ export default function WarPathScreen() {
             <View
                 style={{
                     position: 'absolute',
-                    top: 1000,
-                    left: 0,
+                    top: 0,
+                    left: -5000,
                     width: 420,
                     height: 600,
                     backgroundColor: '#FF3B30', // Swiss Red

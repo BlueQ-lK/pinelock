@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, Alert, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Alert, StyleSheet, Platform, StatusBar } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -215,38 +215,45 @@ export default function EditFocusPlanScreen() {
                         isActive && styles.activeItem
                     ]}
                 >
-                    <View className="flex-row gap-4 items-center">
+                    <View className="flex-row items-center gap-4">
                         {/* Drag Handle Indicator */}
-                        <TouchableOpacity onPressIn={drag} className="p-2">
-                            <Ionicons name="reorder-two" size={24} color="#CCC" />
+                        <TouchableOpacity onPressIn={drag} className="p-2 opacity-50">
+                            <Ionicons name="menu" size={20} color="#000" />
                         </TouchableOpacity>
 
                         <View className="flex-1">
-                            {/* Editable Deadline Badge */}
-                            <TouchableOpacity
-                                onPress={() => handleDatePress(item.id)}
-                                className="bg-gray-100 self-start px-2 py-1 rounded text-xs mb-2 flex-row gap-1 items-center border border-gray-200"
-                            >
-                                <Ionicons name="calendar-outline" size={10} color="#666" />
-                                <Text className="text-[10px] font-bold text-gray-600">
-                                    {item.deadline}
-                                </Text>
-                            </TouchableOpacity>
+                            <View className="flex-row items-center justify-between mb-1">
+                                {/* Editable Deadline Badge */}
+                                <TouchableOpacity
+                                    onPress={() => handleDatePress(item.id)}
+                                    className="bg-gray-100 self-start px-2 py-1 rounded text-xs flex-row gap-1 items-center"
+                                >
+                                    <View className="w-1.5 h-1.5 bg-swiss-red rounded-full" />
+                                    <Text className="text-[10px] font-bold text-gray-900 tracking-wide">
+                                        {item.deadline}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
 
                             <TextInput
                                 value={item.title}
                                 onChangeText={(t) => handleTextChange(item.id, 'title', t)}
-                                className="font-black text-lg text-black mb-1 p-0"
+                                className="font-black text-xl text-black py-0"
                                 placeholder="Milestone Title"
+                                placeholderTextColor="#999"
                                 multiline
                             />
-                            <TextInput
-                                value={item.description}
-                                onChangeText={(t) => handleTextChange(item.id, 'description', t)}
-                                className="text-sm text-gray-500 leading-5"
-                                placeholder="Description"
-                                multiline
-                            />
+                            {/* Optional Description - Keep it minimal */}
+                            {item.description ? (
+                                <TextInput
+                                    value={item.description}
+                                    onChangeText={(t) => handleTextChange(item.id, 'description', t)}
+                                    className="text-xs text-gray-500 font-medium mt-1"
+                                    placeholder="Add context..."
+                                    placeholderTextColor="#CCC"
+                                    multiline
+                                />
+                            ) : null}
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -258,15 +265,16 @@ export default function EditFocusPlanScreen() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+            <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+                <StatusBar barStyle="dark-content" />
                 {/* Header */}
-                <View className="px-6 py-4 bg-white border-b border-gray-100 flex-row justify-between items-center z-10 shadow-sm">
+                <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
                     <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-                        <Ionicons name="close" size={24} color="black" />
+                        <Ionicons name="arrow-back" size={24} color="black" />
                     </TouchableOpacity>
-                    <Text className="font-black text-lg tracking-tight">EDIT TACTICS</Text>
-                    <TouchableOpacity onPress={handleSave} className="bg-black px-4 py-2 rounded-full">
-                        <Text className="text-white font-bold text-xs">SAVE</Text>
+                    <Text className="font-black text-lg tracking-tight">EDIT STRATEGY</Text>
+                    <TouchableOpacity onPress={handleSave} className="bg-black px-5 py-2 rounded-full">
+                        <Text className="text-white font-bold text-xs tracking-wider">SAVE</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -277,32 +285,42 @@ export default function EditFocusPlanScreen() {
                     renderItem={renderItem}
                     contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
                     ListHeaderComponent={
-                        lockedMilestones.length > 0 ? (
-                            <View className="mb-6 opacity-60">
-                                <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-1">LOCKED (COMPLETED)</Text>
-                                {lockedMilestones.map((m) => (
-                                    <View key={m.id} className="bg-gray-100 p-4 rounded-xl mb-3 border border-gray-200">
-                                        <View className="flex-row items-center gap-3">
-                                            <Ionicons name="lock-closed" size={16} color="#999" />
-                                            <View>
-                                                <Text className="font-bold text-gray-500 line-through">{m.title}</Text>
-                                                <Text className="text-[10px] text-gray-400">{m.deadline}</Text>
+                        <View>
+                            {lockedMilestones.length > 0 && (
+                                <View className="mb-8">
+                                    <Text className="font-black text-[10px] text-gray-400 tracking-[0.2em] uppercase mb-4 ml-1">
+                                        LOCKED IN HISTORY
+                                    </Text>
+                                    <View className="bg-gray-50 p-4 rounded-3xl border border-gray-100">
+                                        {lockedMilestones.map((m, i) => (
+                                            <View key={m.id} className={`flex-row items-center gap-3 ${i < lockedMilestones.length - 1 ? 'mb-4 border-b border-gray-100 pb-4' : ''}`}>
+                                                <View className="w-6 h-6 rounded-full bg-gray-200 items-center justify-center">
+                                                    <Ionicons name="lock-closed" size={12} color="#999" />
+                                                </View>
+                                                <View className="flex-1">
+                                                    <Text className="font-bold text-gray-400 line-through text-md">{m.title}</Text>
+                                                    <Text className="text-[10px] text-gray-400 font-bold">{m.deadline}</Text>
+                                                </View>
                                             </View>
-                                        </View>
+                                        ))}
                                     </View>
-                                ))}
-                                <View className="h-1 bg-gray-200 my-4 rounded-full" />
-                                <Text className="font-bold text-xs text-swiss-red tracking-widest mb-4 ml-1">DRAG TO REORDER</Text>
+                                </View>
+                            )}
+
+                            <View className="flex-row items-center mb-6">
+                                <View className="w-1 h-4 bg-swiss-red mr-3" />
+                                <Text className="font-black text-[10px] text-black tracking-[0.2em] uppercase">
+                                    Strategic Timeline
+                                </Text>
                             </View>
-                        ) : (
-                            <Text className="font-bold text-xs text-swiss-red tracking-widest mb-4 ml-1 mt-4">DRAG TO REORDER</Text>
-                        )
+                        </View>
                     }
                 />
 
                 {showDatePicker && (
-                    <View className="absolute bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-3xl z-50 p-4 border-t border-gray-100 items-center pb-8">
-                        <View className="w-full flex-row justify-end mb-2">
+                    <View className="absolute bottom-0 left-0 right-0 bg-white shadow-2xl rounded-t-[32px] z-50 p-6 border-t border-gray-100 items-center pb-10">
+                        <View className="w-full flex-row justify-between items-center mb-4">
+                            <Text className="font-black text-lg">Reschedule</Text>
                             <TouchableOpacity onPress={() => setShowDatePicker(false)} className="bg-gray-100 px-4 py-2 rounded-full">
                                 <Text className="text-black font-bold text-xs">DONE</Text>
                             </TouchableOpacity>
@@ -336,22 +354,22 @@ export default function EditFocusPlanScreen() {
 const styles = StyleSheet.create({
     rowItem: {
         backgroundColor: 'white',
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
+        paddingVertical: 12,
+        marginBottom: 16,
+        borderBottomWidth: 1,
+        borderColor: '#F3F4F6', // Very light gray border
     },
     activeItem: {
+        backgroundColor: 'white',
         borderColor: '#FF3B30', // Swiss Red
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-        elevation: 5,
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
         transform: [{ scale: 1.02 }]
     }
 });
