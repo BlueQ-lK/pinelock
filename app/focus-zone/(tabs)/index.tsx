@@ -7,6 +7,7 @@ import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
 import { TacticalCard } from '../../../components/war-room/TacticalCard';
+import { EditMilestoneModal } from '../../../components/war-room/EditMilestoneModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeIn, FadeInDown, Layout } from 'react-native-reanimated';
 
@@ -20,7 +21,7 @@ interface ChatMessage {
 
 export default function TacticalBoard() {
   const router = useRouter();
-  const { goal, setDraftStack } = useWarRoom();
+  const { goal, setDraftStack, draftStack } = useWarRoom();
   const {
     generateManualMilestone,
     isReady
@@ -31,6 +32,7 @@ export default function TacticalBoard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
   const [mode, setMode] = useState<'greeting' | 'manual'>('greeting');
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -163,7 +165,22 @@ export default function TacticalBoard() {
       return [...prev, ...distinctive];
     });
 
-    router.push('/focus-zone/review');
+    router.push('/focus-zone/staged');
+  };
+
+  const handleSaveEdit = (updated: Milestone) => {
+    setMessages(prev => prev.map(msg => {
+      if (!msg.milestones) return msg;
+
+      const hasMilestone = msg.milestones.some(m => m.id === updated.id);
+      if (!hasMilestone) return msg;
+
+      return {
+        ...msg,
+        milestones: msg.milestones.map(m => m.id === updated.id ? updated : m)
+      };
+    }));
+    setEditingMilestone(null);
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
@@ -192,7 +209,7 @@ export default function TacticalBoard() {
                   milestone={ms}
                   isSelected={selectedIds.has(ms.id)}
                   onToggle={() => toggleSelection(ms)}
-                  onEdit={() => { }}
+                  onEdit={() => setEditingMilestone(ms)}
                   index={idx}
                 />
               </View>
@@ -270,6 +287,14 @@ export default function TacticalBoard() {
           )}
         </View>
       </KeyboardAvoidingView>
-    </View>
+
+
+      <EditMilestoneModal
+        visible={!!editingMilestone}
+        milestone={editingMilestone}
+        onClose={() => setEditingMilestone(null)}
+        onSave={handleSaveEdit}
+      />
+    </View >
   );
 }

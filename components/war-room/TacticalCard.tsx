@@ -15,7 +15,7 @@ export function TacticalCard({ milestone, isSelected, onToggle, onEdit, index }:
         <TouchableOpacity
             onPress={onToggle}
             activeOpacity={0.9}
-            className={`w-[280px] h-[340px] rounded-3xl p-6 mr-4 border-2 flex justify-between shadow-sm ${isSelected
+            className={`w-[280px] h-[340px] rounded-3xl p-6 border-2 flex justify-between shadow-sm ${isSelected
                 ? 'bg-white border-swiss-red'
                 : 'bg-white border-gray-200'
                 }`}

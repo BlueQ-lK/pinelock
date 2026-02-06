@@ -18,8 +18,8 @@ export default function WarRoomTabsLayout() {
             }}
         >
             <MaterialTopTabs.Screen name="index" options={{ title: 'QUICK ACTIONS' }} />
-            <MaterialTopTabs.Screen name="campaign" options={{ title: 'FULL ROADMAP' }} />
             <MaterialTopTabs.Screen name="manual" options={{ title: 'MANUAL' }} />
+            <MaterialTopTabs.Screen name="staged" options={{ title: 'STAGED INTEL' }} />
         </MaterialTopTabs>
     );
 }

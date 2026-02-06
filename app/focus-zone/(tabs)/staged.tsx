@@ -1,15 +1,10 @@
-
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useWarRoom } from './_context';
+import { useWarRoom } from '../_context';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export default function ReviewDeploymentScreen() {
-    const router = useRouter();
+export default function StagedMilestonesScreen() {
     const { draftStack, setDraftStack, deployStack } = useWarRoom();
 
     // Date Picker State
@@ -46,13 +41,8 @@ export default function ReviewDeploymentScreen() {
             }));
         }
 
-        // For iOS, we keep the state open until user dismisses or clicks elsewhere, 
-        // but typically we update essentially live or on closing. 
-        // Simplified: update state, but maybe we want a Done button for iOS if presentation style is different.
-        // Given the list UI, iOS inline picker might be bulky. Let's use standard behavior.
         if (Platform.OS === 'android' && selectedDate) {
             setEditingDateId(null);
-            // Update logic handled above
         }
     };
 
@@ -65,22 +55,34 @@ export default function ReviewDeploymentScreen() {
     };
 
     return (
-        <SafeAreaView edges={['top']} className="flex-1 bg-white">
-            <View className="px-6 py-4 border-b border-gray-100 flex-row justify-between items-center">
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-                <Text className="font-black text-lg">REVIEW PLAN</Text>
-                <View style={{ width: 24 }} />
+        <View className="flex-1 bg-white">
+            <View className="px-6 py-4 flex-row justify-between items-end border-b border-gray-100">
+                <View>
+                    <Text className="text-xs font-bold text-gray-400 tracking-widest uppercase mb-1">Staging Area</Text>
+                    <Text className="text-2xl font-black">{draftStack.length} INTEL STAGED</Text>
+                </View>
+                {draftStack.length > 0 && (
+                    <TouchableOpacity
+                        onPress={() => setDraftStack([])}
+                        className="bg-gray-100 px-3 py-1 rounded-full"
+                    >
+                        <Text className="text-[10px] font-bold text-gray-500">CLEAR ALL</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
-            <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 120 }}>
+            <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
                 <Text className="text-xs font-bold text-gray-400 mb-6 tracking-widest">
                     ARRANGE SEQUENCE & ADJUST DEADLINES
                 </Text>
 
                 {draftStack.length === 0 ? (
-                    <Text className="text-gray-400 text-center mt-10">No steps staged.</Text>
+                    <View className="flex-1 justify-center items-center py-20 opacity-50">
+                        <Ionicons name="layers-outline" size={64} color="#D1D5DB" />
+                        <Text className="text-gray-400 font-medium mt-4 text-center max-w-[200px]">
+                            No intel currently staged. Generate and select milestones in "Quick Actions".
+                        </Text>
+                    </View>
                 ) : (
                     draftStack.map((milestone, index) => (
                         <View key={milestone.id} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex-row items-start gap-4 shadow-sm">
@@ -167,17 +169,18 @@ export default function ReviewDeploymentScreen() {
                 )}
             </ScrollView>
 
-            <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 gap-3">
-                <TouchableOpacity
-                    onPress={deployStack}
-                    disabled={draftStack.length === 0}
-                    className={`py-4 rounded-xl items-center flex-row justify-center gap-2 ${draftStack.length > 0 ? 'bg-swiss-red' : 'bg-gray-300'
-                        }`}
-                >
-                    <Text className="text-white font-black tracking-wide">CONFIRM & START</Text>
-                    <Ionicons name="checkmark-done" size={20} color="white" />
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+            {draftStack.length > 0 && (
+                <View className="absolute bottom-6 left-6 right-6">
+                    <TouchableOpacity
+                        onPress={deployStack}
+                        className="w-full bg-swiss-red py-4 rounded-xl flex-row justify-center items-center gap-2 shadow-lg"
+                    >
+                        <Text className="text-white font-black tracking-wide">CONFIRM & START DEPLOYMENT</Text>
+                        <Ionicons name="checkmark-done" size={20} color="white" />
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
     );
 }
+
