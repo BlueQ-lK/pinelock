@@ -3,22 +3,30 @@ import { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { isGoalEnded } from '../utils/goalStatus';
+
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasOnboarded, setHasOnboarded] = useState(false);
+  const [shouldRecap, setShouldRecap] = useState(false);
 
   useEffect(() => {
-    checkOnboarding();
+    checkStatus();
   }, []);
 
-  const checkOnboarding = async () => {
+  const checkStatus = async () => {
     try {
-      const value = await AsyncStorage.getItem('hasOnboarded');
-      if (value !== null) {
+      const onboarded = await AsyncStorage.getItem('hasOnboarded');
+      if (onboarded !== null) {
+        // If onboarded, check if goal has ended
+        const goalEnded = await isGoalEnded();
+        if (goalEnded) {
+          setShouldRecap(true);
+        }
         setHasOnboarded(true);
       }
     } catch (e) {
-      // error reading value
+      console.error('Error checking status:', e);
     } finally {
       setIsLoading(false);
     }
@@ -34,6 +42,10 @@ export default function Index() {
 
   if (!hasOnboarded) {
     return <Redirect href="/(onboarding)" />;
+  }
+
+  if (shouldRecap) {
+    return <Redirect href="/recap" />;
   }
 
   return <Redirect href="/(tabs)" />;

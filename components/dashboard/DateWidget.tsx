@@ -14,8 +14,10 @@ export function DateWidget() {
         <Text className="text-swiss-red font-bold text-xl tracking-widest">
           {format(now, 'MMM').toUpperCase()}
         </Text>
-        <Text className="text-black font-black text-8xl tracking-tighter -ml-1">
-          {format(now, 'd')}
+        <Text className="text-black font-black text-9xl tracking-tighter -ml-1">
+          {
+            format(now, 'd').length === 1 ? `0${format(now, 'd')}` : format(now, 'd')
+          }
         </Text>
       </View>
       <Text className="text-gray-600 font-bold text-sm tracking-widest uppercase">

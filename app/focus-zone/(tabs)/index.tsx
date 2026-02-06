@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useWarRoom } from '../_context';
@@ -8,159 +8,268 @@ import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
 import { TacticalCard } from '../../../components/war-room/TacticalCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { FadeIn, FadeInDown, Layout } from 'react-native-reanimated';
+
+interface ChatMessage {
+  id: string;
+  role: 'ai' | 'user';
+  content: string;
+  milestones?: Milestone[];
+  options?: { label: string; value: string; action: 'manual' }[];
+}
 
 export default function TacticalBoard() {
   const router = useRouter();
-  const { goal, setDraftStack, deployStack, draftOptions, setDraftOptions } = useWarRoom();
-  const { generateTacticalOptions, modelStatus, isReady } = useOnDeviceAI();
+  const { goal, setDraftStack } = useWarRoom();
+  const {
+    generateManualMilestone,
+    isReady
+  } = useOnDeviceAI();
 
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputText, setInputText] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [mode, setMode] = useState<'greeting' | 'manual'>('greeting');
+
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    // Auto-generation disabled to save costs
-    if (draftOptions.length > 0) {
-      setHasGenerated(true);
+    // Initial Greeting
+    if (messages.length === 0 && goal) {
+      setMessages([
+        {
+          id: 'init-1',
+          role: 'ai',
+          content: `Mission Control online. Target: "${goal.title}".\n\nDescribe the milestone(s) you want to create.`
+        }
+      ]);
+      setMode('manual'); // Start in manual mode immediately
     }
-  }, [draftOptions]);
+  }, [goal]);
 
-  const handleGenerate = async () => {
-    if (!goal) return;
-    setIsLoading(true);
-    setHasGenerated(true);
-    setSelectedIds(new Set()); // CLEAR PREVIOUS SELECTIONS
+  useEffect(() => {
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [messages]);
 
-    // Get history for context
-    const stackStr = await AsyncStorage.getItem('milestoneStack');
-    const history: Milestone[] = stackStr ? JSON.parse(stackStr) : [];
-    const completedTitles = history.filter(m => m.status === 'COMPLETED').map(m => m.title);
+  const calculateGoalDeadline = (): Date => {
+    if (!goal?.startDate || !goal?.durationValue || !goal?.durationUnit) {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + 1);
+      return d;
+    }
+    const start = new Date(goal.startDate);
+    const deadline = new Date(start);
+    if (goal.durationUnit === 'year') deadline.setFullYear(start.getFullYear() + goal.durationValue);
+    else if (goal.durationUnit === 'months') deadline.setMonth(start.getMonth() + goal.durationValue);
+    else deadline.setDate(start.getDate() + goal.durationValue);
+    return deadline;
+  };
 
-    const newOptions = await generateTacticalOptions(goal, completedTitles);
-    setDraftOptions(newOptions);
-    setIsLoading(false);
+
+
+
+
+  const handleManualSubmit = async () => {
+    if (!inputText.trim() || !goal) return;
+
+    const text = inputText.trim();
+    setInputText('');
+    setIsProcessing(true);
+
+    // Add User Message
+    setMessages(prev => [...prev, {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: text
+    }]);
+
+    const deadline = calculateGoalDeadline();
+
+    // Generate milestones directly (validation removed to reduce API calls)
+    try {
+      const milestones = await generateManualMilestone(goal, text, deadline);
+
+      if (milestones.length > 0) {
+        // DEADLINE SAFETY NET: Check all deadlines
+        const invalidMilestones = milestones.filter(m => new Date(m.deadline) > deadline);
+
+        if (invalidMilestones.length > 0) {
+          setMessages(prev => [...prev, {
+            id: `ai-deadline-error-${Date.now()}`,
+            role: 'ai',
+            content: `Timeline Conflict: Your goal ends on ${deadline.toDateString()}, but some milestones extend beyond that.\n\nPlease adjust your request to fit within your goal's timeframe.`
+          }]);
+          setIsProcessing(false);
+          return;
+        }
+
+        setMessages(prev => [...prev, {
+          id: `ai-manual-res-${Date.now()}`,
+          role: 'ai',
+          content: milestones.length === 1 ? "Milestone drafted successfully." : `${milestones.length} milestones drafted successfully.`,
+          milestones: milestones
+        }]);
+      } else {
+        setMessages(prev => [...prev, {
+          id: `ai-err-${Date.now()}`,
+          role: 'ai',
+          content: "Failed to generate milestone. Please try again."
+        }]);
+      }
+    } catch (error: any) {
+      console.error("Chat Submit Error:", error);
+      const isOverloaded = error?.message?.includes('overloaded') || error?.status === 'UNAVAILABLE' || (typeof error?.message === 'string' && error.message.includes('503'));
+
+      setMessages(prev => [...prev, {
+        id: `ai-err-${Date.now()}`,
+        role: 'ai',
+        content: isOverloaded
+          ? "AI Control is overloaded with transmissions. Please wait 30 seconds and try again."
+          : "Tactical protocol error. AI communication failed. Please try again."
+      }]);
+    }
+
+    setIsProcessing(false);
   };
 
   const toggleSelection = (milestone: Milestone) => {
     const next = new Set(selectedIds);
-    if (next.has(milestone.id)) {
-      next.delete(milestone.id);
-    } else {
-      next.add(milestone.id);
-    }
+    if (next.has(milestone.id)) next.delete(milestone.id);
+    else next.add(milestone.id);
     setSelectedIds(next);
   };
 
-  const openEditScreen = (milestone: Milestone) => {
-    router.push({
-      pathname: '/focus-zone/edit-milestone',
-      params: { id: milestone.id }
-    });
-  };
-
   const handleDeploy = () => {
-    const selectedMilestones = draftOptions.filter(opt => selectedIds.has(opt.id));
-    if (selectedMilestones.length === 0) return;
+    // Collect all selected milestones from all messages
+    const allMilestones: Milestone[] = [];
+    messages.forEach(m => {
+      if (m.milestones) {
+        m.milestones.forEach(ms => {
+          if (selectedIds.has(ms.id)) {
+            allMilestones.push(ms);
+          }
+        });
+      }
+    });
 
-    // Check availability in draftStack to avoid duplicates or replace?
-    // User flow: Select -> Review. We will simple append or set.
-    // If we assume this is a fresh selection session:
-    // We append new selections to whatever is already drafted (e.g. from manual entry)
+    if (allMilestones.length === 0) return;
+
     setDraftStack(prev => {
-      // Filter out any that might already be in draftStack by ID to avoid duplicates
       const existingIds = new Set(prev.map(m => m.id));
-      const distinctive = selectedMilestones.filter(m => !existingIds.has(m.id));
+      const distinctive = allMilestones.filter(m => !existingIds.has(m.id));
       return [...prev, ...distinctive];
     });
 
     router.push('/focus-zone/review');
   };
 
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
+    const isAi = item.role === 'ai';
+    return (
+      <Animated.View
+        entering={FadeInDown.duration(400)}
+        layout={Layout.springify()}
+        className={`mb-6 ${isAi ? 'items-start' : 'items-end'}`}
+      >
+        <View className={`max-w-[85%] p-4 rounded-2xl ${isAi ? 'bg-gray-50 rounded-tl-none border border-green-200' : 'bg-black rounded-tr-none'
+          }`}>
+          <Text className={`text-sm font-medium leading-5 ${isAi ? 'text-black' : 'text-white'}`}>
+            {item.content}
+          </Text>
+        </View>
+
+
+
+        {/* Milestones Attachment */}
+        {item.milestones && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4 -ml-2" contentContainerStyle={{ paddingLeft: 8 }}>
+            {item.milestones.map((ms, idx) => (
+              <View key={ms.id} className="mr-3 scale-90 origin-top-left">
+                <TacticalCard
+                  milestone={ms}
+                  isSelected={selectedIds.has(ms.id)}
+                  onToggle={() => toggleSelection(ms)}
+                  onEdit={() => { }}
+                  index={idx}
+                />
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </Animated.View>
+    );
+  };
+
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
-      <View className="px-6 pt-12 pb-6 border-b border-gray-100 flex-row justify-between items-center">
+      {/* Header - Fixed at top */}
+      <View className="px-6 pt-12 pb-4 border-b border-gray-100 flex-row justify-between items-center bg-white z-10">
         <View>
-          <Text className="text-xs font-bold text-gray-400 tracking-widest mb-1">FOCUS HUB</Text>
-          <Text className="text-2xl font-black">NEXT STEPS</Text>
+          <Text className="text-xs font-bold text-gray-400 tracking-widest mb-1">WAR ROOM</Text>
+          <Text className="text-2xl font-black">STRATEGY</Text>
         </View>
-        {/* Dynamic Commander Sprite */}
         <View className="scale-75 origin-right h-24 w-24 justify-center items-center">
-          <View className="absolute">
-            <ScannerSprite
-              state={isLoading ? 'ANALYZING' : selectedIds.size > 0 ? 'APPROVED' : 'IDLE'}
-              showLabels={false}
-            />
-          </View>
+          <ScannerSprite
+            state={isProcessing ? 'ANALYZING' : selectedIds.size > 0 ? 'APPROVED' : 'IDLE'}
+            showLabels={false}
+          />
         </View>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>
-        {isLoading ? (
-          <View className="mt-20 items-center">
-            <ActivityIndicator size="large" color="black" />
-            <Text className="mt-4 font-bold text-gray-400 tracking-widest">ANALYZING PRIORITIES...</Text>
-          </View>
-        ) : draftOptions.length === 0 ? (
-          <View className="mt-10 items-center">
-            <Text className="text-gray-400 text-center mb-6 leading-6 font-medium">
-              Ready to analyze "{goal?.title}".{'\n'}
-              Generate tactical steps to move forward.
-            </Text>
+      {/* Chat + Input Area - Responds to keyboard */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        {/* Chat Area */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={item => item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={{ padding: 24, paddingBottom: 20 }}
+          keyboardDismissMode="interactive"
+        />
+
+        {/* Input / Action Bar */}
+        <View className="p-4 bg-white border-t border-gray-100">
+          {selectedIds.size > 0 ? (
             <TouchableOpacity
-              onPress={handleGenerate}
-              className="bg-black py-4 px-8 rounded-xl flex-row items-center gap-2"
+              onPress={handleDeploy}
+              className="w-full bg-swiss-red py-4 rounded-xl flex-row justify-center items-center gap-2"
             >
-              <Ionicons name="flash" size={18} color="white" />
-              <Text className="text-white font-bold tracking-widest">GENERATE NEXT STEPS</Text>
+              <Text className="text-white font-black tracking-wide">DEPLOY INTEL ({selectedIds.size})</Text>
+              <Ionicons name="arrow-forward" size={18} color="white" />
             </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <Text className="text-xs font-medium text-gray-500 mb-6 leading-5">
-              Analyzing objective "{goal?.title}".{'\n'}
-              Select actionable steps to deploy to your stack.
-            </Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8" style={{ overflow: 'visible' }}>
-              {draftOptions.map((opt, index) => (
-                <TacticalCard
-                  key={opt.id}
-                  index={index}
-                  milestone={opt}
-                  isSelected={selectedIds.has(opt.id)}
-                  onToggle={() => toggleSelection(opt)}
-                  onEdit={() => openEditScreen(opt)}
-                />
-              ))}
-            </ScrollView>
-          </>
-        )}
-      </ScrollView>
-
-      {/* Bottom Action Bar */}
-      <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 flex-row gap-4" style={{ paddingBottom: 40 }}>
-        <TouchableOpacity
-          onPress={handleGenerate}
-          className="flex-1 bg-gray-100 py-4 rounded-xl items-center justify-center flex-row gap-2"
-          disabled={isLoading}
-        >
-          <Ionicons name="refresh" size={18} color="black" />
-          <Text className="font-bold text-xs">REGENERATE</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className={`flex-[2] py-4 rounded-xl items-center justify-center flex-row gap-2 ${selectedIds.size > 0 ? 'bg-swiss-red' : 'bg-gray-200'
-            }`}
-          disabled={selectedIds.size === 0}
-          onPress={handleDeploy}
-        >
-          <Text className={`font-black text-sm tracking-wide ${selectedIds.size > 0 ? 'text-white' : 'text-gray-400'}`}>
-            REVIEW & DEPLOY {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
-          </Text>
-          {selectedIds.size > 0 && <Ionicons name="arrow-forward" size={18} color="white" />}
-        </TouchableOpacity>
-      </View>
+          ) : mode === 'manual' ? (
+            <View className="flex-row gap-2 items-center">
+              <TextInput
+                className="flex-1 bg-gray-100 p-4 rounded-xl font-medium"
+                placeholder="Describe your milestone..."
+                value={inputText}
+                onChangeText={setInputText}
+                onSubmitEditing={handleManualSubmit}
+                editable={!isProcessing}
+              />
+              <TouchableOpacity
+                onPress={handleManualSubmit}
+                disabled={!inputText.trim() || isProcessing}
+                className={`p-4 rounded-xl ${!inputText.trim() ? 'bg-gray-200' : 'bg-black'}`}
+              >
+                <Ionicons name="send" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className="items-center">
+              <Text className="text-xs text-gray-400 font-medium">Awaiting orders...</Text>
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }

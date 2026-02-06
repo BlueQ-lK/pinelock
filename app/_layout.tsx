@@ -61,6 +61,7 @@ export default function RootLayout() {
             <Stack.Screen name="war-path" options={{ headerShown: false }} />
             <Stack.Screen name="tactical-plan" options={{ presentation: 'modal', headerTitle: 'Tactical Plan' }} />
             <Stack.Screen name="shiny-object" options={{ presentation: 'modal', headerTitle: 'Shiny Object Detector' }} />
+            <Stack.Screen name="recap" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         )}
       </AIProvider>

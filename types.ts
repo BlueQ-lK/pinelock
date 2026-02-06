@@ -49,3 +49,9 @@ export interface ChatMessage {
   role: 'user' | 'ai';
   content: string;
 }
+
+export interface AlignmentValidation {
+  isValid: boolean;
+  reasoning: string;
+  suggestion?: string;
+}
