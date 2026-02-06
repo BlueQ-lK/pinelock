@@ -62,11 +62,13 @@ export default function Dashboard() {
 
     if (savedActive) {
       const parsedActive = JSON.parse(savedActive);
-      setActiveMilestone(calculateDaysLeft(parsedActive));
+      if (!parsedActive.isArchived) {
+        setActiveMilestone(calculateDaysLeft(parsedActive));
+      }
     }
     if (savedStack) {
       const parsedStack: Milestone[] = JSON.parse(savedStack);
-      setMilestoneStack(parsedStack.map(calculateDaysLeft));
+      setMilestoneStack(parsedStack.filter(m => !m.isArchived).map(calculateDaysLeft));
     }
   };
 
@@ -174,26 +176,58 @@ export default function Dashboard() {
 
     setShowVictory(true);
 
-    // Update stack: Mark current as completed
-    const updatedStack = milestoneStack.map(m =>
-      m.id === activeMilestone.id ? { ...m, status: 'COMPLETED' as const } : m
-    );
+    try {
+      // 1. Get the FULL stack from storage (including archived)
+      const savedStack = await AsyncStorage.getItem('milestoneStack');
+      const fullStack: Milestone[] = savedStack ? JSON.parse(savedStack) : [];
 
-    // Find next pending milestone
-    const nextMilestone = updatedStack.find(m => m.status === 'PENDING');
+      // 2. Update the specific milestone in the FULL stack
+      const updatedFullStack = fullStack.map(m =>
+        m.id === activeMilestone.id ? { ...m, status: 'COMPLETED' as const } : m
+      );
 
-    if (nextMilestone) {
-      nextMilestone.status = 'ACTIVE';
-      await AsyncStorage.setItem('activeMilestone', JSON.stringify(nextMilestone));
-    } else {
-      await AsyncStorage.removeItem('activeMilestone');
+      // 3. Find next pending (that is NOT archived)
+      // We look through updatedFullStack, respecting order
+      const nextMilestone = updatedFullStack.find(m => m.status === 'PENDING' && !m.isArchived);
+
+      if (nextMilestone) {
+        // Mark it as active in the full stack
+        // Note: We need to find it by ID to be safe
+        const index = updatedFullStack.findIndex(m => m.id === nextMilestone.id);
+        if (index !== -1) {
+          updatedFullStack[index].status = 'ACTIVE';
+          await AsyncStorage.setItem('activeMilestone', JSON.stringify(updatedFullStack[index]));
+          // Update nextMilestone ref for local state uses
+          Object.assign(nextMilestone, updatedFullStack[index]);
+        }
+      } else {
+        await AsyncStorage.removeItem('activeMilestone');
+      }
+
+      // 4. Save the FULL stack
+      await AsyncStorage.setItem('milestoneStack', JSON.stringify(updatedFullStack));
+
+      // 5. Update Local State (Filtered)
+      // We filter out archived ones for the UI
+      const filteredStack = updatedFullStack.filter(m => !m.isArchived);
+
+      // Re-calculate days left (helper function logic)
+      const calculateDaysLeft = (milestone: Milestone): Milestone => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadline = new Date(milestone.deadline);
+        deadline.setHours(0, 0, 0, 0);
+        const diffTime = deadline.getTime() - today.getTime();
+        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return { ...milestone, daysLeft: Math.max(0, daysLeft) };
+      };
+
+      setMilestoneStack(filteredStack.map(calculateDaysLeft));
+      setActiveMilestone(nextMilestone ? calculateDaysLeft(nextMilestone) : undefined);
+
+    } catch (e) {
+      console.error("Failed to complete milestone", e);
     }
-
-    await AsyncStorage.setItem('milestoneStack', JSON.stringify(updatedStack));
-
-    // Refresh state
-    setMilestoneStack(updatedStack);
-    setActiveMilestone(nextMilestone);
   };
 
   return (

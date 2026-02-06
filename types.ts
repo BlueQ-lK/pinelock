@@ -24,6 +24,7 @@ export interface Milestone {
   daysLeft?: number;
   todos?: Todo[];
   order: number;
+  isArchived?: boolean;
 }
 
 export interface ShinyObjectAnalysis {

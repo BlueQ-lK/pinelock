@@ -14,6 +14,7 @@ export default function EditFocusPlanScreen() {
     const router = useRouter();
     const [lockedMilestones, setLockedMilestones] = useState<Milestone[]>([]);
     const [editableMilestones, setEditableMilestones] = useState<Milestone[]>([]);
+    const [archivedMilestones, setArchivedMilestones] = useState<Milestone[]>([]);
     const [goal, setGoal] = useState<LockedGoal | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -35,10 +36,13 @@ export default function EditFocusPlanScreen() {
                 all.sort((a, b) => a.order - b.order);
 
                 const locked = all.filter(m => m.status === 'COMPLETED');
-                const editable = all.filter(m => m.status !== 'COMPLETED');
+                // Filter out archived from editable view, but keep them in state to preserve them
+                const editable = all.filter(m => m.status !== 'COMPLETED' && !m.isArchived);
+                const archived = all.filter(m => m.status !== 'COMPLETED' && m.isArchived);
 
                 setLockedMilestones(locked);
                 setEditableMilestones(editable);
+                setArchivedMilestones(archived);
             }
 
             // Load Goal for date constraints
@@ -167,20 +171,59 @@ export default function EditFocusPlanScreen() {
         setShowDatePicker(true);
     };
 
+    const handleArchive = (id: string) => {
+        const milestone = editableMilestones.find(m => m.id === id);
+
+        if (!milestone) return;
+
+        if (milestone.status === 'ACTIVE') {
+            Alert.alert(
+                "Restricted",
+                "You cannot archive the currently active milestone. Please complete it or drag another milestone to the top first."
+            );
+            return;
+        }
+
+        Alert.alert(
+            "Archive Milestone",
+            "This milestone will be hidden from your dashboard. It cannot be deleted, only archived.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Archive",
+                    style: "destructive",
+                    onPress: () => {
+                        setEditableMilestones(prev => prev.filter(m => m.id !== id));
+                        setArchivedMilestones(prev => [...prev, { ...milestone, isArchived: true }]);
+                    }
+                }
+            ]
+        );
+    };
+
     const handleSave = async () => {
         try {
-            // Combine locked + editable
-            // We need to re-assign 'order' property based on the final list
-            const combined = [...lockedMilestones, ...editableMilestones].map((m, index) => ({
+            // Combine locked + editable + archived
+            // We need to re-assign 'order' property based on the final list (only for visible ones usually, but let's keep order for active)
+            const visible = [...lockedMilestones, ...editableMilestones].map((m, index) => ({
                 ...m,
                 order: index
             }));
+
+            // Re-integrate archived milestones (keep their existing data/order or push to end? Order doesn't matter for archived)
+            const combined = [...visible, ...archivedMilestones];
 
             // Also check status consistency (First non-completed should be ACTIVE, others PENDING)
             // But we should respect if Drag makes a Pending one first.
             let foundActive = false;
             const finalizedStatus = combined.map(m => {
                 if (m.status === 'COMPLETED') return m;
+
+                // Archived items should never be active
+                if (m.isArchived) {
+                    return { ...m, status: 'PENDING' as const };
+                }
+
                 if (!foundActive) {
                     foundActive = true;
                     return { ...m, status: 'ACTIVE' as const };
@@ -255,11 +298,19 @@ export default function EditFocusPlanScreen() {
                                 />
                             ) : null}
                         </View>
+
+                        {/* Archive Button */}
+                        <TouchableOpacity
+                            onPress={() => handleArchive(item.id)}
+                            className="p-2 ml-2  bg-gray-100 rounded-full"
+                        >
+                            <Ionicons name="archive-outline" size={18} color="#FF0000" />
+                        </TouchableOpacity>
                     </View>
                 </TouchableOpacity>
             </ScaleDecorator>
         );
-    }, [handleTextChange, handleDatePress]);
+    }, [handleTextChange, handleDatePress, handleArchive]);
 
     if (loading) return <View className="flex-1 bg-white" />;
 
@@ -272,9 +323,16 @@ export default function EditFocusPlanScreen() {
                     <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
                         <Ionicons name="arrow-back" size={24} color="black" />
                     </TouchableOpacity>
-                    <Text className="font-black text-lg tracking-tight">EDIT STRATEGY</Text>
+                    <Text className="font-black text-lg tracking-tight">EDIT MILESTONES</Text>
                     <TouchableOpacity onPress={handleSave} className="bg-black px-5 py-2 rounded-full">
                         <Text className="text-white font-bold text-xs tracking-wider">SAVE</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Sub Header for Archives Link */}
+                <View className="px-6 pb-2 items-end">
+                    <TouchableOpacity onPress={() => router.push('/archived-milestones')}>
+                        <Text className="text-gray-400 font-bold text-[10px] tracking-widest underline">VIEW ARCHIVES</Text>
                     </TouchableOpacity>
                 </View>
 

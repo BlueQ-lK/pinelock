@@ -32,7 +32,8 @@ export default function WarPathScreen() {
                         m &&
                         typeof m.id === 'string' &&
                         typeof m.title === 'string' &&
-                        typeof m.order === 'number'
+                        typeof m.order === 'number' &&
+                        !m.isArchived
                     )
                     : [];
                 setMilestones(validMilestones);
