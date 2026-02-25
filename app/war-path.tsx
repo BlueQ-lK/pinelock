@@ -139,7 +139,7 @@ export default function WarPathScreen() {
                 {/* Timeline Header */}
                 <View className="px-1 mb-4 flex-row justify-between items-center">
                     <Text className="font-black text-sm tracking-[0.2em] uppercase text-black">Milestones</Text>
-                    <View className="h-[2px] flex-1 bg-black ml-4" />
+                    {/* <View className="h-[2px] flex-1 bg-black ml-4" /> */}
                 </View>
                 <View className="gap-3">
                     {sortedMilestones.map((milestone, index) => {
@@ -150,7 +150,7 @@ export default function WarPathScreen() {
 
                             <TouchableOpacity
                                 key={`${milestone.id}-${milestone.order}`}
-                                className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/40 shadow-lg shadow-swiss-red/20' :
+                                className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/20 shadow-lg shadow-swiss-red/20' :
                                     isCompleted ? 'bg-gray-50 border-gray-200' :
                                         'border-gray-200'
                                     }`}
@@ -212,7 +212,7 @@ export default function WarPathScreen() {
                                         <View className="bg-swiss-red px-3 py-1 rounded-full">
                                             <Text className="text-white text-[9px] font-black tracking-widest uppercase">IN PROGRESS</Text>
                                         </View>
-                                        <View className="flex-1 h-[2px] bg-swiss-red" />
+                                        {/* <View className="flex-1 h-[2px] bg-swiss-red" /> */}
                                     </View>
                                 )}
                             </TouchableOpacity>

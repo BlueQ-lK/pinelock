@@ -188,7 +188,7 @@ export default function TacticalPlanScreen() {
           {/* Task List Header */}
           <View className="px-1 mb-4 flex-row justify-between items-center">
             <Text className="font-black text-sm tracking-[0.2em] uppercase text-black">Target Objectives</Text>
-            <View className="h-[2px] flex-1 bg-black ml-4" />
+            {/* <View className="h-[2px] flex-1 bg-black ml-4" /> */}
           </View>
 
           <View className="px-6 space-y-0">
