@@ -6,8 +6,8 @@ import { useWarRoom } from '../_context';
 import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
-import { TacticalCard } from '../../../components/war-room/TacticalCard';
-import { EditMilestoneModal } from '../../../components/war-room/EditMilestoneModal';
+import { TacticalCard } from '../../../components/milestones/MilestoneCard';
+import { EditMilestoneModal } from '../../../components/milestones/EditMilestoneModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeIn, FadeInDown, Layout } from 'react-native-reanimated';
 

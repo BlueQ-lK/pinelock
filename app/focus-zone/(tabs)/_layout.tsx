@@ -5,10 +5,10 @@ const { Navigator } = createMaterialTopTabNavigator();
 
 export const MaterialTopTabs = withLayoutContext(Navigator);
 
-export default function WarRoomTabsLayout() {
+export default function TabsLayout() {
     return (
         <MaterialTopTabs
-            id="war-room-tabs"
+            id="milestone-generator-tabs"
             screenOptions={{
                 tabBarLabelStyle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 1 },
                 tabBarStyle: { backgroundColor: 'white', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },

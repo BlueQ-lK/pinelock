@@ -272,7 +272,7 @@ export default function Dashboard() {
 
         {/* War Path Summary Widget */}
         <TouchableOpacity
-          onPress={() => router.push('/war-path')}
+          onPress={() => router.push('/milestones')}
           className="mb-8"
         >
           <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">FOCUS PATH</Text>
@@ -308,7 +308,7 @@ export default function Dashboard() {
             onPress={() => {
               if (activeMilestone) {
                 router.push({
-                  pathname: '/tactical-plan',
+                  pathname: '/active-milestone',
                   params: { milestone: JSON.stringify(activeMilestone) }
                 });
               } else {

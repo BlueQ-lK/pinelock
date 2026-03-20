@@ -155,7 +155,7 @@ export default function WarPathScreen() {
                                         'border-gray-200'
                                     }`}
                                 onPress={() => router.push({
-                                    pathname: '/tactical-plan',
+                                    pathname: '/active-milestone',
                                     params: {
                                         milestone: JSON.stringify(milestone),
                                         isActive: isActive.toString()
