@@ -204,16 +204,34 @@ export function YearProgressWidgetCat() {
     return (
         <Animated.View
             entering={FadeIn.delay(300)}
-            className="bg-gray-50 rounded-[32px] p-8 w-full border border-gray-100"
+            className="bg-[#2F3132] rounded-[32px] p-8 w-full border border-gray-100 relative"
         >
+            {/* Background "26" Overlay */}
+            <View className="absolute inset-0 flex items-center justify-center opacity-[0.08]">
+                <Text className="text-white font-black text-[320px] leading-none select-none">
+                    26
+                </Text>
+            </View>
+            <View className='flex items-center justify-center mb-4'>
+                <Text className="text-gray-400 font-bold text-xs tracking-widest uppercase  mb-3">
+                    {progressData.isCustom ? "GOAL PROGRESS" : `${progressData.year} PROGRESS`}
+                </Text>
+                <Text className={`font-extrabold text-9xl tracking-tighter text-white`}>
+                    {`${progressData.daysLeft}`}
+                </Text>
+                <Text className="text-white font-bold text-lg tracking-widest uppercase text-center">
+                    DAYS LEFT
+                </Text>
+            </View>
+
             <TouchableOpacity activeOpacity={1} onPress={handlePress}>
-                <View className="flex-row flex-wrap gap-[6px] justify-center content-start">
+                <View className="flex-row flex-wrap gap-[6px] justify-center content-start bg-white/5 border border-white/10 px-4 py-6 rounded-[32px]">
                     {dots.map((day) => {
                         if (day < progressData.daysPassed) {
                             return (
                                 <View
                                     key={day}
-                                    className="w-[6px] h-[6px] rounded-full bg-black opacity-20"
+                                    className="w-[6px] h-[6px] rounded-full bg-white"
                                 />
                             );
                         } else if (day === progressData.daysPassed) {
@@ -231,7 +249,7 @@ export function YearProgressWidgetCat() {
                             return (
                                 <View
                                     key={day}
-                                    className="w-[6px] h-[6px] rounded-full bg-gray-400 opacity-50"
+                                    className="w-[6px] h-[6px] rounded-full border border-white/30 bg-white/30"
                                 />
                             );
                         }
@@ -239,14 +257,6 @@ export function YearProgressWidgetCat() {
                 </View>
             </TouchableOpacity>
 
-            <View className="flex-row justify-between items-end mt-4">
-                <Text className="text-gray-400 font-bold text-xs tracking-widest uppercase">
-                    {progressData.isCustom ? "GOAL PROGRESS" : `${progressData.year} PROGRESS`}
-                </Text>
-                <Text className={`font-black text-xl tracking-tighter ${message ? 'text-black' : 'text-swiss-red'}`}>
-                    {message || `${progressData.daysLeft} DAYS LEFT`}
-                </Text>
-            </View>
         </Animated.View>
     );
 }

@@ -57,17 +57,6 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="journey"
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <View className="items-center justify-center gap-1">
-                <Ionicons name={focused ? "trophy" : "trophy-outline"} size={24} color={color} />
-                {focused && <View className="w-1 h-1 rounded-full bg-swiss-red" />}
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="profile"
           options={{
             tabBarIcon: ({ color, focused }) => (

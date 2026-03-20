@@ -176,10 +176,6 @@ export default function Streak() {
                         })}
                     </View>
                 </Animated.View >
-
-                <Animated.View entering={FadeInDown.duration(200).delay(400)}>
-                    <YearProgressWidgetCat />
-                </Animated.View>
             </ScrollView>
 
             {/* Check In Button Container */}
