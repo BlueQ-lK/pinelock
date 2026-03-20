@@ -10,6 +10,7 @@ import * as Sharing from 'expo-sharing';
 import { format } from 'date-fns';
 import { FocusLogSprite } from '../components/dashboard/FocusLogSprite';
 import { ScannerSprite } from '../components/dashboard/ScannerSprite';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function WarPathScreen() {
     const router = useRouter();
@@ -93,7 +94,7 @@ export default function WarPathScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
             {/* Header */}
-            <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
+            <Animated.View entering={FadeInDown.duration(200).delay(100)} className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
                 <TouchableOpacity onPress={() => router.back()} className="p-2">
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
@@ -101,11 +102,11 @@ export default function WarPathScreen() {
                     <Text className="font-black text-lg tracking-tight">FOCUS LOG</Text>
                 </View>
                 <View />
-            </View>
+            </Animated.View>
 
             <ScrollView className="flex-1 " contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
                 {/* Bento Summary Grid */}
-                <View className="flex-row flex-wrap gap-3 mb-8">
+                <Animated.View entering={FadeInDown.duration(200).delay(200)} className="flex-row flex-wrap gap-3 mb-8">
                     {/* Progress Card - Large */}
                     <View className="w-full bg-swiss-red p-6 rounded-[24px] flex-row justify-between items-center">
                         <View className="flex-1">
@@ -134,20 +135,19 @@ export default function WarPathScreen() {
                     >
                         <Text className="text-white text-lg font-black tracking-[0.2em] uppercase mb-1">EDIT</Text>
                     </TouchableOpacity>
-                </View>
+                </Animated.View>
 
                 {/* Timeline Header */}
-                <View className="px-1 mb-4 flex-row justify-between items-center">
+                <Animated.View entering={FadeInDown.duration(300).delay(300)} className="px-1 mb-4 flex-row justify-between items-center">
                     <Text className="font-black text-sm tracking-[0.2em] uppercase text-black">Milestones</Text>
                     {/* <View className="h-[2px] flex-1 bg-black ml-4" /> */}
-                </View>
-                <View className="gap-3">
+                </Animated.View>
+                <Animated.View entering={FadeInDown.duration(300).delay(300)} className="gap-3">
                     {sortedMilestones.map((milestone, index) => {
                         const isActive = milestone.status === 'ACTIVE';
                         const isCompleted = milestone.status === 'COMPLETED';
 
                         return (
-
                             <TouchableOpacity
                                 key={`${milestone.id}-${milestone.order}`}
                                 className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/20 shadow-lg shadow-swiss-red/20' :
@@ -218,7 +218,7 @@ export default function WarPathScreen() {
                             </TouchableOpacity>
                         );
                     })}
-                </View>
+                </Animated.View>
             </ScrollView>
 
             {/* Hidden Share Card View (Redesigned) */}
