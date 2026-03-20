@@ -471,17 +471,17 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
 
             {/* Mocking Text */}
             {showLabels && state === 'MOCKING' && (
-                <Animated.View entering={FadeIn} className="absolute -top-6 w-full items-center z-0">
+                <View className="absolute -top-6 w-full items-center z-0">
                     <Text className="font-black text-4xl text-gray-100 uppercase tracking-tighter text-center opacity-50">{insult}</Text>
-                </Animated.View>
+                </View>
             )}
 
             {/* Approved Text */}
             {
                 showLabels && state === 'APPROVED' && (
-                    <Animated.View entering={ZoomIn} className="absolute -top-6 w-full items-center z-0">
+                    <View className="absolute -top-6 w-full items-center z-0">
                         <Text className="font-black text-4xl text-green-50 uppercase tracking-tighter text-center">ALIGNED</Text>
-                    </Animated.View>
+                    </View>
                 )
             }
 

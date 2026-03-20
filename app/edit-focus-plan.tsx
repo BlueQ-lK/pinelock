@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, Alert, StyleSheet, Platform, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Alert, StyleSheet, Platform, StatusBar, ActivityIndicator } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,14 +9,20 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, addYears, addMonths, addDays } from 'date-fns';
 import { Milestone, LockedGoal } from '../types';
+import { ScannerSprite } from '../components/dashboard/ScannerSprite';
+
+let cachedLocked: Milestone[] | null = null;
+let cachedEditable: Milestone[] | null = null;
+let cachedArchived: Milestone[] | null = null;
+let cachedGoal: LockedGoal | null = null;
 
 export default function EditFocusPlanScreen() {
     const router = useRouter();
-    const [lockedMilestones, setLockedMilestones] = useState<Milestone[]>([]);
-    const [editableMilestones, setEditableMilestones] = useState<Milestone[]>([]);
-    const [archivedMilestones, setArchivedMilestones] = useState<Milestone[]>([]);
-    const [goal, setGoal] = useState<LockedGoal | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [lockedMilestones, setLockedMilestones] = useState<Milestone[]>(cachedLocked || []);
+    const [editableMilestones, setEditableMilestones] = useState<Milestone[]>(cachedEditable || []);
+    const [archivedMilestones, setArchivedMilestones] = useState<Milestone[]>(cachedArchived || []);
+    const [goal, setGoal] = useState<LockedGoal | null>(cachedGoal);
+    const [loading, setLoading] = useState(!cachedEditable);
 
     // Date Picker State
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -28,6 +34,9 @@ export default function EditFocusPlanScreen() {
     }, []);
 
     const loadData = async () => {
+        if (!cachedEditable) {
+            setLoading(true);
+        }
         try {
             const savedStack = await AsyncStorage.getItem('milestoneStack');
             if (savedStack) {
@@ -36,9 +45,12 @@ export default function EditFocusPlanScreen() {
                 all.sort((a, b) => a.order - b.order);
 
                 const locked = all.filter(m => m.status === 'COMPLETED');
-                // Filter out archived from editable view, but keep them in state to preserve them
                 const editable = all.filter(m => m.status !== 'COMPLETED' && !m.isArchived);
                 const archived = all.filter(m => m.status !== 'COMPLETED' && m.isArchived);
+
+                cachedLocked = locked;
+                cachedEditable = editable;
+                cachedArchived = archived;
 
                 setLockedMilestones(locked);
                 setEditableMilestones(editable);
@@ -53,13 +65,15 @@ export default function EditFocusPlanScreen() {
                 const value = await AsyncStorage.getItem('durationValue');
                 const startDate = await AsyncStorage.getItem('goalStartDate');
 
-                setGoal({
+                const goalObj = {
                     title,
                     motivation: motivation || '',
                     durationUnit: unit as any,
                     durationValue: value ? parseInt(value) : undefined,
                     startDate: startDate || undefined
-                });
+                };
+                cachedGoal = goalObj;
+                setGoal(goalObj);
             }
         } catch (e) {
             console.error('Failed to load milestones', e);
@@ -312,7 +326,13 @@ export default function EditFocusPlanScreen() {
         );
     }, [handleTextChange, handleDatePress, handleArchive]);
 
-    if (loading) return <View className="flex-1 bg-white" />;
+    if (loading) {
+        return (
+            <SafeAreaView className="flex-1 bg-white items-center justify-center">
+                <ActivityIndicator size="large" color="#FF3B30" />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>

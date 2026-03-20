@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Milestone } from '../../types';
@@ -36,8 +36,7 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
   if (!milestone) {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-        <Animated.View
-          entering={FadeInDown.delay(300)}
+        <View
           className="bg-swiss-red rounded-[32px] p-8 mb-6 shadow-lg"
         >
           <View className="flex-row justify-between items-start mb-6">
@@ -54,15 +53,14 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
           <Text className="text-white/90 font-medium text-sm leading-5">
             Focus is built one step at a time. Tap to set your first milestone.
           </Text>
-        </Animated.View>
+        </View>
       </TouchableOpacity>
     );
   }
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-      <Animated.View
-        entering={FadeInDown.delay(300)}
+      <View
         className="bg-swiss-red rounded-[32px] p-8 mb-6 shadow-lg border border-red-600"
       >
         <View className="flex-row justify-between items-start mb-8">
@@ -99,7 +97,7 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
             </TouchableOpacity>
           )}
         </View>
-      </Animated.View>
+      </View>
     </TouchableOpacity>
   );
 }

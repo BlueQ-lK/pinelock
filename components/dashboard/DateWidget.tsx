@@ -1,13 +1,11 @@
 import { View, Text } from 'react-native';
 import { format } from 'date-fns';
-import Animated, { FadeIn } from 'react-native-reanimated';
 
 export function DateWidget() {
   const now = new Date();
 
   return (
-    <Animated.View
-      entering={FadeIn.delay(100)}
+    <View
       className="bg-gray-50 rounded-[32px] p-6 flex-1 aspect-square justify-between border border-gray-100"
     >
       <View>
@@ -23,6 +21,6 @@ export function DateWidget() {
       <Text className="text-gray-600 font-bold text-sm tracking-widest uppercase">
         {format(now, 'EEEE')}
       </Text>
-    </Animated.View>
+    </View>
   );
 }

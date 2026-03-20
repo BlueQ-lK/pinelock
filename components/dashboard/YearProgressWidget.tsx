@@ -1,5 +1,4 @@
 import { View, Text, Dimensions } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { differenceInDays, endOfYear, startOfYear, addYears, addMonths, addDays, parseISO } from 'date-fns';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -60,8 +59,7 @@ export function YearProgressWidget() {
   const dots = Array.from({ length: progressData.totalDays }, (_, i) => i);
 
   return (
-    <Animated.View
-      entering={FadeIn.delay(300)}
+    <View
       className="bg-gray-50 rounded-[32px] p-8 w-full aspect-[4/3] justify-between border border-gray-100"
     >
       <View className="flex-row flex-wrap gap-[6px] justify-center content-start">
@@ -82,6 +80,6 @@ export function YearProgressWidget() {
           {progressData.daysLeft} DAYS LEFT
         </Text>
       </View>
-    </Animated.View>
+    </View>
   );
 }

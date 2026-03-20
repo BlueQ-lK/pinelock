@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
@@ -12,21 +12,53 @@ import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
 import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
 import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
+import { ScannerSprite } from '../../components/dashboard/ScannerSprite';
 import { useAI } from '../../contexts/AIContext';
 // ... imports
 
 
-// Inside the component return:
-{/* Top Row Widgets */ }
-<View className="flex-row gap-4 mb-6">
-  <DateWidget />
-  <DayProgressWidgetCat />
-</View>
-{/* Year Progress Widget */ }
-<View className="mb-8">
-  <YearProgressWidgetCat />
-</View>
+const DashboardSkeleton = () => (
+  <ScrollView
+    contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
+    showsVerticalScrollIndicator={false}
+  >
+    {/* Header Section Skeleton */}
+    <View className="flex-row justify-between items-center mb-8">
+      <View>
+        <View className="w-40 h-8 bg-gray-100 rounded-lg mb-2 animate-pulse" />
+        <View className="w-24 h-4 bg-gray-100 rounded animate-pulse" />
+      </View>
+      <View className="flex-row gap-3">
+        <View className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
+        <View className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
+      </View>
+    </View>
 
+    {/* Top Row Widgets Skeleton */}
+    <View className="flex-row gap-4 mb-6">
+      <View className="flex-1 h-32 bg-gray-100 rounded-3xl animate-pulse" />
+      <View className="flex-1 h-32 bg-gray-100 rounded-3xl animate-pulse" />
+    </View>
+
+    {/* War Path Summary Skeleton */}
+    <View className="mb-8">
+      <View className="w-24 h-4 bg-gray-100 rounded mb-4 ml-2 animate-pulse" />
+      <View className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+    </View>
+
+    {/* Primary Action Skeleton */}
+    <View className="h-[300px] bg-gray-100 rounded-[32px] mb-8 animate-pulse" />
+
+    {/* Year Progress Skeleton */}
+    <View className="mb-8">
+      <View className="h-32 bg-gray-100 rounded-3xl animate-pulse" />
+    </View>
+
+    {/* Motivation Skeleton */}
+    <View className="w-32 h-4 bg-gray-100 rounded mb-4 ml-2 animate-pulse" />
+    <View className="h-40 bg-gray-100 rounded-[32px] animate-pulse" />
+  </ScrollView>
+);
 
 export default function Dashboard() {
   const router = useRouter();
@@ -232,107 +264,113 @@ export default function Dashboard() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <VictoryOverlay
-        visible={showVictory}
-        onClose={() => setShowVictory(false)}
-      />
-      <ScrollView
-        contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header Section */}
-        <View className="flex-row justify-between items-center mb-8">
-          <View>
-            <Text className="font-black text-2xl tracking-tighter">LOCKIN {new Date().getFullYear()}</Text>
-            <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD</Text>
-          </View>
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={() => router.push('/focus-timer')}
-              className="bg-black rounded-full p-3"
-            >
-              <Ionicons name="timer-outline" size={20} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/focus-zone')}
-              className="bg-swiss-red rounded-full p-3"
-            >
-              <Ionicons name="add" size={20} color="white" />
-            </TouchableOpacity>
-
-          </View>
-        </View>
-
-        {/* Top Row Widgets */}
-        <View className="flex-row gap-4 mb-6">
-          <DateWidget />
-          <DayProgressWidgetCat />
-        </View>
-
-        {/* War Path Summary Widget */}
-        <TouchableOpacity
-          onPress={() => router.push('/milestones')}
-          className="mb-8"
-        >
-          <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">FOCUS PATH</Text>
-          <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex-row justify-between items-center">
-            <View className="flex-row items-center gap-4">
-              <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center shadow-sm">
-                <Text className="text-white font-black text-xl">
-                  {milestoneStack.filter(m => m.status === 'COMPLETED').length}
-                </Text>
-              </View>
-              <View>
-                <Text className="font-black text-lg">FOCUS LOG</Text>
-                <Text className="text-xs text-gray-500 font-medium">
-                  {milestoneStack.length} Milestones Scheduled
-                </Text>
-              </View>
-            </View>
-            <View className="bg-gray-50 p-3 rounded-full">
-              <Ionicons name="chevron-forward" size={20} color="black" />
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Primary Action: Milestone */}
-        {isGenerating ? (
-          <View className="bg-black p-6 rounded-[32px] mb-8 min-h-[300px] items-center justify-center">
-            <Text className="text-white font-bold text-lg mb-2">GENERATING FOCUS PLAN...</Text>
-            <Text className="text-gray-400 text-xs tracking-widest">ANALYZING FOCUS PATH</Text>
-          </View>
-        ) : (
-          <MilestoneCard
-            milestone={activeMilestone}
-            onPress={() => {
-              if (activeMilestone) {
-                router.push({
-                  pathname: '/active-milestone',
-                  params: { milestone: JSON.stringify(activeMilestone) }
-                });
-              } else {
-                router.push('/focus-zone');
-              }
-            }}
-            onComplete={handleCompleteMilestone}
+      {goal === 'Loading...' ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
+          <VictoryOverlay
+            visible={showVictory}
+            onClose={() => setShowVictory(false)}
           />
-        )}
+          <ScrollView
+            contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header Section */}
+            <View className="flex-row justify-between items-center mb-8">
+              <View>
+                <Text className="font-black text-2xl tracking-tighter">LOCKIN {new Date().getFullYear()}</Text>
+                <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD</Text>
+              </View>
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  onPress={() => router.push('/focus-timer')}
+                  className="bg-black rounded-full p-3"
+                >
+                  <Ionicons name="timer-outline" size={20} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push('/focus-zone')}
+                  className="bg-swiss-red rounded-full p-3"
+                >
+                  <Ionicons name="add" size={20} color="white" />
+                </TouchableOpacity>
 
-        {/* Year Progress Widget */}
-        <View className="mb-8">
-          <YearProgressWidgetCat />
-        </View>
+              </View>
+            </View>
 
-        {/* Motivation Section */}
-        <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">YOUR CONTRACT</Text>
-        <MotivationCard
-          goal={goal}
-          motivation={motivation}
-          onEdit={() => router.push('/(onboarding)')}
-        />
+            {/* Top Row Widgets */}
+            <View className="flex-row gap-4 mb-6">
+              <DateWidget />
+              <DayProgressWidgetCat />
+            </View>
 
-      </ScrollView>
+            {/* War Path Summary Widget */}
+            <TouchableOpacity
+              onPress={() => router.push('/milestones')}
+              className="mb-8"
+            >
+              <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">FOCUS PATH</Text>
+              <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex-row justify-between items-center">
+                <View className="flex-row items-center gap-4">
+                  <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center shadow-sm">
+                    <Text className="text-white font-black text-xl">
+                      {milestoneStack.filter(m => m.status === 'COMPLETED').length}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text className="font-black text-lg">FOCUS LOG</Text>
+                    <Text className="text-xs text-gray-500 font-medium">
+                      {milestoneStack.length} Milestones Scheduled
+                    </Text>
+                  </View>
+                </View>
+                <View className="bg-gray-50 p-3 rounded-full">
+                  <Ionicons name="chevron-forward" size={20} color="black" />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Primary Action: Milestone */}
+            {isGenerating ? (
+              <View className="bg-black p-6 rounded-[32px] mb-8 min-h-[300px] items-center justify-center">
+                <Text className="text-white font-bold text-lg mb-2">GENERATING FOCUS PLAN...</Text>
+                <Text className="text-gray-400 text-xs tracking-widest">ANALYZING FOCUS PATH</Text>
+              </View>
+            ) : (
+              <MilestoneCard
+                milestone={activeMilestone}
+                onPress={() => {
+                  if (activeMilestone) {
+                    router.push({
+                      pathname: '/active-milestone',
+                      params: { milestone: JSON.stringify(activeMilestone) }
+                    });
+                  } else {
+                    router.push('/focus-zone');
+                  }
+                }}
+                onComplete={handleCompleteMilestone}
+              />
+            )}
+
+            {/* Year Progress Widget */}
+            <View className="mb-8">
+              <YearProgressWidgetCat />
+            </View>
+
+            {/* Motivation Section */}
+            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">YOUR CONTRACT</Text>
+            <MotivationCard
+              goal={goal}
+              motivation={motivation}
+              onEdit={() => router.push('/(onboarding)')}
+            />
+
+          </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 }

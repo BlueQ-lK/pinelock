@@ -1,5 +1,4 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
 interface MotivationCardProps {
@@ -10,7 +9,7 @@ interface MotivationCardProps {
 
 export function MotivationCard({ goal, motivation, onEdit }: MotivationCardProps) {
   return (
-    <Animated.View entering={FadeInDown.delay(200)} className="bg-white rounded-[32px] p-8 mb-6 border border-gray-100 shadow-sm">
+    <View className="bg-white rounded-[32px] p-8 mb-6 border border-gray-100 shadow-sm">
       {/* Header */}
       <View className="flex-row justify-between items-start mb-6">
         <View className="flex-row items-center gap-2 bg-gray-50 px-3 py-1 rounded-full">
@@ -35,6 +34,6 @@ export function MotivationCard({ goal, motivation, onEdit }: MotivationCardProps
           </Text>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }

@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, {
-    FadeIn,
     FadeOut,
     useSharedValue,
     useAnimatedStyle,
@@ -106,8 +105,7 @@ export function DayProgressWidgetCat() {
     });
 
     return (
-        <Animated.View
-            entering={FadeIn.delay(200)}
+        <View
             className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100 shadow-sm overflow-hidden"
         >
             <TouchableOpacity
@@ -118,7 +116,6 @@ export function DayProgressWidgetCat() {
                 {/* Custom Text Bubble for states other than MOCKING/APPROVED which have built-in calls */}
                 {interactionText && (
                     <Animated.View
-                        entering={FadeIn}
                         exiting={FadeOut}
                         className="absolute -top-4 z-50 bg-black px-4 py-2 rounded-xl mb-4"
                         style={{ pointerEvents: 'none' }}
@@ -141,6 +138,6 @@ export function DayProgressWidgetCat() {
                     </View>
                 </Animated.View>
             </TouchableOpacity>
-        </Animated.View>
+        </View>
     );
 }

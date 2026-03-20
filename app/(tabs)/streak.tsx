@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeIn, withSpring, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { withSpring, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
 import Svg, { Path, Rect, Defs, Pattern } from 'react-native-svg';
@@ -16,12 +16,52 @@ import {
     StreakData
 } from '../../utils/streakUtils';
 import { YearProgressWidgetCat } from '../../components/dashboard/YearProgressWidgetCat';
+import { ScannerSprite } from '../../components/dashboard/ScannerSprite';
+
+const StreakSkeleton = () => (
+    <>
+        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View className="mb-8">
+                <View className="w-40 h-8 bg-gray-100 rounded-lg mb-2 animate-pulse" />
+                <View className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
+            </View>
+
+            {/* Hero Block */}
+            <View className="mb-0">
+                <View className="items-center justify-center relative min-h-[300px] mb-8 -mx-6 -mt-4">
+                    <View className="w-[200px] h-[200px] rounded-full bg-gray-100 animate-pulse" />
+                </View>
+            </View>
+
+            {/* Week Row */}
+            <View className="mb-10">
+                <View className="flex-row justify-between items-end mb-4 px-2">
+                    <View className="w-24 h-4 bg-gray-100 rounded animate-pulse" />
+                    <View className="w-32 h-4 bg-gray-100 rounded animate-pulse" />
+                </View>
+                <View className="flex-row justify-between items-center bg-gray-50 p-4 rounded-3xl border border-gray-100">
+                    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                        <View key={i} className="items-center">
+                            <View className="w-4 h-3 bg-gray-200 rounded mb-2 animate-pulse" />
+                            <View className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                        </View>
+                    ))}
+                </View>
+            </View>
+        </ScrollView>
+        {/* Check In Button Container Skeleton */}
+        <View className="absolute bottom-0 left-0 right-0 p-6 bg-white/90" style={{ paddingBottom: 40 }}>
+            <View className="h-16 bg-gray-100 rounded-full animate-pulse" />
+        </View>
+    </>
+);
 
 export default function Streak() {
     const [streakData, setStreakData] = useState<StreakData | null>(null);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
     const [checkedInToday, setCheckedInToday] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     const decorativeSquares = useMemo(() => {
         const gridSize = 40;
@@ -44,7 +84,9 @@ export default function Streak() {
     }));
 
     const fetchData = async () => {
-        setIsLoading(true);
+        if (!streakData) {
+            setIsLoading(true);
+        }
         const data = await loadStreakData();
         setStreakData(data);
 
@@ -73,10 +115,6 @@ export default function Streak() {
         setStreakData(newData);
         setCheckedInToday(true);
     };
-    if (isLoading || !streakData) {
-        return <SafeAreaView className="flex-1 bg-white items-center justify-center" />;
-    }
-
     const todayStr = getTodayStr();
     const startOfWeekDate = weekDates[0] ? format(weekDates[0], 'MMM d') : '-';
     const endOfWeekDate = weekDates[6] ? format(weekDates[6], 'MMM d') : '-';
@@ -106,110 +144,115 @@ export default function Streak() {
                 </Svg>
             </View>
 
-            <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            {isLoading || !streakData ? (
+                <StreakSkeleton />
+            ) : (
+                <>
+                    <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
-                {/* Header */}
-                <Animated.View entering={FadeInDown.duration(200).delay(100)} className="mb-8">
-                    <View className="flex-row justify-between items-center">
-                        <View>
-                            <Text className="font-black text-2xl tracking-tighter">STREAK</Text>
-                            <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em] uppercase">DAILY DISCIPLINE</Text>
+                        {/* Header */}
+                        <View className="mb-8">
+                            <View className="flex-row justify-between items-center">
+                                <View>
+                                    <Text className="font-black text-2xl tracking-tighter">STREAK</Text>
+                                    <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em] uppercase">DAILY DISCIPLINE</Text>
+                                </View>
+                            </View>
                         </View>
-                    </View>
-                </Animated.View>
 
-                {/* Hero Block */}
-                <Animated.View entering={FadeInDown.duration(300).delay(200)} className="mb-0">
-                    <View className="items-center justify-center relative overflow-hidden min-h-[300px] mb-8 -mx-6 -mt-4">
-                        {/* Glow Behind Flame */}
-                        <View className="absolute items-center justify-center mb-14">
-                            <View className="absolute w-[300px] h-[300px] rounded-full bg-[#FF3B30]/5 animate-pulse delay-150" />
-                            <View className="absolute w-[260px] h-[260px] rounded-full bg-[#FF3B30]/10 animate-pulse delay-100" />
-                            <View className="absolute w-[220px] h-[220px] rounded-full bg-[#FF3B30]/20 animate-pulse delay-50" />
+                        {/* Hero Block */}
+                        <View className="mb-0">
+                            <View className="items-center justify-center relative overflow-hidden min-h-[300px] mb-8 -mx-6 -mt-4">
+                                {/* Glow Behind Flame */}
+                                <View className="absolute items-center justify-center mb-14">
+                                    <View className="absolute w-[300px] h-[300px] rounded-full bg-[#FF3B30]/5 animate-pulse delay-150" />
+                                    <View className="absolute w-[260px] h-[260px] rounded-full bg-[#FF3B30]/10 animate-pulse delay-100" />
+                                    <View className="absolute w-[220px] h-[220px] rounded-full bg-[#FF3B30]/20 animate-pulse delay-50" />
+                                </View>
+                                {/* Flame and Streak Text */}
+                                <View className="items-center z-10">
+                                    <Text style={{ fontSize: 200 }}>🔥</Text>
+                                    <Text className="text-black font-black text-[90px] leading-[100px] tracking-tighter">
+                                        {streakData.currentStreak}
+                                    </Text>
+                                </View>
+                            </View>
                         </View>
-                        {/* Flame and Streak Text */}
-                        <View className="items-center z-10">
-                            <Text style={{ fontSize: 200 }}>🔥</Text>
-                            <Text className="text-black font-black text-[90px] leading-[100px] tracking-tighter">
-                                {streakData.currentStreak}
-                            </Text>
-                        </View>
-                    </View>
-                </Animated.View>
 
-                {/* Week Row */}
-                <Animated.View entering={FadeInDown.duration(300).delay(300)} className="mb-10">
-                    <View className="flex-row justify-between items-end mb-4 px-2">
-                        <Text className="font-bold text-xs text-gray-400 tracking-widest">THIS WEEK</Text>
-                        <Text className="font-bold text-xs text-black tracking-widest">{startOfWeekDate} - {endOfWeekDate}</Text>
-                    </View>
-                    <View className="flex-row justify-between items-center bg-gray-50 p-4 rounded-3xl border border-gray-100">
-                        {weekDates.map((date, i) => {
-                            const dateStr = format(date, 'yyyy-MM-dd');
-                            const isToday = dateStr === todayStr;
-                            const isCompleted = isCheckedInOnDate(date, streakData.checkIns);
-                            const dayName = format(date, 'EEEE').charAt(0); // M, T, W, T, F, S, S
-                            const dayDate = format(date, 'd');
+                        {/* Week Row */}
+                        <View className="mb-10">
+                            <View className="flex-row justify-between items-end mb-4 px-2">
+                                <Text className="font-bold text-xs text-gray-400 tracking-widest">THIS WEEK</Text>
+                                <Text className="font-bold text-xs text-black tracking-widest">{startOfWeekDate} - {endOfWeekDate}</Text>
+                            </View>
+                            <View className="flex-row justify-between items-center bg-gray-50 p-4 rounded-3xl border border-gray-100">
+                                {weekDates.map((date, i) => {
+                                    const dateStr = format(date, 'yyyy-MM-dd');
+                                    const isToday = dateStr === todayStr;
+                                    const isCompleted = isCheckedInOnDate(date, streakData.checkIns);
+                                    const dayName = format(date, 'EEEE').charAt(0); // M, T, W, T, F, S, S
+                                    const dayDate = format(date, 'd');
 
-                            return (
-                                <View key={i} className="items-center">
-                                    <Text className="text-[10px] font-bold text-gray-400 mb-2">{dayName}</Text>
+                                    return (
+                                        <View key={i} className="items-center">
+                                            <Text className="text-[10px] font-bold text-gray-400 mb-2">{dayName}</Text>
 
-                                    {isCompleted ? (
-                                        <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center shadow-sm">
-                                            <Ionicons name="checkmark" size={16} color="white" />
-                                        </View>
-                                    ) : (
-                                        <View
-                                            className={`w-10 h-10 rounded-full items-center justify-center ${isToday ? 'border-2 border-black bg-white' : 'bg-gray-200'
-                                                }`}
-                                        >
-                                            {isToday ? (
-                                                <View className="w-3 h-3 rounded-full bg-black" />
+                                            {isCompleted ? (
+                                                <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center shadow-sm">
+                                                    <Ionicons name="checkmark" size={16} color="white" />
+                                                </View>
                                             ) : (
-                                                <Text className="text-xs font-bold text-gray-400">{dayDate}</Text>
+                                                <View
+                                                    className={`w-10 h-10 rounded-full items-center justify-center ${isToday ? 'border-2 border-black bg-white' : 'bg-gray-200'
+                                                        }`}
+                                                >
+                                                    {isToday ? (
+                                                        <View className="w-3 h-3 rounded-full bg-black" />
+                                                    ) : (
+                                                        <Text className="text-xs font-bold text-gray-400">{dayDate}</Text>
+                                                    )}
+                                                </View>
                                             )}
                                         </View>
-                                    )}
-                                </View>
-                            );
-                        })}
-                    </View>
-                </Animated.View >
-            </ScrollView>
+                                    );
+                                })}
+                            </View>
+                        </View>
+                    </ScrollView>
 
-            {/* Check In Button Container */}
-            <Animated.View
-                entering={FadeIn.duration(300).delay(500)}
-                className="absolute bottom-0 left-0 right-0 p-6 bg-white/90"
-                style={{ paddingBottom: 40 }}
-            >
-                <Pressable
-                    onPress={handleCheckIn}
-                    disabled={checkedInToday}
-                    style={({ pressed }) => [
-                        { opacity: pressed ? 0.8 : 1 }
-                    ]}
-                >
-                    <Animated.View
-                        style={animatedButtonStyle}
-                        className={`flex-row items-center justify-center gap-2 p-5 rounded-full shadow-lg ${checkedInToday ? 'bg-black' : 'bg-swiss-red'
-                            }`}
+                    {/* Check In Button Container */}
+                    <View
+                        className="absolute bottom-0 left-0 right-0 p-6 bg-white/90"
+                        style={{ paddingBottom: 40 }}
                     >
-                        {checkedInToday ? (
-                            <>
-                                <Text className="text-white font-black tracking-widest text-base">DONE</Text>
-                                <Ionicons name="checkmark-circle" size={20} color="white" />
-                            </>
-                        ) : (
-                            <>
-                                <Text className="text-white font-black tracking-widest text-base">CHECK IN TODAY</Text>
-                                <Ionicons name="flame" size={20} color="white" />
-                            </>
-                        )}
-                    </Animated.View>
-                </Pressable>
-            </Animated.View>
+                        <Pressable
+                            onPress={handleCheckIn}
+                            disabled={checkedInToday}
+                            style={({ pressed }) => [
+                                { opacity: pressed ? 0.8 : 1 }
+                            ]}
+                        >
+                            <Animated.View
+                                style={animatedButtonStyle}
+                                className={`flex-row items-center justify-center gap-2 p-5 rounded-full shadow-lg ${checkedInToday ? 'bg-black' : 'bg-swiss-red'
+                                    }`}
+                            >
+                                {checkedInToday ? (
+                                    <>
+                                        <Text className="text-white font-black tracking-widest text-base">DONE</Text>
+                                        <Ionicons name="checkmark-circle" size={20} color="white" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text className="text-white font-black tracking-widest text-base">CHECK IN TODAY</Text>
+                                        <Ionicons name="flame" size={20} color="white" />
+                                    </>
+                                )}
+                            </Animated.View>
+                        </Pressable>
+                    </View>
+                </>
+            )}
         </SafeAreaView>
     );
 }

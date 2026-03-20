@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity, Dimensions, AppState } from 'react-native';
 import Animated, {
-    FadeIn,
     useSharedValue,
     useAnimatedStyle,
     withSequence,
@@ -202,8 +201,7 @@ export function YearProgressWidgetCat() {
     const dots = Array.from({ length: progressData.totalDays }, (_, i) => i);
 
     return (
-        <Animated.View
-            entering={FadeIn.delay(300)}
+        <View
             className="bg-[#2F3132] rounded-[32px] p-8 w-full border border-gray-100 relative"
         >
             {/* Background "26" Overlay */}
@@ -257,6 +255,6 @@ export function YearProgressWidgetCat() {
                 </View>
             </TouchableOpacity>
 
-        </Animated.View>
+        </View>
     );
 }
