@@ -14,6 +14,7 @@ import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
 import { ScannerSprite } from '../../components/dashboard/ScannerSprite';
 import { useAI } from '../../contexts/AIContext';
+import { checkInToday } from '../../utils/streakUtils';
 // ... imports
 
 
@@ -68,6 +69,8 @@ export default function Dashboard() {
   const [showVictory, setShowVictory] = useState(false);
   const [activeMilestone, setActiveMilestone] = useState<Milestone | undefined>(undefined);
   const [milestoneStack, setMilestoneStack] = useState<Milestone[]>([]);
+  const [isFocusActive, setIsFocusActive] = useState(false);
+  const [focusSessionCount, setFocusSessionCount] = useState(0);
 
   const { generate, isReady } = useAI();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -101,6 +104,15 @@ export default function Dashboard() {
     if (savedStack) {
       const parsedStack: Milestone[] = JSON.parse(savedStack);
       setMilestoneStack(parsedStack.filter(m => !m.isArchived).map(calculateDaysLeft));
+    }
+
+    const savedActiveFocus = await AsyncStorage.getItem('focusStartTime');
+    setIsFocusActive(!!savedActiveFocus);
+
+    const savedHistory = await AsyncStorage.getItem('focusSessionHistory');
+    if (savedHistory) {
+      const history = JSON.parse(savedHistory);
+      setFocusSessionCount(history.length);
     }
   };
 
@@ -257,6 +269,9 @@ export default function Dashboard() {
       setMilestoneStack(filteredStack.map(calculateDaysLeft));
       setActiveMilestone(nextMilestone ? calculateDaysLeft(nextMilestone) : undefined);
 
+      // Auto-advance streak
+      await checkInToday();
+
     } catch (e) {
       console.error("Failed to complete milestone", e);
     }
@@ -281,7 +296,7 @@ export default function Dashboard() {
             <View className="flex-row justify-between items-center mb-8">
               <View>
                 <Text className="font-black text-2xl tracking-tighter">LOCKIN {new Date().getFullYear()}</Text>
-                <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD</Text>
+                <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD • {focusSessionCount} SESSIONS</Text>
               </View>
               <View className="flex-row gap-3">
                 <TouchableOpacity
@@ -331,7 +346,6 @@ export default function Dashboard() {
                 </View>
               </View>
             </TouchableOpacity>
-
             {/* Primary Action: Milestone */}
             {isGenerating ? (
               <View className="bg-black p-6 rounded-[32px] mb-8 min-h-[300px] items-center justify-center">

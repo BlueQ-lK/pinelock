@@ -68,8 +68,13 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
             <PulsingDot />
             <Text className="text-white font-bold text-[10px] tracking-widest">CURRENT FOCUS</Text>
           </View>
-          <View className="bg-black/20 px-3 py-1 rounded-full">
-            <Text className="text-white font-bold text-xs">{milestone.daysLeft} DAYS LEFT</Text>
+          <View className={`px-3 py-1 rounded-full flex-row items-center gap-1 ${(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? 'bg-yellow-400' : 'bg-black/20'}`}>
+            {(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) && (
+              <Ionicons name="warning" size={12} color="black" />
+            )}
+            <Text className={`font-bold text-xs ${(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? 'text-black' : 'text-white'}`}>
+              {milestone.daysLeft} DAYS LEFT
+            </Text>
           </View>
         </View>
 

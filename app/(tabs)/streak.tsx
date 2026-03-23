@@ -1,11 +1,11 @@
 import { View, Text, TouchableOpacity, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback, useMemo } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { withSpring, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import Svg, { Path, Rect, Defs, Pattern } from 'react-native-svg';
 import {
     loadStreakData,
@@ -97,11 +97,12 @@ export default function Streak() {
         setIsLoading(false);
     };
 
-    useFocusEffect(
-        useCallback(() => {
+    const isFocused = useIsFocused();
+    useEffect(() => {
+        if (isFocused) {
             fetchData();
-        }, [])
-    );
+        }
+    }, [isFocused]);
 
     const handleCheckIn = async () => {
         if (checkedInToday || isLoading) return;
@@ -180,7 +181,7 @@ export default function Streak() {
                         </View>
 
                         {/* Week Row */}
-                        <View className="mb-10">
+                        <View className="mb-6">
                             <View className="flex-row justify-between items-end mb-4 px-2">
                                 <Text className="font-bold text-xs text-gray-400 tracking-widest">THIS WEEK</Text>
                                 <Text className="font-bold text-xs text-black tracking-widest">{startOfWeekDate} - {endOfWeekDate}</Text>
@@ -216,6 +217,43 @@ export default function Streak() {
                                         </View>
                                     );
                                 })}
+                            </View>
+                        </View>
+
+                        {/* Additional Stats Row */}
+                        <View className="flex-row gap-4 mb-6">
+                            <View className="flex-1 bg-gray-50 p-5 rounded-3xl border border-gray-100 items-center">
+                                <Text className="font-black text-3xl">{streakData.longestStreak}</Text>
+                                <Text className="text-[10px] font-bold text-gray-400 tracking-widest text-center mt-2">LONGEST STREAK</Text>
+                            </View>
+                            <View className="flex-1 bg-gray-50 p-5 rounded-3xl border border-gray-100 items-center">
+                                <Text className="font-black text-3xl">{streakData.totalCheckIns}</Text>
+                                <Text className="text-[10px] font-bold text-gray-400 tracking-widest text-center mt-2">TOTAL CHECK-INS</Text>
+                            </View>
+                        </View>
+
+                        {/* 30-Day Heatmap */}
+                        <View className="mb-10">
+                            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 px-2">LAST 30 DAYS</Text>
+                            <View className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                                <View className="flex-row flex-wrap gap-2">
+                                    {Array.from({ length: 30 }).map((_, i) => {
+                                        const date = subDays(new Date(), 29 - i);
+                                        const isCompleted = isCheckedInOnDate(date, streakData.checkIns);
+                                        return (
+                                            <View
+                                                key={i}
+                                                className={`w-6 h-6 rounded-md ${isCompleted ? 'bg-swiss-red' : 'bg-gray-200'} border border-black/5`}
+                                            />
+                                        );
+                                    })}
+                                </View>
+                                <View className="flex-row items-center gap-2 mt-4 ml-1">
+                                    <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Missed</Text>
+                                    <View className="w-3 h-3 rounded-sm bg-gray-200" />
+                                    <View className="w-3 h-3 rounded-sm bg-swiss-red" />
+                                    <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Locked In</Text>
+                                </View>
                             </View>
                         </View>
                     </ScrollView>

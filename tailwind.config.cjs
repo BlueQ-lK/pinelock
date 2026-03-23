@@ -12,7 +12,7 @@ module.exports = {
       colors: {
         swiss: {
           red: '#FF3B30',
-          black: '#000000',
+          black: '#2F3132',
           white: '#FFFFFF',
           gray: '#F2F2F7',
         }

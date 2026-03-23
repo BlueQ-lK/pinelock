@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../../types';
 import { useAI } from '../../contexts/AIContext';
 import { saveCustomApiKey, getCustomApiKey, testApiKey } from '../../services/gemini';
+import { loadStreakData } from '../../utils/streakUtils';
 
 export default function Profile() {
   const router = useRouter();
@@ -38,7 +39,8 @@ export default function Profile() {
       setStats(prev => ({ ...prev, completed, total: stack.length }));
     }
 
-    setStats(prev => ({ ...prev, daysActive: 1 }));
+    const streakData = await loadStreakData();
+    setStats(prev => ({ ...prev, daysActive: Math.max(1, streakData.totalCheckIns) }));
 
     // Load custom API key status
     const existingKey = await getCustomApiKey();

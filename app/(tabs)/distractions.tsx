@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import Svg, { Path, Rect, Defs, Pattern } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TextInput } from 'react-native';
 import {
     checkScreenTimePermission,
     requestScreenTimePermission,
@@ -17,6 +19,36 @@ export default function Distractions() {
     const [usage, setUsage] = useState<AppUsage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    const [manualDistraction, setManualDistraction] = useState('');
+    const [manualLogs, setManualLogs] = useState<{id: string, text: string, time: string, date: string}[]>([]);
+
+    useEffect(() => {
+        const loadLogs = async () => {
+             const logsStr = await AsyncStorage.getItem('distractionLog');
+             if (logsStr) {
+                 const parsed = JSON.parse(logsStr);
+                 const todayStr = new Date().toDateString();
+                 const todayLogs = parsed.filter((l: any) => l.date === todayStr);
+                 setManualLogs(todayLogs);
+             }
+        };
+        loadLogs();
+    }, []);
+
+    const logManualDistraction = async () => {
+        if (!manualDistraction.trim()) return;
+        const newLog = {
+            id: Date.now().toString(),
+            text: manualDistraction.trim(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            date: new Date().toDateString()
+        };
+        const updatedLogs = [newLog, ...manualLogs];
+        setManualLogs(updatedLogs);
+        setManualDistraction('');
+        await AsyncStorage.setItem('distractionLog', JSON.stringify(updatedLogs));
+    };
 
     const decorativeSquares = useMemo(() => {
         const gridSize = 40;
@@ -80,13 +112,91 @@ export default function Distractions() {
     }
 
     if (Platform.OS !== 'android') {
+        const totalLogs = manualLogs.length;
+
         return (
-            <SafeAreaView className="flex-1 bg-white items-center justify-center p-8">
-                <Ionicons name="logo-apple" size={48} color="#D1D5DB" />
-                <Text className="font-black text-2xl mt-4 text-center">NOT AVAILABLE ON {Platform.OS.toUpperCase()}</Text>
-                <Text className="text-gray-500 text-center mt-2">
-                    Screen time statistics are currently only supported on Android devices.
-                </Text>
+            <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+                <View className="absolute inset-0 w-full h-full opacity-40">
+                    <Svg width="100%" height="100%">
+                        <Defs>
+                            <Pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <Path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+                            </Pattern>
+                        </Defs>
+                        <Rect width="100%" height="100%" fill="url(#grid)" />
+                        {decorativeSquares.map((sq, i) => (
+                            <Rect key={i} x={sq.x} y={sq.y} width="40" height="40" fill={`rgba(255,59,48, ${sq.opacity})`} />
+                        ))}
+                    </Svg>
+                </View>
+
+                <ScrollView 
+                    contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <Animated.View entering={FadeInDown.duration(400)} className="mb-8">
+                        <Text className="font-black text-4xl tracking-tighter">DISTRACTIONS</Text>
+                        <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em] uppercase">MANUAL LOG</Text>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(100).duration(400)} className="mb-8">
+                        <View className="bg-black p-8 rounded-[40px] shadow-2xl overflow-hidden relative">
+                            <View className="absolute -right-8 -top-8 w-32 h-32 bg-swiss-red/20 rounded-full" />
+                            <Text className="text-gray-400 font-bold text-xs tracking-widest mb-2">DISTRACTIONS LOGGED TODAY</Text>
+                            <View className="flex-row items-end gap-2">
+                                <Text className="text-white font-black text-6xl tracking-tighter">
+                                    {totalLogs}
+                                </Text>
+                            </View>
+                        </View>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(200).duration(400)} className="mb-8">
+                        <View className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4">LOG DISTRACTION</Text>
+                            <View className="flex-row items-center bg-gray-50 rounded-2xl p-2 border border-gray-100">
+                                <TextInput
+                                    value={manualDistraction}
+                                    onChangeText={setManualDistraction}
+                                    placeholder="What distracted you?"
+                                    className="flex-1 p-3 font-bold text-base"
+                                    onSubmitEditing={logManualDistraction}
+                                    returnKeyType="done"
+                                />
+                                <TouchableOpacity 
+                                    onPress={logManualDistraction}
+                                    className="bg-black w-12 h-12 rounded-xl items-center justify-center opacity-90"
+                                >
+                                    <Ionicons name="add" size={24} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+                        <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">TODAY'S LOGS</Text>
+                        <View className="bg-white rounded-[32px] border border-gray-100 p-2 shadow-sm">
+                            {manualLogs.length === 0 ? (
+                                <View className="p-8 items-center">
+                                    <Text className="text-gray-400 font-medium italic">No distractions logged yet.</Text>
+                                </View>
+                            ) : (
+                                manualLogs.map((log, index) => (
+                                    <View key={log.id} className={`flex-row items-center p-4 ${index !== manualLogs.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                                        <View className="w-10 h-10 bg-red-50 rounded-xl items-center justify-center mr-4">
+                                            <Ionicons name="warning-outline" size={20} color="#EF4444" />
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className="font-black text-sm text-black">{log.text}</Text>
+                                        </View>
+                                        <Text className="font-bold text-xs text-gray-400">{log.time}</Text>
+                                    </View>
+                                ))
+                            )}
+                        </View>
+                    </Animated.View>
+                </ScrollView>
             </SafeAreaView>
         );
     }

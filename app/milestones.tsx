@@ -137,7 +137,7 @@ export default function WarPathScreen() {
             ) : (
                 <>
                     {/* Header */}
-                    <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
+                    <View className="px-6 py-4 bg-white flex-row z-10">
                         <TouchableOpacity onPress={() => router.back()} className="p-2">
                             <Ionicons name="arrow-back" size={24} color="black" />
                         </TouchableOpacity>

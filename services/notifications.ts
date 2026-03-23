@@ -80,3 +80,20 @@ export async function scheduleNotificationAtDate(title: string, body: string, da
 export async function cancelAllNotifications() {
     await Notifications.cancelAllScheduledNotificationsAsync();
 }
+
+export async function scheduleDailyStreakReminder() {
+    await cancelAllNotifications(); // avoid duplicate schedules
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Keep the streak alive 🔥",
+        body: "Don't forget to lock in today. One session closer to your goal.",
+        sound: true,
+      },
+      // @ts-ignore
+      trigger: {
+        hour: 21,
+        minute: 0,
+        repeats: true,
+      },
+    });
+}
