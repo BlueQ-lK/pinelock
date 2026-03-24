@@ -61,7 +61,6 @@ export default function RootLayout() {
             <Stack.Screen name="focus-zone" options={{ headerShown: false }} />
             <Stack.Screen name="milestones" options={{ headerShown: false }} />
             <Stack.Screen name="active-milestone" options={{ presentation: 'modal', headerTitle: 'Tactical Plan' }} />
-            <Stack.Screen name="shiny-object" options={{ presentation: 'modal', headerTitle: 'Shiny Object Detector' }} />
             <Stack.Screen name="recap" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         )}

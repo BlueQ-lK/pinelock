@@ -199,7 +199,7 @@ export default function Streak() {
                                             <Text className="text-[10px] font-bold text-gray-400 mb-2">{dayName}</Text>
 
                                             {isCompleted ? (
-                                                <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center shadow-sm">
+                                                <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center">
                                                     <Ionicons name="checkmark" size={16} color="white" />
                                                 </View>
                                             ) : (
@@ -270,9 +270,9 @@ export default function Streak() {
                                 { opacity: pressed ? 0.8 : 1 }
                             ]}
                         >
-                            <Animated.View
-                                style={animatedButtonStyle}
-                                className={`flex-row items-center justify-center gap-2 p-5 rounded-full shadow-lg ${checkedInToday ? 'bg-black' : 'bg-swiss-red'
+                            <View
+
+                                className={`flex-row items-center justify-center gap-2 p-5 rounded-full ${checkedInToday ? 'bg-black' : 'bg-swiss-red'
                                     }`}
                             >
                                 {checkedInToday ? (
@@ -286,7 +286,7 @@ export default function Streak() {
                                         <Ionicons name="flame" size={20} color="white" />
                                     </>
                                 )}
-                            </Animated.View>
+                            </View>
                         </Pressable>
                     </View>
                 </>
