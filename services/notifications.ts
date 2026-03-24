@@ -81,7 +81,7 @@ export async function cancelAllNotifications() {
     await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
-export async function scheduleDailyStreakReminder() {
+export async function scheduleDailyStreakReminder(hour: number = 21, minute: number = 0) {
     await cancelAllNotifications(); // avoid duplicate schedules
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -91,8 +91,8 @@ export async function scheduleDailyStreakReminder() {
       },
       // @ts-ignore
       trigger: {
-        hour: 21,
-        minute: 0,
+        hour,
+        minute,
         repeats: true,
       },
     });

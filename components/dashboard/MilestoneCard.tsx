@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-
 import { Milestone } from '../../types';
 
 interface MilestoneCardProps {
@@ -105,4 +104,4 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
       </View>
     </TouchableOpacity>
   );
-}
+}

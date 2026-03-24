@@ -18,7 +18,7 @@ export default function TabLayout() {
             elevation: 0,
             shadowOpacity: 0,
           },
-          tabBarActiveTintColor: '#FF3B30', // Swiss Red for active
+          tabBarActiveTintColor: '#FF3B30', // Default Swiss Red
           tabBarInactiveTintColor: '#D1D5DB', // Gray-300
           tabBarShowLabel: false,
         }}

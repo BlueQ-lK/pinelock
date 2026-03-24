@@ -8,4 +8,8 @@ export const STORAGE_KEYS = {
     FOCUS_SESSION_HISTORY: 'focusSessionHistory',
     STREAK_DATA: 'streakData',
     DISTRACTION_LOG: 'distractionLog',
+    USER_NAME: 'userName',
+    AVATAR_COLOR: 'avatarColor',
+    NOTIFICATIONS_ENABLED: 'notificationsEnabled',
+    DAILY_REMINDER_TIME: 'dailyReminderTime',
 };

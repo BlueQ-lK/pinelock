@@ -9,6 +9,7 @@ import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '
 import { AIProvider } from '../contexts/AIContext';
 import { registerBackgroundHandler } from '../services/focusNotification';
 
+
 // Register notifee background handler (must be outside component)
 registerBackgroundHandler();
 
@@ -48,23 +49,23 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AIProvider>
-        {!splashAnimationFinished ? (
-          <AnimatedSplashScreen
-            onFinish={() => setSplashAnimationFinished(true)}
-          />
-        ) : (
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(onboarding)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(focus)" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
-            <Stack.Screen name="focus-zone" options={{ headerShown: false }} />
-            <Stack.Screen name="milestones" options={{ headerShown: false }} />
-            <Stack.Screen name="active-milestone" options={{ presentation: 'modal', headerTitle: 'Tactical Plan' }} />
-            <Stack.Screen name="recap" options={{ headerShown: false, gestureEnabled: false }} />
-          </Stack>
-        )}
-      </AIProvider>
+          {!splashAnimationFinished ? (
+            <AnimatedSplashScreen
+              onFinish={() => setSplashAnimationFinished(true)}
+            />
+          ) : (
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(onboarding)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="(focus)" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
+              <Stack.Screen name="focus-zone" options={{ headerShown: false }} />
+              <Stack.Screen name="milestones" options={{ headerShown: false }} />
+              <Stack.Screen name="active-milestone" options={{ presentation: 'modal', headerTitle: 'Tactical Plan' }} />
+              <Stack.Screen name="recap" options={{ headerShown: false, gestureEnabled: false }} />
+            </Stack>
+          )}
+        </AIProvider>
     </GestureHandlerRootView>
   );
 }
