@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,6 +62,8 @@ export default function Streak() {
     const [weekDates, setWeekDates] = useState<Date[]>([]);
     const [checkedInToday, setCheckedInToday] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const insets = useSafeAreaInsets();
+
 
     const decorativeSquares = useMemo(() => {
         const gridSize = 40;
@@ -121,7 +123,7 @@ export default function Streak() {
     const endOfWeekDate = weekDates[6] ? format(weekDates[6], 'MMM d') : '-';
 
     return (
-        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+        <View className="flex-1 bg-white" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
             {/* Grid Background */}
             <View className="absolute inset-0 w-full h-full opacity-60">
                 <Svg width="100%" height="100%">
@@ -291,6 +293,6 @@ export default function Streak() {
                     </View>
                 </>
             )}
-        </SafeAreaView>
+        </View>
     );
 }

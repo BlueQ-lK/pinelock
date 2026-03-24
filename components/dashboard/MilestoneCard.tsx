@@ -37,7 +37,7 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
         <View
-          className="bg-swiss-red rounded-[32px] p-8 mb-6 shadow-lg"
+          className="bg-swiss-red rounded-[32px] p-8 mb-6 "
         >
           <View className="flex-row justify-between items-start mb-6">
             <View className="bg-black/20 px-3 py-1 rounded-full">
@@ -61,7 +61,7 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View
-        className="bg-swiss-red rounded-[32px] p-8 mb-6 shadow-lg border border-red-600"
+        className="bg-swiss-red rounded-[32px] p-8 mb-6  border border-red-600"
       >
         <View className="flex-row justify-between items-start mb-8">
           <View className="flex-row items-center gap-2">

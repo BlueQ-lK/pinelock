@@ -502,7 +502,7 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
                 />
             )}
 
-            <Animated.View style={bodyStyle} className="w-20 h-20 rounded-full items-center justify-center z-20 shadow-2xl">
+            <Animated.View style={bodyStyle} className="w-20 h-20 rounded-full items-center justify-center z-20 ">
                 {/* Fire Bubbles from Back */}
                 {state === 'TYPING' && excitementLevel >= 4 && (
                     <>

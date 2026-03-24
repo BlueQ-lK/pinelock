@@ -21,17 +21,17 @@ export function TacticalPlanDrawer({ visible, onClose, milestone, onToggleTodo }
     <Modal visible={visible} transparent animationType="none">
       <View className="flex-1 flex-row">
         {/* Backdrop */}
-        <TouchableOpacity 
-          activeOpacity={1} 
+        <TouchableOpacity
+          activeOpacity={1}
           onPress={onClose}
           className="flex-1 bg-black/50"
         />
-        
+
         {/* Drawer */}
-        <Animated.View 
+        <Animated.View
           entering={SlideInRight.duration(300)}
           exiting={SlideOutRight.duration(300)}
-          className="w-[85%] bg-white h-full shadow-2xl"
+          className="w-[85%] bg-white h-full "
         >
           <SafeAreaView className="flex-1">
             <View className="p-6 border-b border-gray-100 flex-row justify-between items-center">
@@ -56,26 +56,24 @@ export function TacticalPlanDrawer({ visible, onClose, milestone, onToggleTodo }
 
             <ScrollView className="flex-1 p-6">
               {milestone.todos?.map((todo) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={todo.id}
                   onPress={() => onToggleTodo(todo.id)}
                   className={`flex-row items-start gap-4 mb-6 ${todo.completed ? 'opacity-50' : ''}`}
                 >
-                  <View className={`w-6 h-6 rounded-lg border-2 items-center justify-center mt-0.5 ${
-                    todo.completed ? 'bg-black border-black' : 'border-gray-300 bg-white'
-                  }`}>
+                  <View className={`w-6 h-6 rounded-lg border-2 items-center justify-center mt-0.5 ${todo.completed ? 'bg-black border-black' : 'border-gray-300 bg-white'
+                    }`}>
                     {todo.completed && <Ionicons name="checkmark" size={16} color="white" />}
                   </View>
                   <View className="flex-1">
-                    <Text className={`font-bold text-sm leading-5 ${
-                      todo.completed ? 'text-gray-400 line-through' : 'text-black'
-                    }`}>
+                    <Text className={`font-bold text-sm leading-5 ${todo.completed ? 'text-gray-400 line-through' : 'text-black'
+                      }`}>
                       {todo.task}
                     </Text>
                   </View>
                 </TouchableOpacity>
               ))}
-              
+
               {(!milestone.todos || milestone.todos.length === 0) && (
                 <Text className="text-gray-400 text-center mt-10">No tactical objectives defined.</Text>
               )}

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Milestone, Todo } from '../types';
 import { BoatingSprite } from '../components/dashboard/BoatingSprite';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TacticalPlanScreen() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function TacticalPlanScreen() {
   const [editingText, setEditingText] = useState('');
   const scrollRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const insets = useSafeAreaInsets();
 
   // Check if this milestone is the active one
   const isSessionActive = milestone?.status === 'ACTIVE';
@@ -138,7 +139,7 @@ export default function TacticalPlanScreen() {
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -289,6 +290,6 @@ export default function TacticalPlanScreen() {
           <BoatingSprite isBoat={true} />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

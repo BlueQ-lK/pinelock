@@ -19,7 +19,7 @@ export function MusicPlayer() {
     return (
         <View className="items-center justify-center">
             {/* Capsule */}
-            <View className="flex-row gap-4 items-center rounded-full border border-black/10 bg-white p-2 shadow-sm">
+            <View className="flex-row gap-4 items-center rounded-full border border-black/10 bg-white p-2 ">
                 <Image
                     source={{ uri: "https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_5.png" }}
                     style={{ width: 49, height: 49 }}

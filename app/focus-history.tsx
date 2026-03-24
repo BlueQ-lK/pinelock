@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
@@ -17,6 +17,7 @@ export default function FocusHistoryScreen() {
     const router = useRouter();
     const [history, setHistory] = useState<SessionHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         const loadHistory = async () => {
@@ -84,7 +85,7 @@ export default function FocusHistoryScreen() {
         <View className="flex-1">
             <View className="bg-swiss-black absolute w-full h-2/4 rounded-b-full " />
             <View className="bg-swiss-red absolute w-full h-2/4 bottom-0 rounded-t-full" />
-            <SafeAreaView className="flex-1">
+            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1">
                 {/* Header */}
                 <View className="flex-row items-center gap-4 px-6 py-4 z-10">
                     <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-red rounded-full">
@@ -116,7 +117,7 @@ export default function FocusHistoryScreen() {
                     />
                 )}
 
-            </SafeAreaView>
+            </View>
         </View>
     );
 }

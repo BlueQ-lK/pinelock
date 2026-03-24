@@ -3,7 +3,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Milestone } from '../types';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -49,6 +49,7 @@ const FocusLogSkeleton = () => (
 
 export default function WarPathScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [milestones, setMilestones] = useState<Milestone[]>(cachedMilestones || []);
     const [loading, setLoading] = useState(!cachedMilestones);
 
@@ -131,7 +132,7 @@ export default function WarPathScreen() {
     const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
     return (
-        <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
+        <View className="flex-1 bg-white" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
             {loading ? (
                 <FocusLogSkeleton />
             ) : (
@@ -193,7 +194,7 @@ export default function WarPathScreen() {
                                 return (
                                     <TouchableOpacity
                                         key={`${milestone.id}-${milestone.order}`}
-                                        className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/20 shadow-lg shadow-swiss-red/20' :
+                                        className={`p-6 rounded-[24px] border-2 ${isActive ? 'bg-white border-swiss-red/20 ' :
                                             isCompleted ? 'bg-gray-50 border-gray-200' :
                                                 'border-gray-200'
                                             }`}
@@ -337,12 +338,12 @@ export default function WarPathScreen() {
                             <ScannerSprite state="APPROVED" showLabels={false} />
                         </View>
                         {/* Custom Label since we hid internal one */}
-                        <View className="bg-white px-3 py-1 rounded-full -mt-2 border border-red-500 shadow-sm">
+                        <View className="bg-white px-3 py-1 rounded-full -mt-2 border border-red-500">
                             <Text className="text-swiss-red font-black text-[10px] tracking-widest uppercase">ALIGNED</Text>
                         </View>
                     </View>
                 </View>
             </View>
-        </SafeAreaView >
+        </View>
     );
 }

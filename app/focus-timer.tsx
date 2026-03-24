@@ -12,7 +12,8 @@ import Animated, {
     withSequence,
     FadeIn,
     FadeInDown,
-    ZoomIn
+    ZoomIn,
+    FadeInUp
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import ViewShot, { captureRef } from 'react-native-view-shot';
@@ -251,7 +252,7 @@ export default function FocusTimerScreen() {
         <View className="flex-1 bg-white">
             <SafeAreaView className="flex-1">
                 {/* Common Header */}
-                <View className="flex-row justify-between items-center px-6 py-4 z-10">
+                <Animated.View entering={FadeInUp} className="flex-row justify-between items-center px-6 py-4 z-10">
                     <TouchableOpacity onPress={handleClose} className="p-2 -ml-2 bg-white rounded-full">
                         <Ionicons name="close" size={28} color="black" />
                     </TouchableOpacity>
@@ -264,12 +265,12 @@ export default function FocusTimerScreen() {
                             <Text className="text-black font-bold text-sm tracking-widest">SESSION LOG</Text>
                         </TouchableOpacity>
                     )}
-                </View>
+                </Animated.View>
 
                 {(timerState === 'idle' || timerState === 'active') && (
-                    <View className='flex-row justify-center items-center z-10'>
+                    <Animated.View entering={FadeInUp} className='flex-row justify-center items-center z-10'>
                         <MusicPlayer />
-                    </View>
+                    </Animated.View>
                 )}
 
                 {/* IDLE STATE (Swiss-Bento Redesign) */}

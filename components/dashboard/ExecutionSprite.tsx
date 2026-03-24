@@ -91,7 +91,7 @@ export function ExecutionSprite() {
 
     return (
         <TouchableOpacity activeOpacity={0.9} onPress={handlePress} className="items-center justify-center my-8">
-            <Animated.View style={spriteStyle} className="w-8 h-8 bg-black rounded-full items-center justify-center shadow-lg relative">
+            <Animated.View style={spriteStyle} className="w-8 h-8 bg-black rounded-full items-center justify-center relative">
                 {/* Eyes */}
                 {isAngry ? (
                     // Angry Eyes (> <)

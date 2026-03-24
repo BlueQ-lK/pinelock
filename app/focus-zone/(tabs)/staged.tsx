@@ -85,7 +85,7 @@ export default function StagedMilestonesScreen() {
                     </View>
                 ) : (
                     draftStack.map((milestone, index) => (
-                        <View key={milestone.id} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex-row items-start gap-4 shadow-sm">
+                        <View key={milestone.id} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex-row items-start gap-4 ">
                             {/* Reorder Controls */}
                             <View className="items-center gap-1 pt-1">
                                 <TouchableOpacity
@@ -137,7 +137,7 @@ export default function StagedMilestonesScreen() {
                                     <View className="mt-4 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
                                         <View className="flex-row justify-between items-center bg-gray-100 px-4 py-2 border-b border-gray-200">
                                             <Text className="text-[10px] font-black text-gray-400 tracking-widest uppercase">Target Date</Text>
-                                            <TouchableOpacity onPress={closeDatePicker} className="bg-white px-3 py-1 rounded-full shadow-sm">
+                                            <TouchableOpacity onPress={closeDatePicker} className="bg-white px-3 py-1 rounded-full ">
                                                 <Text className="text-black font-bold text-xs">Done</Text>
                                             </TouchableOpacity>
                                         </View>
@@ -173,7 +173,7 @@ export default function StagedMilestonesScreen() {
                 <View className="absolute bottom-6 left-6 right-6">
                     <TouchableOpacity
                         onPress={deployStack}
-                        className="w-full bg-swiss-red py-4 rounded-xl flex-row justify-center items-center gap-2 shadow-lg"
+                        className="w-full bg-swiss-red py-4 rounded-xl flex-row justify-center items-center gap-2 "
                     >
                         <Text className="text-white font-black tracking-wide">CONFIRM & START DEPLOYMENT</Text>
                         <Ionicons name="checkmark-done" size={20} color="white" />

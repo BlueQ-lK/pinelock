@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, TextInput, Alert, StyleSheet, Platform, StatusBar, ActivityIndicator } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
@@ -18,6 +18,7 @@ let cachedGoal: LockedGoal | null = null;
 
 export default function EditFocusPlanScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [lockedMilestones, setLockedMilestones] = useState<Milestone[]>(cachedLocked || []);
     const [editableMilestones, setEditableMilestones] = useState<Milestone[]>(cachedEditable || []);
     const [archivedMilestones, setArchivedMilestones] = useState<Milestone[]>(cachedArchived || []);
@@ -328,15 +329,15 @@ export default function EditFocusPlanScreen() {
 
     if (loading) {
         return (
-            <SafeAreaView className="flex-1 bg-white items-center justify-center">
+            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-white items-center justify-center">
                 <ActivityIndicator size="large" color="#FF3B30" />
-            </SafeAreaView>
+            </View>
         );
     }
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-white">
                 <StatusBar barStyle="dark-content" />
                 {/* Header */}
                 <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
@@ -426,7 +427,7 @@ export default function EditFocusPlanScreen() {
                         />
                     </View>
                 )}
-            </SafeAreaView>
+            </View>
         </GestureHandlerRootView>
     );
 }

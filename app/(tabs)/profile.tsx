@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
@@ -13,6 +13,7 @@ export default function Profile() {
   const router = useRouter();
   const { aiProvider, refreshProvider } = useAI();
 
+  const insets = useSafeAreaInsets();
   const [goal, setGoal] = useState('Loading...');
   const [motivation, setMotivation] = useState('');
   const [stats, setStats] = useState({ completed: 0, total: 0, daysActive: 0 });
@@ -175,7 +176,7 @@ export default function Profile() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 24 }}>
         {/* Header */}
         <View className="mb-8">
@@ -184,7 +185,7 @@ export default function Profile() {
         </View>
 
         {/* Mission Card */}
-        <View className="bg-swiss-red p-6 rounded-2xl mb-8 shadow-lg shadow-red-200">
+        <View className="bg-swiss-red p-6 rounded-2xl mb-8 ">
           <View className="flex-row justify-between items-start mb-4">
             <View>
               <Text className="text-white/70 text-[10px] font-bold tracking-widest mb-1">CURRENT GOAL</Text>
@@ -343,6 +344,6 @@ export default function Profile() {
           LOCKIN v1.0.0 (BETA)
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

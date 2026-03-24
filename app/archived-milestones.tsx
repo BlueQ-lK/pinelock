@@ -1,13 +1,14 @@
 import { View, Text, TouchableOpacity, FlatList, Alert, StatusBar } from 'react-native';
 import { useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../types';
 
 export default function ArchivedMilestonesScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [archivedMilestones, setArchivedMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -83,7 +84,7 @@ export default function ArchivedMilestonesScreen() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+        <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-white">
             <StatusBar barStyle="dark-content" />
 
             {/* Header */}
@@ -107,6 +108,6 @@ export default function ArchivedMilestonesScreen() {
                     </View>
                 }
             />
-        </SafeAreaView>
+        </View>
     );
 }

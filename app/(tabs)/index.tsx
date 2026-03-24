@@ -327,9 +327,9 @@ export default function Dashboard() {
               className="mb-8"
             >
               <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">FOCUS PATH</Text>
-              <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex-row justify-between items-center">
+              <View className="bg-white p-5 rounded-2xl  border border-gray-100 flex-row justify-between items-center">
                 <View className="flex-row items-center gap-4">
-                  <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center shadow-sm">
+                  <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center ">
                     <Text className="text-white font-black text-xl">
                       {milestoneStack.filter(m => m.status === 'COMPLETED').length}
                     </Text>

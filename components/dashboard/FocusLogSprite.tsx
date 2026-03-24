@@ -162,7 +162,7 @@ export function FocusLogSprite({ index }: { index: number }) {
     return (
         <TouchableOpacity activeOpacity={1} onPress={handlePress} className="items-center justify-center w-8 h-8 z-20 overflow-visible">
             {/* The Sprite (Background Layer) */}
-            <Animated.View style={spriteStyle} className="absolute w-7 h-7 bg-black rounded-full items-center justify-center shadow-md z-0">
+            <Animated.View style={spriteStyle} className="absolute w-7 h-7 bg-black rounded-full items-center justify-center  z-0">
                 {/* Eyes */}
                 {isCaught ? (
                     // CAUGHT EYES (> <)
@@ -186,7 +186,7 @@ export function FocusLogSprite({ index }: { index: number }) {
                 {/* EEP Text (Visible when caught) */}
                 {isCaught && (
                     <Animated.View
-                        className="absolute -top-9 bg-black px-3 py-1.5 rounded-lg shadow-sm z-50 items-center justify-center min-w-[50px]"
+                        className="absolute -top-9 bg-black px-3 py-1.5 rounded-lg  z-50 items-center justify-center min-w-[50px]"
                     >
                         <Text className="text-[10px] font-black text-white" numberOfLines={1}>EEP!</Text>
                         <View className="absolute -bottom-1 left-2 w-2 h-2 bg-black rotate-45" />
@@ -195,7 +195,7 @@ export function FocusLogSprite({ index }: { index: number }) {
             </Animated.View>
 
             {/* The Active Node (Foreground Layer - The Shield) */}
-            <View className="w-8 h-8 bg-white border-2 border-swiss-red rounded-full items-center justify-center z-10 shadow-sm">
+            <View className="w-8 h-8 bg-white border-2 border-swiss-red rounded-full items-center justify-center z-10 ">
                 <Text className="font-bold text-xs text-swiss-red">
                     {index + 1}
                 </Text>

@@ -253,7 +253,7 @@ export function BoatingSprite({ isBoat }: { isBoat: boolean }) {
                 <Animated.View className="absolute z-50 items-center justify-center left-0" style={boatStyle}>
                     {/* Speech Bubble (Nested inside to move with boat) */}
                     {showMessage && (
-                        <View className="absolute bottom-[50px] z-20 bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm min-w-[100px] items-center">
+                        <View className="absolute bottom-[50px] z-20 bg-white px-3 py-2 rounded-xl border border-gray-100  min-w-[100px] items-center">
                             <Text className="font-bold text-[10px] text-swiss-red tracking-widest whitespace-nowrap">{MESSAGES[msgIndex]}</Text>
                             <View className="absolute bottom-[-4px] left-1/2 -ml-1 w-2 h-2 bg-white rotate-45 border-b border-r border-gray-100" />
                         </View>

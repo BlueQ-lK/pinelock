@@ -106,7 +106,7 @@ export function DayProgressWidgetCat() {
 
     return (
         <View
-            className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100 shadow-sm overflow-hidden"
+            className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100  overflow-hidden"
         >
             <TouchableOpacity
                 activeOpacity={1}
