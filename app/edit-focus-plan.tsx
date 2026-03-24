@@ -340,11 +340,13 @@ export default function EditFocusPlanScreen() {
                 <StatusBar barStyle="dark-content" />
                 {/* Header */}
                 <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
-                    <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-                        <Ionicons name="arrow-back" size={24} color="black" />
-                    </TouchableOpacity>
-                    <Text className="font-black text-lg tracking-tight">EDIT MILESTONES</Text>
-                    <TouchableOpacity onPress={handleSave} className="bg-black px-5 py-2 rounded-full">
+                    <View className="flex-row items-center gap-4">
+                        <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-black rounded-full">
+                            <Ionicons name="arrow-back" size={24} color="white" />
+                        </TouchableOpacity>
+                        <Text className="font-black text-lg tracking-tight">EDIT MILESTONES</Text>
+                    </View>
+                    <TouchableOpacity onPress={handleSave} className="bg-swiss-black px-5 py-2 rounded-full">
                         <Text className="text-white font-bold text-xs tracking-wider">SAVE</Text>
                     </TouchableOpacity>
                 </View>

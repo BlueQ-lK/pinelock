@@ -145,9 +145,9 @@ export default function TacticalPlanScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/*  Header */}
-        <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
-          <TouchableOpacity onPress={() => router.back()} className="p-2">
-            <Ionicons name="arrow-back" size={24} color="black" />
+        <View className="px-6 py-4 bg-white flex-row gap-4  items-center z-10">
+          <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-black rounded-full">
+            <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <View className="items-center">
             <Text className="font-black text-lg tracking-tight">TACTICAL PLAN</Text>

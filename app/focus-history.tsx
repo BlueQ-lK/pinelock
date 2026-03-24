@@ -86,12 +86,12 @@ export default function FocusHistoryScreen() {
             <View className="bg-swiss-red absolute w-full h-2/4 bottom-0 rounded-t-full" />
             <SafeAreaView className="flex-1">
                 {/* Header */}
-                <View className="flex-row items-center justify-between px-6 py-4 z-10">
-                    <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2 bg-gray-100 rounded-full">
-                        <Ionicons name="arrow-back" size={24} color="black" />
+                <View className="flex-row items-center gap-4 px-6 py-4 z-10">
+                    <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-red rounded-full">
+                        <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
-                    <View className="bg-white px-3 py-1 rounded-full z-10">
-                        <Text className="text-black font-bold text-sm tracking-widest">SESSION LOG</Text>
+                    <View className="items-center">
+                        <Text className="font-black text-lg tracking-tight text-white">SESSION LOG</Text>
                     </View>
                 </View>
 

@@ -87,9 +87,9 @@ export default function ArchivedMilestonesScreen() {
             <StatusBar barStyle="dark-content" />
 
             {/* Header */}
-            <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10 border-b border-gray-100">
-                <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-                    <Ionicons name="arrow-back" size={24} color="black" />
+            <View className="px-6 py-4 bg-white flex-row gap-4 items-center z-10 border-b border-gray-100">
+                <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-black rounded-full">
+                    <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
                 <Text className="font-black text-lg tracking-tight">ARCHIVES</Text>
                 <View className="w-10" />
