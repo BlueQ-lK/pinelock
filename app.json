@@ -7,18 +7,43 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/icon.png",
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lockin.2026"
+      "bundleIdentifier": "com.lockin.2026",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow LockIn to save focus session cards to your gallery.",
+        "NSPhotoLibraryAddUsageDescription": "Allow LockIn to add focus session cards to your gallery.",
+        "NSMotionUsageDescription": "Allow LockIn to use motion sensors for the interactive widget.",
+        "UIBackgroundModes": [
+          "audio",
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.lockin.2026"
+      "package": "com.devnoname.lockin2026",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.VIBRATE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -30,17 +55,28 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-notifications",
-      "./plugins/withAndroidUsageStats.js"
+      "expo-media-library",
+      "expo-audio",
+      "expo-asset",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "pcimmortal",
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "c8347986-fc74-480b-a163-694cc8465f7e"
+        "projectId": "17720551-6a93-413c-a4ff-3fcf52d0f26f"
       }
-    },
-    "owner": "adhd.dev"
+    }
   }
 }

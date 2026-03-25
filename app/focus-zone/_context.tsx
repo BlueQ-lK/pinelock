@@ -113,3 +113,8 @@ export function useWarRoom() {
   }
   return context;
 }
+
+// Add dummy default export to fix Expo Router missing default export warning
+export default function FocusZoneContextDummy() {
+  return null;
+}

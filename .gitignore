@@ -39,3 +39,6 @@ Thumbs.db
 
 # Expo Type Generation
 expo-env.d.ts
+
+audit/
+patches/

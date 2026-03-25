@@ -296,7 +296,7 @@ export default function Dashboard() {
             <View className="flex-row justify-between items-center mb-8">
               <View>
                 <Text className="font-black text-2xl tracking-tighter">LOCKIN {new Date().getFullYear()}</Text>
-                <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD • {focusSessionCount} SESSIONS</Text>
+
               </View>
               <View className="flex-row gap-3">
                 <TouchableOpacity
