@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/StorageService';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Milestone } from '../types';
@@ -22,7 +22,11 @@ const FocusLogSkeleton = () => (
             <View className="w-10 h-10" />
         </View>
 
-        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+        <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+            removeClippedSubviews={true}
+        >
             {/* Bento Summary Grid */}
             <View className="flex-row flex-wrap gap-3 mb-8">
                 {/* Progress Card - Large */}
@@ -63,12 +67,11 @@ export default function WarPathScreen() {
             setLoading(true);
         }
         try {
-            const savedStack = await AsyncStorage.getItem('milestoneStack');
-            if (savedStack) {
-                const parsed = JSON.parse(savedStack);
+            const all = await StorageService.getJSON<Milestone[]>('milestoneStack');
+            if (all) {
                 // Validate data - ensure each milestone has required fields
-                const validMilestones = Array.isArray(parsed)
-                    ? parsed.filter((m: any) =>
+                const validMilestones = Array.isArray(all)
+                    ? all.filter((m: any) =>
                         m &&
                         typeof m.id === 'string' &&
                         typeof m.title === 'string' &&

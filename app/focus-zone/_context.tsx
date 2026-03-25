@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Milestone, LockedGoal, StrategyOption } from '../../types';
+import { StorageService } from '../../utils/StorageService';
 
 interface Message {
   id: string;
@@ -69,15 +70,14 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
   const deployStack = async () => {
     if (draftStack.length === 0) return;
 
-    const existingStr = await AsyncStorage.getItem('milestoneStack');
-    const existing: Milestone[] = existingStr ? JSON.parse(existingStr) : [];
+    const existing = await StorageService.getJSON<Milestone[]>('milestoneStack') || []; // Use getJSON
 
     const startOrder = existing.length > 0 ? Math.max(...existing.map(m => m.order)) + 1 : 1;
     const newMilestones = draftStack.map((m, i) => ({ ...m, order: startOrder + i }));
 
     const combined = [...existing, ...newMilestones];
 
-    const active = await AsyncStorage.getItem('activeMilestone');
+    const active = await StorageService.getJSON<Milestone>('activeMilestone'); // Use getJSON
     let finalStack = combined;
 
     if (!active && newMilestones.length > 0) {
@@ -86,7 +86,7 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem('activeMilestone', JSON.stringify(first));
       finalStack = combined.map(m => m.id === first.id ? { ...m, status: 'ACTIVE' } : m);
     } else if (active) {
-      const activeObj = JSON.parse(active);
+      const activeObj = active; // active is already parsed
       const inStack = finalStack.find(m => m.id === activeObj.id);
       if (inStack) {
         finalStack = finalStack.map(m => m.id === activeObj.id ? { ...m, status: 'ACTIVE' } : m);

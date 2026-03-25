@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
+import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 interface MotivationCardProps {
@@ -7,7 +8,7 @@ interface MotivationCardProps {
   onEdit?: () => void;
 }
 
-export function MotivationCard({ goal, motivation, onEdit }: MotivationCardProps) {
+function MotivationCardComponent({ goal, motivation, onEdit }: MotivationCardProps) {
   return (
     <View className="bg-white rounded-[32px] p-8 mb-6 border border-gray-100 ">
       {/* Header */}
@@ -37,3 +38,5 @@ export function MotivationCard({ goal, motivation, onEdit }: MotivationCardProps
     </View>
   );
 }
+
+export const MotivationCard = React.memo(MotivationCardComponent);

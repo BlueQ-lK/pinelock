@@ -2,7 +2,6 @@ import { Stack, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WarRoomProvider, useWarRoom } from './_context';
-import { AIProvider } from '../../contexts/AIContext';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useEffect } from 'react';
 
@@ -63,25 +62,23 @@ function WarRoomHeader() {
 
 export default function WarRoomLayout() {
   return (
-    <AIProvider>
-      <WarRoomProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ header: () => <WarRoomHeader /> }} />
-          <Stack.Screen
-            name="edit-milestone"
-            options={{
-              presentation: 'modal',
-              headerShown: false
-            }}
-          />
-          <Stack.Screen
-            name="review"
-            options={{
-              headerShown: false
-            }}
-          />
-        </Stack>
-      </WarRoomProvider>
-    </AIProvider>
+    <WarRoomProvider>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ header: () => <WarRoomHeader /> }} />
+        <Stack.Screen
+          name="edit-milestone"
+          options={{
+            presentation: 'modal',
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="review"
+          options={{
+            headerShown: false
+          }}
+        />
+      </Stack>
+    </WarRoomProvider>
   );
 }

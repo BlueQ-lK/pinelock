@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { generateWithGemini, hasCustomApiKey } from '../services/gemini';
 
 // Try to import expo-ai-kit, but handle if not available
@@ -25,8 +24,6 @@ interface AIContextType {
 
 const AIContext = createContext<AIContextType | undefined>(undefined);
 
-const AI_PROVIDER_STORAGE = 'aiPreferredProvider';
-
 export function AIProvider({ children }: { children: ReactNode }) {
   const [aiProvider, setAiProvider] = useState<AIProvider>('none');
   const [modelStatus, setModelStatus] = useState<'idle' | 'ready' | 'error'>('idle');
@@ -34,7 +31,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [onDeviceAvailable, setOnDeviceAvailable] = useState(false);
 
-  const checkOnDeviceAI = async (): Promise<boolean> => {
+  const checkOnDeviceAI = useCallback(async (): Promise<boolean> => {
     if (!expoAiKit) return false;
 
     try {
@@ -44,9 +41,9 @@ export function AIProvider({ children }: { children: ReactNode }) {
       console.log('On-device AI check failed:', e);
       return false;
     }
-  };
+  }, []);
 
-  const initialize = async () => {
+  const initialize = useCallback(async () => {
     try {
       setModelStatus('idle');
       setError(null);
@@ -91,19 +88,19 @@ export function AIProvider({ children }: { children: ReactNode }) {
       setModelStatus('error');
       setAiProvider('none');
     }
-  };
+  }, [checkOnDeviceAI]);
 
   // Re-check providers (call after setting custom key)
-  const refreshProvider = async () => {
+  const refreshProvider = useCallback(async () => {
     await initialize();
-  };
+  }, [initialize]);
 
   // Auto-initialize on mount
   useEffect(() => {
     initialize();
-  }, []);
+  }, [initialize]);
 
-  const generate = async (prompt: string): Promise<string> => {
+  const generate = useCallback(async (prompt: string): Promise<string> => {
     setIsLoading(true);
 
     try {
@@ -145,10 +142,10 @@ export function AIProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [aiProvider, onDeviceAvailable]);
 
-  return (
-    <AIContext.Provider value={{
+  const contextValue = useMemo(
+    () => ({
       isReady: modelStatus === 'ready',
       isLoading,
       error,
@@ -157,7 +154,12 @@ export function AIProvider({ children }: { children: ReactNode }) {
       aiProvider,
       modelStatus,
       refreshProvider,
-    }}>
+    }),
+    [aiProvider, error, generate, initialize, isLoading, modelStatus, refreshProvider]
+  );
+
+  return (
+    <AIContext.Provider value={contextValue}>
       {children}
     </AIContext.Provider>
   );

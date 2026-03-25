@@ -1,21 +1,11 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, {
     FadeOut,
-    useSharedValue,
-    useAnimatedStyle,
-    withSequence,
-    withTiming,
-    withSpring,
-    withRepeat,
-    Easing,
-    runOnJS
 } from 'react-native-reanimated';
-import { useState, useCallback, useEffect, useRef } from 'react';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { Accelerometer } from 'expo-sensors';
+import React, { useState, useCallback } from 'react'; // Added React import for React.memo
 import { ScannerSprite } from './ScannerSprite';
 
-export function DayProgressWidgetCat() {
+function DayProgressWidgetCatComponent() { // Renamed the function
     // --- State Mapping ---
     // IDLE -> Neutral
     // SEARCHING -> Suspicious
@@ -24,30 +14,6 @@ export function DayProgressWidgetCat() {
     const [scannerState, setScannerState] = useState<'IDLE' | 'ANALYZING' | 'HAPPY' | 'SEARCHING' | 'POINTING' | 'SEALING' | 'TYPING' | 'VALIDATING' | 'WITNESSING'>('IDLE');
     const [interactionText, setInteractionText] = useState<string | null>(null);
 
-    // Gravity Offset (Gyroscope)
-    const gravityX = useSharedValue(0);
-    const gravityY = useSharedValue(0);
-
-    // Accelerometer logic
-    useEffect(() => {
-        let subscription: any;
-
-        const subscribe = async () => {
-            subscription = Accelerometer.addListener(data => {
-                const SENSITIVITY = 50; // Reduced sensitivity for larger sprite
-                gravityX.value = withSpring(-data.x * SENSITIVITY, { damping: 10, stiffness: 60 });
-                gravityY.value = withSpring(data.y * SENSITIVITY, { damping: 10, stiffness: 60 });
-            });
-
-            Accelerometer.setUpdateInterval(50);
-        };
-
-        subscribe();
-
-        return () => {
-            subscription?.remove();
-        };
-    }, []);
 
     const handlePress = useCallback(() => {
         // Debounce if already active
@@ -95,15 +61,6 @@ export function DayProgressWidgetCat() {
 
     }, [scannerState]);
 
-    const animatedStyle = useAnimatedStyle(() => {
-        return {
-            transform: [
-                { translateX: gravityX.value },
-                { translateY: gravityY.value },
-            ] as any
-        };
-    });
-
     return (
         <View
             className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100  overflow-hidden"
@@ -125,8 +82,7 @@ export function DayProgressWidgetCat() {
                     </Animated.View>
                 )}
 
-                <Animated.View
-                    style={animatedStyle}
+                <View
                     className="items-center justify-center pointer-events-none"
                 >
                     <View>
@@ -136,8 +92,10 @@ export function DayProgressWidgetCat() {
                             showLabels={false}
                         />
                     </View>
-                </Animated.View>
+                </View>
             </TouchableOpacity>
         </View>
     );
 }
+
+export const DayProgressWidgetCat = React.memo(DayProgressWidgetCatComponent);

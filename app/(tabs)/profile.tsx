@@ -12,6 +12,7 @@ import { useAI } from '../../contexts/AIContext';
 import { saveCustomApiKey, getCustomApiKey, testApiKey } from '../../services/gemini';
 import { loadStreakData } from '../../utils/streakUtils';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
+import { StorageService } from '../../utils/StorageService';
 import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '../../services/notifications';
 
 
@@ -19,10 +20,6 @@ import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '
 export default function Profile() {
   const router = useRouter();
   const { aiProvider, refreshProvider } = useAI();
-
-  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
 
   const insets = useSafeAreaInsets();
   const [userName, setUserName] = useState('LLockIN');
@@ -42,13 +39,28 @@ export default function Profile() {
   const [hasExistingKey, setHasExistingKey] = useState(false);
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
   const loadData = async () => {
-    const savedName = await AsyncStorage.getItem(STORAGE_KEYS.USER_NAME);
-    const savedGoal = await AsyncStorage.getItem(STORAGE_KEYS.MAIN_GOAL);
-    const savedMotivation = await AsyncStorage.getItem(STORAGE_KEYS.MOTIVATION);
-    const savedStack = await AsyncStorage.getItem(STORAGE_KEYS.MILESTONE_STACK);
-    const savedNotifs = await AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
-    const savedTime = await AsyncStorage.getItem(STORAGE_KEYS.DAILY_REMINDER_TIME);
+    const [
+      savedName,
+      savedGoal,
+      savedMotivation,
+      savedNotifs,
+      streakData,
+      existingKey
+    ] = await Promise.all([
+      AsyncStorage.getItem(STORAGE_KEYS.USER_NAME),
+      AsyncStorage.getItem(STORAGE_KEYS.MAIN_GOAL),
+      AsyncStorage.getItem(STORAGE_KEYS.MOTIVATION),
+      AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED),
+      loadStreakData(),
+      getCustomApiKey()
+    ]);
 
     if (savedName) setUserName(savedName);
     if (savedGoal) setGoal(savedGoal);
@@ -61,26 +73,31 @@ export default function Profile() {
       setNotificationsEnabled(false);
     }
 
+    const [savedTime, savedStack] = await Promise.all([
+      StorageService.getJSON<{ hour: number; minute: number } | null>(STORAGE_KEYS.DAILY_REMINDER_TIME),
+      StorageService.getJSON<Milestone[]>(STORAGE_KEYS.MILESTONE_STACK)
+    ]);
+
     if (savedTime) {
-      setReminderTime(JSON.parse(savedTime));
+      setReminderTime(savedTime);
     }
 
+    let completed = 0;
+    let total = 0;
     if (savedStack) {
-      const stack: Milestone[] = JSON.parse(savedStack);
-      const completed = stack.filter(m => m.status === 'COMPLETED').length;
-      setStats(prev => ({ ...prev, completed, total: stack.length }));
+      completed = savedStack.filter(m => m.status === 'COMPLETED').length;
+      total = savedStack.length;
     }
 
-    const streakData = await loadStreakData();
-    setStats(prev => ({
-      ...prev,
+    setStats({
+      completed,
+      total,
       daysActive: Math.max(0, streakData.totalCheckIns),
       currentStreak: streakData.currentStreak,
       longestStreak: streakData.longestStreak
-    }));
+    });
 
     // Load custom API key status
-    const existingKey = await getCustomApiKey();
     setHasExistingKey(!!existingKey);
     if (existingKey) {
       // Show masked key

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../../types';
+import React from 'react'; // Added React import
 
 interface MilestoneCardProps {
   onPress: () => void;
@@ -31,7 +32,7 @@ function PulsingDot() {
   return <Animated.View style={animatedStyle} className="w-2 h-2 rounded-full bg-white" />;
 }
 
-export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardProps) {
+function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCardProps) {
   if (!milestone) {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
@@ -104,4 +105,6 @@ export function MilestoneCard({ onPress, onComplete, milestone }: MilestoneCardP
       </View>
     </TouchableOpacity>
   );
-}
+}
+
+export const MilestoneCard = React.memo(MilestoneCardComponent);

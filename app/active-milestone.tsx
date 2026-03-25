@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingVi
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/StorageService';
 import { Milestone, Todo } from '../types';
 import { BoatingSprite } from '../components/dashboard/BoatingSprite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,36 +46,45 @@ export default function TacticalPlanScreen() {
   }, []);
 
   useEffect(() => {
-    if (params.milestone) {
-      try {
-        setMilestone(JSON.parse(params.milestone as string));
-      } catch (e) {
-        console.error("Failed to parse milestone", e);
+    const loadMilestoneData = async () => {
+      if (params.milestone) {
+        if (typeof params.milestone === 'string') {
+          try {
+            const parsed = JSON.parse(params.milestone);
+            setMilestone(parsed);
+            // Also store it as active
+            await StorageService.setItem('activeMilestone', JSON.stringify(parsed));
+          } catch (e) {
+            console.error("Failed to parse milestone param", e);
+            router.replace('/(tabs)');
+            return;
+          }
+        }
+      } else {
+        const saved = await StorageService.getJSON<Milestone>('activeMilestone');
+        if (saved) {
+          setMilestone(saved);
+        } else {
+          router.replace('/(tabs)');
+        }
       }
-    } else {
-      loadActiveMilestone();
-    }
+    };
+    loadMilestoneData();
   }, [params.milestone]);
-
-  const loadActiveMilestone = async () => {
-    const saved = await AsyncStorage.getItem('activeMilestone');
-    if (saved) setMilestone(JSON.parse(saved));
-  };
 
   const saveMilestone = async (updatedMilestone: Milestone) => {
     setMilestone(updatedMilestone);
 
     // Only save to activeMilestone if this is actually the active milestone
     if (updatedMilestone.status === 'ACTIVE') {
-      await AsyncStorage.setItem('activeMilestone', JSON.stringify(updatedMilestone));
+      await StorageService.setItem('activeMilestone', JSON.stringify(updatedMilestone));
     }
 
     // Always update the milestone stack
-    const stackStr = await AsyncStorage.getItem('milestoneStack');
-    if (stackStr) {
-      const stack: Milestone[] = JSON.parse(stackStr);
-      const updatedStack = stack.map(m => m.id === updatedMilestone.id ? updatedMilestone : m);
-      await AsyncStorage.setItem('milestoneStack', JSON.stringify(updatedStack));
+    const stack = await StorageService.getJSON<Milestone[]>('milestoneStack');
+    if (stack) {
+      const updatedStack = stack.map((m: Milestone) => m.id === updatedMilestone.id ? updatedMilestone : m);
+      await StorageService.setItem('milestoneStack', JSON.stringify(updatedStack));
     }
   };
 
@@ -162,6 +171,7 @@ export default function TacticalPlanScreen() {
           className="flex-1 "
           contentContainerStyle={{ padding: 16, paddingBottom: Math.max(220, keyboardHeight + 100) }}
           keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={true}
         >
           {/* Bento Momentum & Metadata */}
           <View className="flex-row gap-3 mb-4">

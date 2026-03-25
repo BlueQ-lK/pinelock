@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from './StorageService';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 
 export interface StreakData {
@@ -24,10 +24,8 @@ export const getTodayStr = () => format(new Date(), 'yyyy-MM-dd');
 
 export const loadStreakData = async (): Promise<StreakData> => {
   try {
-    const data = await AsyncStorage.getItem(STREAK_STORAGE_KEY);
-    if (!data) return DEFAULT_STREAK_DATA;
-
-    let parsed: StreakData = JSON.parse(data);
+    const parsed = await StorageService.getJSON<StreakData>(STREAK_STORAGE_KEY);
+    if (!parsed) return DEFAULT_STREAK_DATA;
 
     // Ensure checkIns array exists
     if (!parsed.checkIns) {
@@ -60,7 +58,7 @@ export const loadStreakData = async (): Promise<StreakData> => {
 
 export const saveStreakData = async (data: StreakData): Promise<void> => {
   try {
-    await AsyncStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(data));
+    await StorageService.setItem(STREAK_STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
     console.error('Failed to save streak data', error);
   }

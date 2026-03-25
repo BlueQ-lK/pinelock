@@ -153,7 +153,9 @@ export default function RecapPage() {
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
             <ScrollView
+                className="flex-1"
                 contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
+                removeClippedSubviews={true}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}

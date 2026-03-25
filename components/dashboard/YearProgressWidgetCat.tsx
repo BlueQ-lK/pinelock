@@ -8,10 +8,11 @@ import Animated, {
     Easing,
     withDelay
 } from 'react-native-reanimated';
-import { differenceInDays, endOfYear, startOfYear, addYears, addMonths, addDays, parseISO } from 'date-fns';
-import { useState, useEffect, useCallback } from 'react';
+import { differenceInDays, endOfYear, startOfYear, addYears, addMonths, addDays } from 'date-fns';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons'; // Added Ionicons import
 
 // --- Sweat Drop Particle ---
 const SweatDrop = () => {
@@ -95,7 +96,42 @@ const TrekkerSprite = ({ running = true, exhausted = false }: { running?: boolea
     );
 };
 
-export function YearProgressWidgetCat() {
+function YearProgressWidgetCatComponent() {
+    const { progress, remainingDays, year } = useMemo(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const startOfYearDate = new Date(currentYear, 0, 1);
+        const endOfYearDate = new Date(currentYear, 11, 31, 23, 59, 59);
+
+        const totalYearMs = endOfYearDate.getTime() - startOfYearDate.getTime();
+        const elapsedMs = now.getTime() - startOfYearDate.getTime();
+
+        const calcProgress = (elapsedMs / totalYearMs) * 100;
+        const calcRemainingDays = Math.ceil((endOfYearDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        return { progress: calcProgress, remainingDays: calcRemainingDays, year: currentYear };
+    }, []);
+
+    const [currentProgress, setCurrentProgress] = useState(progress);
+    const [currentRemainingDays, setCurrentRemainingDays] = useState(remainingDays);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const startOfYearDate = new Date(currentYear, 0, 1);
+            const endOfYearDate = new Date(currentYear, 11, 31, 23, 59, 59);
+
+            const totalYearMs = endOfYearDate.getTime() - startOfYearDate.getTime();
+            const elapsedMs = now.getTime() - startOfYearDate.getTime();
+
+            setCurrentProgress((elapsedMs / totalYearMs) * 100);
+            setCurrentRemainingDays(Math.ceil((endOfYearDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        }, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     const [progressData, setProgressData] = useState<{
         start: Date;
         end: Date;
@@ -117,7 +153,7 @@ export function YearProgressWidgetCat() {
         let end: Date;
 
         if (savedStart && unit && valueStr) {
-            start = parseISO(savedStart);
+            start = new Date(savedStart); // Use Date constructor instead of parseISO
             start.setHours(0, 0, 0, 0);
 
             if (unit === 'year') {
@@ -258,3 +294,5 @@ export function YearProgressWidgetCat() {
         </View>
     );
 }
+
+export const YearProgressWidgetCat = React.memo(YearProgressWidgetCatComponent);

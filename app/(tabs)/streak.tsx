@@ -1,9 +1,8 @@
-import { View, Text, TouchableOpacity, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { withSpring, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
 import Svg, { Path, Rect, Defs, Pattern } from 'react-native-svg';
@@ -15,12 +14,10 @@ import {
     getTodayStr,
     StreakData
 } from '../../utils/streakUtils';
-import { YearProgressWidgetCat } from '../../components/dashboard/YearProgressWidgetCat';
-import { ScannerSprite } from '../../components/dashboard/ScannerSprite';
 
 const StreakSkeleton = () => (
     <>
-        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false} removeClippedSubviews={true}>
             {/* Header */}
             <View className="mb-8">
                 <View className="w-40 h-8 bg-gray-100 rounded-lg mb-2 animate-pulse" />
@@ -64,27 +61,6 @@ export default function Streak() {
     const [isLoading, setIsLoading] = useState(false);
     const insets = useSafeAreaInsets();
 
-
-    const decorativeSquares = useMemo(() => {
-        const gridSize = 40;
-        const width = Dimensions.get('window').width;
-        const height = 1000; // Large enough for ScrollView content
-        const cols = Math.ceil(width / gridSize);
-        const rows = Math.ceil(height / gridSize);
-
-        return Array.from({ length: 30 }).map(() => ({
-            x: Math.floor(Math.random() * cols) * gridSize,
-            y: Math.floor(Math.random() * rows) * gridSize,
-            opacity: Math.random() * 0.08 + 0.02 // Keeping them subtle
-        }));
-    }, []);
-
-    const buttonScale = useSharedValue(1);
-
-    const animatedButtonStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: buttonScale.value }]
-    }));
-
     const fetchData = async () => {
         if (!streakData) {
             setIsLoading(true);
@@ -109,10 +85,6 @@ export default function Streak() {
     const handleCheckIn = async () => {
         if (checkedInToday || isLoading) return;
 
-        buttonScale.value = withSpring(0.9, {}, () => {
-            buttonScale.value = withSpring(1);
-        });
-
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         const newData = await checkInToday();
         setStreakData(newData);
@@ -133,17 +105,6 @@ export default function Streak() {
                         </Pattern>
                     </Defs>
                     <Rect width="100%" height="100%" fill="url(#grid)" />
-                    {/* Random decorative squares */}
-                    {decorativeSquares.map((sq, i) => (
-                        <Rect
-                            key={i}
-                            x={sq.x}
-                            y={sq.y}
-                            width="40"
-                            height="40"
-                            fill={`rgba(255,59,48, ${sq.opacity})`}
-                        />
-                    ))}
                 </Svg>
             </View>
 

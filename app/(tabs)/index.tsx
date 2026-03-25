@@ -1,18 +1,17 @@
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { StorageService } from '../../utils/StorageService';
 import { Ionicons } from '@expo/vector-icons';
+import { calculateDaysLeft } from '../../utils/milestoneUtils';
 import { DateWidget } from '../../components/dashboard/DateWidget';
 import { DayProgressWidgetCat } from '../../components/dashboard/DayProgressWidgetCat';
 import { YearProgressWidgetCat } from '../../components/dashboard/YearProgressWidgetCat';
 import { MotivationCard } from '../../components/dashboard/MotivationCard';
 import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
-import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
 import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
-import { ScannerSprite } from '../../components/dashboard/ScannerSprite';
 import { useAI } from '../../contexts/AIContext';
 import { checkInToday } from '../../utils/streakUtils';
 // ... imports
@@ -61,6 +60,8 @@ const DashboardSkeleton = () => (
   </ScrollView>
 );
 
+const CURRENT_YEAR = new Date().getFullYear().toString();
+
 export default function Dashboard() {
   const router = useRouter();
   const [goal, setGoal] = useState('Loading...');
@@ -71,48 +72,54 @@ export default function Dashboard() {
   const [milestoneStack, setMilestoneStack] = useState<Milestone[]>([]);
   const [isFocusActive, setIsFocusActive] = useState(false);
   const [focusSessionCount, setFocusSessionCount] = useState(0);
+  const [lastFocusSession, setLastFocusSession] = useState<any | null>(null);
 
   const { generate, isReady } = useAI();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const loadData = async () => {
-    const savedGoal = await AsyncStorage.getItem('mainGoal');
-    const savedMotivation = await AsyncStorage.getItem('motivation');
-    const savedActive = await AsyncStorage.getItem('activeMilestone');
-    const savedStack = await AsyncStorage.getItem('milestoneStack');
+    const [
+      savedGoal,
+      savedMotivation,
+      savedActiveFocusVal,
+    ] = await StorageService.multiGet([
+      'mainGoal',
+      'motivation',
+      'focusStartTime', 
+    ]);
 
-    if (savedGoal) setGoal(savedGoal);
-    if (savedMotivation) setMotivation(savedMotivation);
+    if (savedGoal[1]) setGoal(savedGoal[1]);
+    if (savedMotivation[1]) setMotivation(savedMotivation[1]);
 
-    // Calculate daysLeft for milestones
-    const calculateDaysLeft = (milestone: Milestone): Milestone => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const deadline = new Date(milestone.deadline);
-      deadline.setHours(0, 0, 0, 0);
-      const diffTime = deadline.getTime() - today.getTime();
-      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return { ...milestone, daysLeft: Math.max(0, daysLeft) };
-    };
+    // Replaced JSON.parse with StorageService.getJSON and updated logic for milestones and focus history
+    const parsedActive = await StorageService.getJSON<Milestone>('activeMilestone');
+    if (parsedActive && Array.isArray(parsedActive.todos)) { // Changed 'checklist' to 'todos' to match Milestone type
+      setActiveMilestone(calculateDaysLeft(parsedActive)); // Apply calculateDaysLeft
+    } else {
+      setActiveMilestone(undefined); // Use undefined for no active milestone
+    }
 
-    if (savedActive) {
-      const parsedActive = JSON.parse(savedActive);
-      if (!parsedActive.isArchived) {
-        setActiveMilestone(calculateDaysLeft(parsedActive));
+    const parsedStack = await StorageService.getJSON<Milestone[]>('milestoneStack');
+    if (parsedStack && Array.isArray(parsedStack)) {
+      const filteredStack = parsedStack.filter(m => !m.isArchived).map(calculateDaysLeft); // Filter and apply calculateDaysLeft
+      setMilestoneStack(filteredStack);
+      // If there's no active milestone but there are milestones in the stack, set the first non-archived one as active
+      if (!parsedActive && filteredStack.length > 0) {
+        setActiveMilestone(filteredStack[0]);
       }
-    }
-    if (savedStack) {
-      const parsedStack: Milestone[] = JSON.parse(savedStack);
-      setMilestoneStack(parsedStack.filter(m => !m.isArchived).map(calculateDaysLeft));
+    } else {
+      setMilestoneStack([]);
     }
 
-    const savedActiveFocus = await AsyncStorage.getItem('focusStartTime');
-    setIsFocusActive(!!savedActiveFocus);
+    setIsFocusActive(!!savedActiveFocusVal[1]); 
 
-    const savedHistory = await AsyncStorage.getItem('focusSessionHistory');
-    if (savedHistory) {
-      const history = JSON.parse(savedHistory);
+    const history = await StorageService.getJSON<any[]>('focusSessionHistory'); 
+    if (history && history.length > 0) {
       setFocusSessionCount(history.length);
+      setLastFocusSession(history[0]); // Set lastFocusSession
+    } else {
+      setFocusSessionCount(0);
+      setLastFocusSession(null);
     }
   };
 
@@ -198,8 +205,10 @@ export default function Dashboard() {
       setMilestoneStack(newMilestones);
       setActiveMilestone(firstActive);
 
-      await AsyncStorage.setItem('milestoneStack', JSON.stringify(newMilestones));
-      await AsyncStorage.setItem('activeMilestone', JSON.stringify(firstActive));
+      await StorageService.multiSet([
+        ['milestoneStack', JSON.stringify(newMilestones)],
+        ['activeMilestone', JSON.stringify(firstActive)]
+      ]);
 
     } catch (e) {
       console.error('Failed to generate battle plan:', e);
@@ -221,8 +230,7 @@ export default function Dashboard() {
     setShowVictory(true);
 
     try {
-      // 1. Get the FULL stack from storage (including archived)
-      const savedStack = await AsyncStorage.getItem('milestoneStack');
+      const savedStack = await StorageService.getItem('milestoneStack');
       const fullStack: Milestone[] = savedStack ? JSON.parse(savedStack) : [];
 
       // 2. Update the specific milestone in the FULL stack
@@ -240,31 +248,20 @@ export default function Dashboard() {
         const index = updatedFullStack.findIndex(m => m.id === nextMilestone.id);
         if (index !== -1) {
           updatedFullStack[index].status = 'ACTIVE';
-          await AsyncStorage.setItem('activeMilestone', JSON.stringify(updatedFullStack[index]));
+          await StorageService.setItem('activeMilestone', JSON.stringify(updatedFullStack[index]));
           // Update nextMilestone ref for local state uses
           Object.assign(nextMilestone, updatedFullStack[index]);
         }
       } else {
-        await AsyncStorage.removeItem('activeMilestone');
+        await StorageService.removeItem('activeMilestone');
       }
 
       // 4. Save the FULL stack
-      await AsyncStorage.setItem('milestoneStack', JSON.stringify(updatedFullStack));
+      await StorageService.setItem('milestoneStack', JSON.stringify(updatedFullStack));
 
       // 5. Update Local State (Filtered)
       // We filter out archived ones for the UI
       const filteredStack = updatedFullStack.filter(m => !m.isArchived);
-
-      // Re-calculate days left (helper function logic)
-      const calculateDaysLeft = (milestone: Milestone): Milestone => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const deadline = new Date(milestone.deadline);
-        deadline.setHours(0, 0, 0, 0);
-        const diffTime = deadline.getTime() - today.getTime();
-        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return { ...milestone, daysLeft: Math.max(0, daysLeft) };
-      };
 
       setMilestoneStack(filteredStack.map(calculateDaysLeft));
       setActiveMilestone(nextMilestone ? calculateDaysLeft(nextMilestone) : undefined);
@@ -291,11 +288,12 @@ export default function Dashboard() {
             contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews={true}
           >
             {/* Header Section */}
             <View className="flex-row justify-between items-center mb-8">
               <View>
-                <Text className="font-black text-2xl tracking-tighter">LOCKIN {new Date().getFullYear()}</Text>
+                <Text className="font-black text-2xl tracking-tighter">LOCKIN {CURRENT_YEAR}</Text>
 
               </View>
               <View className="flex-row gap-3">
