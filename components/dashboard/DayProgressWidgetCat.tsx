@@ -3,11 +3,13 @@ import Animated, {
     FadeOut,
 } from 'react-native-reanimated';
 import React, { useState, useCallback, Suspense, lazy } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // C-1: Lazy load ScannerSprite
 const ScannerSprite = lazy(() => import('./ScannerSprite').then(m => ({ default: m.ScannerSprite })));
 
 function DayProgressWidgetCatComponent() { // Renamed the function
+    const { theme } = useTheme();
     // --- State Mapping ---
     // IDLE -> Neutral
     // SEARCHING -> Suspicious
@@ -65,7 +67,8 @@ function DayProgressWidgetCatComponent() { // Renamed the function
 
     return (
         <View
-            className="bg-white rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border border-gray-100  overflow-hidden"
+            className="rounded-[32px] p-6 flex-1 aspect-square items-center justify-center border overflow-hidden"
+            style={{ borderColor: theme.border }}
         >
             <TouchableOpacity
                 activeOpacity={1}
@@ -76,11 +79,11 @@ function DayProgressWidgetCatComponent() { // Renamed the function
                 {interactionText && (
                     <Animated.View
                         exiting={FadeOut}
-                        className="absolute -top-4 z-50 bg-black px-4 py-2 rounded-xl mb-4"
-                        style={{ pointerEvents: 'none' }}
+                        className="absolute -top-4 z-50 px-4 py-2 rounded-xl mb-4"
+                        style={{ backgroundColor: theme.text, pointerEvents: 'none' }}
                     >
-                        <Text className="text-white font-bold text-sm tracking-wide">{interactionText}</Text>
-                        <View className="absolute -bottom-1 left-1/2 -ml-1 w-2 h-2 bg-black rotate-45" />
+                        <Text className="font-bold text-sm tracking-wide" style={{ color: theme.background }}>{interactionText}</Text>
+                        <View className="absolute -bottom-1 left-1/2 -ml-1 w-2 h-2 rotate-45" style={{ backgroundColor: theme.text }} />
                     </Animated.View>
                 )}
 

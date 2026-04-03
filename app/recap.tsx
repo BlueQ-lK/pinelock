@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import Animated, {
     FadeInUp,
 } from 'react-native-reanimated';
 import { getRecapStats, resetGoalData, RecapStats } from '../utils/goalStatus';
+import { useTheme } from '../contexts/ThemeContext';
 
 // C-1: Lazy load ScannerSprite
 const ScannerSprite = lazy(() => import('../components/dashboard/ScannerSprite').then(m => ({ default: m.ScannerSprite })));
@@ -29,11 +30,14 @@ const StatCard = React.memo(function StatCard({
     isLarge?: boolean,
     highlight?: boolean
 }) {
+    const { theme } = useTheme();
     return (
         <Animated.View
             entering={FadeInDown.springify().damping(15).stiffness(100).delay(delay)}
-            className={`rounded-[32px] p-6 border border-gray-100 shadow-sm ${isLarge ? 'w-full mb-4' : 'flex-1'} ${highlight ? 'bg-swiss-red' : 'bg-white'}`}
+            className={`rounded-[32px] p-6 border shadow-sm ${isLarge ? 'w-full mb-4' : 'flex-1'}`}
             style={{
+                backgroundColor: highlight ? theme.accent : theme.surface,
+                borderColor: theme.border,
                 elevation: 2,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 4 },
@@ -41,14 +45,23 @@ const StatCard = React.memo(function StatCard({
                 shadowRadius: 12
             }}
         >
-            <Text className={`text-xs font-bold tracking-[0.2em] mb-3 ${highlight ? 'text-white' : 'text-gray-400'}`}>
+            <Text
+                className={`text-xs font-bold tracking-[0.2em] mb-3`}
+                style={{ color: highlight ? theme.textWhite : theme.textSecondary }}
+            >
                 {label.toUpperCase()}
             </Text>
-            <Text className={`font-black tracking-tighter leading-none mb-1 ${isLarge ? 'text-7xl' : 'text-4xl'} ${highlight ? 'text-white' : 'text-black'}`}>
+            <Text
+                className={`font-black tracking-tighter leading-none mb-1 ${isLarge ? 'text-7xl' : 'text-4xl'}`}
+                style={{ color: highlight ? theme.textWhite : theme.text }}
+            >
                 {value}
             </Text>
             {subtext && (
-                <Text className={`font-medium text-xs ${highlight ? 'text-white' : 'text-gray-500'}`}>
+                <Text
+                    className={`font-medium text-xs`}
+                    style={{ color: highlight ? theme.textWhite : theme.textSecondary, opacity: 0.8 }}
+                >
                     {subtext}
                 </Text>
             )}
@@ -57,6 +70,7 @@ const StatCard = React.memo(function StatCard({
 });
 
 const MilestoneRow = React.memo(function MilestoneRow({ title, status, index }: { title: string, status: 'COMPLETED' | 'ACTIVE' | 'PENDING' | 'FAILED', index: number }) {
+    const { theme } = useTheme();
     const isCompleted = status === 'COMPLETED';
 
     return (
@@ -64,14 +78,20 @@ const MilestoneRow = React.memo(function MilestoneRow({ title, status, index }: 
             entering={FadeInDown.springify().damping(15).stiffness(100).delay(200 + (index * 60))}
             className="flex-row items-center mb-4"
         >
-            <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${isCompleted ? 'bg-swiss-red' : 'bg-gray-100'}`}>
+            <View
+                className={`w-8 h-8 rounded-full items-center justify-center mr-3`}
+                style={{ backgroundColor: isCompleted ? theme.accent : theme.surfaceAlt }}
+            >
                 {isCompleted ? (
-                    <Ionicons name="checkmark" size={16} color="white" />
+                    <Ionicons name="checkmark" size={16} color={theme.textWhite} />
                 ) : (
-                    <View className="w-2 h-2 rounded-full bg-gray-300" />
+                    <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.border }} />
                 )}
             </View>
-            <Text className={`flex-1 font-bold text-sm ${isCompleted ? 'text-black' : 'text-gray-400 line-through'}`}>
+            <Text
+                className={`flex-1 font-bold text-sm ${!isCompleted ? 'line-through' : ''}`}
+                style={{ color: isCompleted ? theme.text : theme.textSecondary }}
+            >
                 {title}
             </Text>
         </Animated.View>
@@ -79,13 +99,12 @@ const MilestoneRow = React.memo(function MilestoneRow({ title, status, index }: 
 });
 
 export default function RecapPage() {
+    const { theme, themeName } = useTheme();
     const router = useRouter();
     const [stats, setStats] = useState<RecapStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSharing, setIsSharing] = useState(false);
     const shareViewRef = useRef<View>(null);
-
-    // Animation values for progressive counting could go here
 
     useEffect(() => {
         loadStats();
@@ -136,28 +155,30 @@ export default function RecapPage() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-white items-center justify-center">
-                <Text className="font-bold tracking-widest text-xs">CALCULATING RESULTS...</Text>
+            <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.background }}>
+                <Text className="font-bold tracking-widest text-xs" style={{ color: theme.textSecondary }}>CALCULATING RESULTS...</Text>
             </View>
         );
     }
 
     if (!stats) {
         return (
-            <View className="flex-1 bg-white items-center justify-center p-8">
-                <Text className="text-xl font-black mb-4">NO DATA FOUND</Text>
+            <View className="flex-1 items-center justify-center p-8" style={{ backgroundColor: theme.background }}>
+                <Text className="text-xl font-black mb-4" style={{ color: theme.text }}>NO DATA FOUND</Text>
                 <TouchableOpacity
                     onPress={handleStartNew}
-                    className="bg-black py-4 px-8 rounded-full"
+                    className="py-4 px-8 rounded-full"
+                    style={{ backgroundColor: theme.text }}
                 >
-                    <Text className="text-white font-bold">START NEW GOAL</Text>
+                    <Text className="font-bold" style={{ color: theme.background }}>START NEW GOAL</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50">
+        <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
+            <StatusBar barStyle={themeName === 'dark' || themeName === 'catppuccin' ? 'light-content' : 'dark-content'} />
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
@@ -167,11 +188,11 @@ export default function RecapPage() {
                 {/* Header */}
                 <Animated.View entering={FadeInDown.springify().damping(15).stiffness(100).delay(100)} className="mb-8 flex-row items-center justify-between mr-9">
                     <View>
-                        <Text className="font-bold text-xs text-swiss-red tracking-[0.3em] mb-2">MISSION DEBRIEF</Text>
-                        <Text className="font-black text-5xl tracking-tighter leading-tight text-black">
+                        <Text className="font-bold text-xs tracking-[0.3em] mb-2" style={{ color: theme.accent }}>MISSION DEBRIEF</Text>
+                        <Text className="font-black text-5xl tracking-tighter leading-tight" style={{ color: theme.text }}>
                             TIME&apos;S UP.
                         </Text>
-                        <Text className="font-medium text-lg text-gray-400 mt-2">
+                        <Text className="font-medium text-lg mt-2" style={{ color: theme.textSecondary }}>
                             Let&apos;s review your performance.
                         </Text>
                     </View>
@@ -187,25 +208,29 @@ export default function RecapPage() {
                 </Animated.View>
 
                 {/* Goal Summary */}
-                <Animated.View entering={FadeInDown.springify().damping(15).stiffness(100).delay(250)} className="mb-8 p-6 bg-white rounded-[32px]">
-                    <Text className="font-bold text-xs text-gray-400 tracking-widest mb-2">OBJECTIVE</Text>
-                    <Text className="font-black text-2xl mb-4">{stats.goalTitle}</Text>
-                    <View className="h-[1px] bg-gray-100 w-full mb-4" />
-                    <Text className="font-bold text-xs text-gray-400 tracking-widest mb-2">MOTIVATION</Text>
-                    <Text className="font-medium text-base text-gray-600 italic">&quot;{stats.motivation}&quot;</Text>
+                <Animated.View
+                    entering={FadeInDown.springify().damping(15).stiffness(100).delay(250)}
+                    className="mb-8 p-6 rounded-[32px]"
+                    style={{ backgroundColor: theme.surface }}
+                >
+                    <Text className="font-bold text-xs tracking-widest mb-2" style={{ color: theme.textSecondary }}>OBJECTIVE</Text>
+                    <Text className="font-black text-2xl mb-4" style={{ color: theme.text }}>{stats.goalTitle}</Text>
+                    <View className="h-[1px] w-full mb-4" style={{ backgroundColor: theme.border }} />
+                    <Text className="font-bold text-xs tracking-widest mb-2" style={{ color: theme.textSecondary }}>MOTIVATION</Text>
+                    <Text className="font-medium text-base italic" style={{ color: theme.textSecondary }}>&quot;{stats.motivation}&quot;</Text>
 
-                    <View className="h-[1px] bg-gray-100 w-full my-4" />
+                    <View className="h-[1px] w-full my-4" style={{ backgroundColor: theme.border }} />
 
                     <View className="flex-row justify-between items-center">
                         <View>
-                            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-1">STARTED</Text>
-                            <Text className="font-bold text-sm text-black">
+                            <Text className="font-bold text-xs tracking-widest mb-1" style={{ color: theme.textSecondary }}>STARTED</Text>
+                            <Text className="font-bold text-sm" style={{ color: theme.text }}>
                                 {new Date(stats.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             </Text>
                         </View>
                         <View className="items-end">
-                            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-1">ENDED</Text>
-                            <Text className="font-bold text-sm text-black">
+                            <Text className="font-bold text-xs tracking-widest mb-1" style={{ color: theme.textSecondary }}>ENDED</Text>
+                            <Text className="font-bold text-sm" style={{ color: theme.text }}>
                                 {new Date(stats.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             </Text>
                         </View>
@@ -240,10 +265,10 @@ export default function RecapPage() {
 
                 {/* Milestone Timeline */}
                 <Animated.View entering={FadeInDown.springify().damping(15).stiffness(100).delay(700)} className="mt-8 mb-8">
-                    <Text className="font-black text-xl mb-6 tracking-tight">ATTACK LOG</Text>
-                    <View className="bg-white rounded-[32px] p-6">
+                    <Text className="font-black text-xl mb-6 tracking-tight" style={{ color: theme.text }}>ATTACK LOG</Text>
+                    <View className="rounded-[32px] p-6" style={{ backgroundColor: theme.surface }}>
                         {stats.milestones.length === 0 ? (
-                            <Text className="text-gray-400 font-medium text-center py-4">No milestones tracked.</Text>
+                            <Text className="font-medium text-center py-4" style={{ color: theme.textSecondary }}>No milestones tracked.</Text>
                         ) : (
                             stats.milestones.map((m, i) => (
                                 <MilestoneRow key={m.id} title={m.title} status={m.status} index={i} />
@@ -257,8 +282,10 @@ export default function RecapPage() {
             {/* Footer Actions */}
             <Animated.View
                 entering={FadeInUp.springify().damping(15).stiffness(100).delay(1000)}
-                className="absolute bottom-0 left-0 right-0 bg-white/90 blur-xl px-6 py-4 pb-8 border-t border-gray-100/50 flex-row gap-4"
+                className="absolute bottom-0 left-0 right-0 px-6 py-4 pb-8 border-t flex-row gap-4"
                 style={{
+                    backgroundColor: theme.background + 'EE', // Semi-transparent
+                    borderTopColor: theme.border,
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: -10 },
                     shadowOpacity: 0.05,
@@ -267,18 +294,21 @@ export default function RecapPage() {
             >
                 <TouchableOpacity
                     onPress={handleShare}
-                    className="flex-1 bg-gray-100 py-5 rounded-full items-center justify-center"
+                    className="flex-1 py-5 rounded-full items-center justify-center"
+                    style={{ backgroundColor: theme.surfaceAlt }}
                 >
-                    <Ionicons name="share-outline" size={24} color="black" />
+                    <Ionicons name="share-outline" size={24} color={theme.text} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     onPress={handleStartNew}
-                    className="flex-[3] bg-swiss-black py-5 rounded-full items-center justify-center shadow-lg shadow-red-200"
+                    className="flex-[3] py-5 rounded-full items-center justify-center shadow-lg"
+                    style={{ backgroundColor: theme.text, shadowColor: theme.accent }}
                 >
-                    <Text className="text-white font-black text-lg tracking-widest">START NEW GOAL</Text>
+                    <Text className="font-black text-lg tracking-widest" style={{ color: theme.background }}>START NEW GOAL</Text>
                 </TouchableOpacity>
             </Animated.View>
+
             {/* Hidden Share Card View */}
             {isSharing && (
                 <View
@@ -288,7 +318,7 @@ export default function RecapPage() {
                         left: -5000,
                         width: 420,
                         height: 600,
-                        backgroundColor: '#FF3B30', // Swiss Red
+                        backgroundColor: theme.accent,
                         padding: 32,
                         justifyContent: 'space-between'
                     }}
@@ -297,8 +327,8 @@ export default function RecapPage() {
                 >
                     {/* Header Badge */}
                     <View className="flex-row justify-between items-start">
-                        <View className="bg-black/20 px-4 py-2 rounded-full backdrop-blur-md">
-                            <Text className="text-white/90 font-bold text-[10px] tracking-[0.3em] uppercase">
+                        <View className="px-4 py-2 rounded-full" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                            <Text className="font-bold text-[10px] tracking-[0.3em] uppercase" style={{ color: theme.textWhite }}>
                                 MISSION DEBRIEF
                             </Text>
                         </View>
@@ -311,43 +341,44 @@ export default function RecapPage() {
                     {/* Main Content */}
                     <View className="flex-1 justify-center my-4">
                         <View className="flex-row items-center gap-2 mb-4">
-                            <Ionicons name="medal" size={24} color="rgba(255,255,255,0.8)" />
-                            <Text className="text-white/80 font-bold text-sm tracking-widest uppercase">
+                            <Ionicons name="medal" size={24} color={theme.textWhite} style={{ opacity: 0.8 }} />
+                            <Text className="font-bold text-sm tracking-widest uppercase" style={{ color: theme.textWhite, opacity: 0.8 }}>
                                 OBJECTIVE COMPLETE
                             </Text>
                         </View>
 
                         <Text
-                            className="text-white font-black text-5xl leading-[50px] tracking-tight mb-6"
+                            className="font-black text-5xl leading-[50px] tracking-tight mb-6"
                             adjustsFontSizeToFit
                             numberOfLines={3}
+                            style={{ color: theme.textWhite }}
                         >
                             {stats?.goalTitle.toUpperCase() || 'GOAL'}
                         </Text>
 
-                        <View className="h-1 w-20 bg-white/30 rounded-full mb-8" />
+                        <View className="h-1 w-20 rounded-full mb-8" style={{ backgroundColor: theme.textWhite, opacity: 0.3 }} />
 
                         <View className="flex-row gap-4 mb-8">
-                            <View className="bg-white/20 px-5 py-4 rounded-2xl border border-white/10 flex-1">
-                                <Text className="text-white/60 font-bold text-[10px] tracking-widest uppercase mb-1">
+                            <View className="px-5 py-4 rounded-2xl border flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                                <Text className="font-bold text-[10px] tracking-widest uppercase mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>
                                     COMPLETION
                                 </Text>
-                                <Text className="text-white font-black text-4xl tracking-tighter">
+                                <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.textWhite }}>
                                     {stats?.completionPercentage}%
                                 </Text>
                             </View>
-                            <View className="bg-white/20 px-5 py-4 rounded-2xl border border-white/10 flex-1">
-                                <Text className="text-white/60 font-bold text-[10px] tracking-widest uppercase mb-1">
+                            <View className="px-5 py-4 rounded-2xl border flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                                <Text className="font-bold text-[10px] tracking-widest uppercase mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>
                                     DURATION
                                 </Text>
-                                <Text className="text-white font-black text-4xl tracking-tighter">
+                                <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.textWhite }}>
                                     {stats?.daysElapsed}D
                                 </Text>
                             </View>
                         </View>
 
-                        <View className="bg-black/10 px-6 py-4 rounded-2xl border border-white/5 mx-[-8]">
-                            <Text className="text-white font-medium text-lg italic text-center">
+                        <View className="px-6 py-4 rounded-2xl border mx-[-8]" style={{ backgroundColor: 'rgba(0,0,0,0.05)', borderColor: 'rgba(255,255,255,0.05)' }}>
+                            <Text className="font-medium text-lg italic text-center" style={{ color: theme.textWhite }}>
                                 &quot;{stats?.motivation}&quot;
                             </Text>
                         </View>
@@ -356,11 +387,11 @@ export default function RecapPage() {
                     {/* Footer Section */}
                     <View className="flex-row justify-between items-end">
                         <View>
-                            <Text className="text-white/60 text-[10px] font-bold tracking-[0.4em] mb-2 uppercase">SECURED ON</Text>
-                            <Text className="text-white font-black text-2xl tracking-tighter">LOCKIN 2026</Text>
+                            <Text className="text-[10px] font-bold tracking-[0.4em] mb-2 uppercase" style={{ color: theme.textWhite, opacity: 0.6 }}>SECURED ON</Text>
+                            <Text className="font-black text-2xl tracking-tighter" style={{ color: theme.textWhite }}>LOCKIN 2026</Text>
                             <View className="mt-1 flex-row gap-2 items-center">
-                                <View className="w-1.5 h-1.5 bg-green-300 rounded-full" />
-                                <Text className="text-white/50 text-[9px] font-bold uppercase">System Optimal</Text>
+                                <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.accent }} />
+                                <Text className="text-[9px] font-bold uppercase" style={{ color: theme.textWhite, opacity: 0.5 }}>System Optimal</Text>
                             </View>
                         </View>
 
@@ -373,8 +404,8 @@ export default function RecapPage() {
                                     excitementLevel={3}
                                 />
                             </View>
-                            <View className="bg-white px-3 py-1 rounded-full -mt-2 border border-swiss-red shadow-sm">
-                                <Text className="text-swiss-red font-black text-[10px] tracking-widest uppercase">VERIFIED</Text>
+                            <View className="px-3 py-1 rounded-full -mt-2 border shadow-sm" style={{ backgroundColor: theme.background, borderColor: theme.accent }}>
+                                <Text className="font-black text-[10px] tracking-widest uppercase" style={{ color: theme.accent }}>VERIFIED</Text>
                             </View>
                         </View>
                     </View>

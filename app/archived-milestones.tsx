@@ -6,8 +6,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StorageService } from '../utils/StorageService';
 import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function ArchivedMilestonesScreen() {
+    const { theme, themeName } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [archivedMilestones, setArchivedMilestones] = useState<Milestone[]>([]);
@@ -70,30 +72,31 @@ export default function ArchivedMilestonesScreen() {
     };
 
     const renderItem = ({ item }: { item: Milestone }) => (
-        <View className="bg-gray-50 p-4 rounded-2xl mb-3 border border-gray-100 flex-row items-center justify-between">
+        <View className="p-4 rounded-2xl mb-3 border flex-row items-center justify-between" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
             <View className="flex-1 mr-4">
-                <Text className="font-bold  text-xs mb-1 uppercase tracking-wider">{item.deadline}</Text>
-                <Text className="font-bold text-black text-lg">{item.title}</Text>
+                <Text className="font-bold text-xs mb-1 uppercase tracking-wider" style={{ color: theme.textSecondary }}>{item.deadline}</Text>
+                <Text className="font-bold text-lg" style={{ color: theme.text }}>{item.title}</Text>
             </View>
             <TouchableOpacity
                 onPress={() => handleRestore(item.id)}
-                className="bg-white p-2 rounded-full border border-gray-200 shadow-sm"
+                className="p-2 rounded-full border shadow-sm"
+                style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}
             >
-                <Ionicons name="refresh" size={20} color="black" />
+                <Ionicons name="refresh" size={20} color={theme.text} />
             </TouchableOpacity>
         </View>
     );
 
     return (
-        <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-white">
-            <StatusBar barStyle="dark-content" />
+        <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: theme.background }} className="flex-1">
+            <StatusBar barStyle={themeName === 'dark' || themeName === 'catppuccin' ? 'light-content' : 'dark-content'} />
 
             {/* Header */}
-            <View className="px-6 py-4 bg-white flex-row gap-4 items-center z-10 border-b border-gray-100">
-                <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-black rounded-full">
-                    <Ionicons name="arrow-back" size={24} color="white" />
+            <View className="px-6 py-4 flex-row gap-4 items-center z-10 border-b" style={{ backgroundColor: theme.background, borderBottomColor: theme.border }}>
+                <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full" style={{ backgroundColor: theme.text }}>
+                    <Ionicons name="arrow-back" size={24} color={theme.background} />
                 </TouchableOpacity>
-                <Text className="font-black text-lg tracking-tight">ARCHIVES</Text>
+                <Text className="font-black text-lg tracking-tight" style={{ color: theme.text }}>ARCHIVES</Text>
                 <View className="w-10" />
             </View>
 
@@ -104,8 +107,8 @@ export default function ArchivedMilestonesScreen() {
                 contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
                 ListEmptyComponent={
                     <View className="items-center justify-center mt-20 opacity-50">
-                        <Ionicons name="documents-outline" size={48} color="#ccc" />
-                        <Text className="text-gray-400 font-bold mt-4 text-center">No archived milestones found</Text>
+                        <Ionicons name="documents-outline" size={48} color={theme.textSecondary} />
+                        <Text className="font-bold mt-4 text-center" style={{ color: theme.textSecondary }}>No archived milestones found</Text>
                     </View>
                 }
             />

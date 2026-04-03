@@ -6,9 +6,11 @@ import { useWarRoom } from './_context';
 import { Milestone } from '../../types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function EditMilestone() {
     const router = useRouter();
+    const { theme, themeName } = useTheme();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { draftOptions, setDraftOptions } = useWarRoom();
 
@@ -76,47 +78,53 @@ export default function EditMilestone() {
     };
 
     // We shouldn't probably show the form until found
-    if (!milestone) return <View className="flex-1 bg-white" />;
+    if (!milestone) return <View className="flex-1" style={{ backgroundColor: theme.background }} />;
 
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 bg-white"
+            className="flex-1"
+            style={{ backgroundColor: theme.background }}
         >
-            <View className="px-6 pt-12 pb-6 border-b border-gray-100 flex-row items-center gap-4">
+            <View className="px-6 pt-12 pb-6 border-b flex-row items-center gap-4" style={{ borderBottomColor: theme.border }}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
+                    <Ionicons name="arrow-back" size={24} color={theme.text} />
                 </TouchableOpacity>
                 <View>
-                    <Text className="text-xl font-black">EDIT TACTIC</Text>
+                    <Text className="text-xl font-black" style={{ color: theme.text }}>EDIT TACTIC</Text>
                 </View>
             </View>
 
             <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 140 }}>
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">MISSION TITLE</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>MISSION TITLE</Text>
                 <TextInput
-                    className="bg-gray-50 p-4 rounded-xl font-bold text-lg mb-6"
+                    className="p-4 rounded-xl font-bold text-lg mb-6"
+                    style={{ backgroundColor: theme.surface, color: theme.text }}
                     placeholder="Title"
+                    placeholderTextColor={theme.textSecondary}
                     value={title}
                     onChangeText={setTitle}
                 />
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">TACTICAL DESCRIPTION</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>TACTICAL DESCRIPTION</Text>
                 <TextInput
-                    className="bg-gray-50 p-4 rounded-xl font-medium text-sm mb-6 h-32"
+                    className="p-4 rounded-xl font-medium text-sm mb-6 h-32"
+                    style={{ backgroundColor: theme.surface, color: theme.text }}
                     placeholder="Description..."
+                    placeholderTextColor={theme.textSecondary}
                     multiline
                     textAlignVertical="top"
                     value={description}
                     onChangeText={setDescription}
                 />
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">DEADLINE</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>DEADLINE</Text>
                 <TouchableOpacity
                     onPress={() => setShowDatePicker(true)}
-                    className="bg-gray-50 p-4 rounded-xl mb-6"
+                    className="p-4 rounded-xl mb-6"
+                    style={{ backgroundColor: theme.surface }}
                 >
-                    <Text className="font-medium text-sm text-black">
+                    <Text className="font-medium text-sm" style={{ color: theme.text }}>
                         {format(deadline, 'MMMM d, yyyy')}
                     </Text>
                 </TouchableOpacity>
@@ -136,25 +144,26 @@ export default function EditMilestone() {
                 {Platform.OS === 'ios' && showDatePicker && (
                     <TouchableOpacity
                         onPress={() => setShowDatePicker(false)}
-                        className="bg-gray-100 p-2 rounded-lg items-center mb-6"
+                        className="p-2 rounded-lg items-center mb-6"
+                        style={{ backgroundColor: theme.surfaceAlt }}
                     >
-                        <Text className="text-blue-500 font-bold">Done</Text>
+                        <Text className="font-bold" style={{ color: theme.accent }}>Done</Text>
                     </TouchableOpacity>
                 )}
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">IMPACT LEVEL</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>IMPACT LEVEL</Text>
                 <View className="flex-row gap-3 mb-8">
                     {(['HIGH', 'CRITICAL'] as const).map((level) => (
                         <TouchableOpacity
                             key={level}
                             onPress={() => setImpact(level)}
-                            className={`flex-1 py-4 rounded-xl border-2 items-center ${impact === level
-                                ? 'bg-black border-black'
-                                : 'bg-white border-gray-200'
-                                }`}
+                            className={`flex-1 py-4 rounded-xl border-2 items-center`}
+                            style={{ 
+                                backgroundColor: impact === level ? theme.accent : theme.surface,
+                                borderColor: impact === level ? theme.accent : theme.border
+                            }}
                         >
-                            <Text className={`font-bold text-xs tracking-widest ${impact === level ? 'text-white' : 'text-gray-400'
-                                }`}>
+                            <Text className={`font-bold text-xs tracking-widest`} style={{ color: impact === level ? theme.accentForeground : theme.textSecondary }}>
                                 {level}
                             </Text>
                         </TouchableOpacity>
@@ -162,12 +171,13 @@ export default function EditMilestone() {
                 </View>
             </ScrollView>
 
-            <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100" style={{ paddingBottom: 40 }}>
+            <View className="absolute bottom-0 left-0 right-0 p-6 border-t" style={{ paddingBottom: 40, backgroundColor: theme.background, borderTopColor: theme.border }}>
                 <TouchableOpacity
                     onPress={handleSave}
-                    className="bg-black py-4 rounded-xl items-center"
+                    className="py-4 rounded-xl items-center"
+                    style={{ backgroundColor: theme.text }}
                 >
-                    <Text className="text-white font-bold tracking-widest">SAVE CHANGES</Text>
+                    <Text className="font-bold tracking-widest" style={{ color: theme.background }}>SAVE CHANGES</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>

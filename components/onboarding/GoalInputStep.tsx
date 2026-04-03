@@ -19,6 +19,7 @@ import Animated, {
   withSpring,
   withDelay,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export type DurationUnit = "year" | "months" | "days";
 
@@ -37,6 +38,7 @@ function HeadbuttScene({
   isActive: boolean;
   onBreak: boolean;
 }) {
+  const { theme } = useTheme();
   // Character position & transform
   const charX = useSharedValue(0);
   const charY = useSharedValue(0);
@@ -441,8 +443,9 @@ function HeadbuttScene({
         <Animated.View style={characterStyle}>
           {/* Body */}
           <View
-            className="w-14 h-14 bg-black rounded-full items-center justify-center"
+            className="w-14 h-14 rounded-full items-center justify-center"
             style={{
+              backgroundColor: theme.text,
               elevation: 8,
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 3 },
@@ -453,21 +456,21 @@ function HeadbuttScene({
             {/* Eyes */}
             <View className="flex-row gap-1">
               <Animated.View
-                style={eyeStyle}
-                className="w-4 h-4 bg-white rounded-full items-center justify-center overflow-hidden"
+                style={[eyeStyle, { backgroundColor: theme.background }]}
+                className="w-4 h-4 rounded-full items-center justify-center overflow-hidden"
               >
                 <Animated.View
-                  style={pupilStyle}
-                  className="w-2 h-2.5 bg-black rounded-full"
+                  style={[pupilStyle, { backgroundColor: theme.text }]}
+                  className="w-2 h-2.5 rounded-full"
                 />
               </Animated.View>
               <Animated.View
-                style={eyeStyle}
-                className="w-4 h-4 bg-white rounded-full items-center justify-center overflow-hidden"
+                style={[eyeStyle, { backgroundColor: theme.background }]}
+                className="w-4 h-4 rounded-full items-center justify-center overflow-hidden"
               >
                 <Animated.View
-                  style={pupilStyle}
-                  className="w-2 h-2.5 bg-black rounded-full"
+                  style={[pupilStyle, { backgroundColor: theme.text }]}
+                  className="w-2 h-2.5 rounded-full"
                 />
               </Animated.View>
             </View>
@@ -475,8 +478,8 @@ function HeadbuttScene({
         </Animated.View>
         {/* Shadow */}
         <Animated.View
-          style={[shadowStyle, { marginTop: 4 }]}
-          className="w-10 h-2 bg-black rounded-full"
+          style={[shadowStyle, { marginTop: 4, backgroundColor: theme.text }]}
+          className="w-10 h-2 rounded-full"
         />
       </View>
 
@@ -485,8 +488,8 @@ function HeadbuttScene({
 
       {/* Impact Ring */}
       <Animated.View
-        style={[impactStyle, { position: "absolute", left: "50%" }]}
-        className="w-8 h-8 rounded-full border-2 border-swiss-red"
+        style={[impactStyle, { position: "absolute", left: "50%", borderColor: theme.accent }]}
+        className="w-8 h-8 rounded-full border-2"
       />
 
       {/* The "1" - animates during break */}
@@ -494,7 +497,7 @@ function HeadbuttScene({
         style={barrierStyle}
         className="items-center justify-center"
       >
-        <Text className="font-black text-8xl text-gray-300 leading-none">
+        <Text className="font-black text-8xl leading-none" style={{ color: theme.border }}>
           |
         </Text>
       </Animated.View>
@@ -508,6 +511,7 @@ export function GoalInputStep({
   initialDurationUnit = "year",
   initialDurationValue = 1,
 }: GoalInputStepProps) {
+  const { theme } = useTheme();
   const [goal, setGoal] = useState(initialValue);
   const [isBreaking, setIsBreaking] = useState(false);
   const [excitementLevel, setExcitementLevel] = useState(0);
@@ -548,17 +552,17 @@ export function GoalInputStep({
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 24, paddingBottom: 20 }}
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={FadeInDown.delay(300)} className="mt-4">
-          <Text className="font-black text-6xl text-black tracking-tighter leading-none mb-2">
+          <Text className="font-black text-6xl tracking-tighter leading-none mb-2" style={{ color: theme.text }}>
             {getDurationText()}
           </Text>
-          <Text className="font-black text-6xl text-swiss-red tracking-tighter leading-none mb-8">
+          <Text className="font-black text-6xl tracking-tighter leading-none mb-8" style={{ color: theme.accent }}>
             ONE GOAL.
           </Text>
         </Animated.View>
@@ -576,23 +580,23 @@ export function GoalInputStep({
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(500)}>
-          <Text className="font-bold text-sm text-gray-400 tracking-widest mb-4">
+          <Text className="font-bold text-sm tracking-widest mb-4" style={{ color: theme.textSecondary }}>
             DEFINE YOUR OBJECTIVE
           </Text>
 
           <TextInput
-            className="font-black text-3xl text-black border-b-2 border-black pb-4 leading-tight"
+            className="font-black text-3xl border-b-2 pb-4 leading-tight"
+            style={{ color: theme.text, borderBottomColor: theme.text, minHeight: 60, maxHeight: 150 }}
             placeholder="Build the next unicorn..."
-            placeholderTextColor="#E5E5E5"
+            placeholderTextColor={theme.textSecondary + '66'}
             value={goal}
             onChangeText={handleTextChange}
             multiline
             autoFocus
-            selectionColor="#FF3B30"
-            style={{ minHeight: 60, maxHeight: 150 }}
+            selectionColor={theme.accent}
             editable={!isBreaking}
           />
-          <Text className="font-medium text-xs text-swiss-red mt-4">
+          <Text className="font-medium text-xs mt-4" style={{ color: theme.accent }}>
             ⚠ THIS CANNOT BE CHANGED LATER.
           </Text>
         </Animated.View>
@@ -602,17 +606,19 @@ export function GoalInputStep({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
-        <View className="px-6 pb-8 pt-2 bg-white">
+        <View className="px-6 pb-8 pt-2" style={{ backgroundColor: theme.background }}>
           {/* Automatic Headbutt Animation */}
           <HeadbuttScene isActive={!isBreaking} onBreak={isBreaking} />
 
           <TouchableOpacity
             onPress={handleConfirm}
             disabled={!goal.trim() || isBreaking}
-            className={`w-full py-5 rounded-full items-center mt-4 ${goal.trim() && !isBreaking ? "bg-black" : "bg-gray-200"}`}
+            className={`w-full py-5 rounded-full items-center mt-4`}
+            style={{ backgroundColor: goal.trim() && !isBreaking ? theme.text : theme.surfaceAlt }}
           >
             <Text
-              className={`font-bold text-lg tracking-widest ${goal.trim() && !isBreaking ? "text-white" : "text-gray-400"}`}
+              className={`font-bold text-lg tracking-widest`}
+              style={{ color: goal.trim() && !isBreaking ? theme.background : theme.textSecondary }}
             >
               {isBreaking ? "BREAKING THROUGH!" : "CONFIRM OBJECTIVE"}
             </Text>
@@ -623,8 +629,6 @@ export function GoalInputStep({
   );
 }
 
-
-
 function DurationSelector({
   unit,
   value,
@@ -634,6 +638,7 @@ function DurationSelector({
   value: number;
   onChange: (unit: DurationUnit, value: number) => void;
 }) {
+  const { theme } = useTheme();
   const handleUnitSelect = (newUnit: DurationUnit) => {
     // Reset value to reasonable defaults/max when switching
     let newValue = 1;
@@ -670,21 +675,20 @@ function DurationSelector({
               key={u}
               onPress={() => handleUnitSelect(u)}
               activeOpacity={0.7}
-              className={`flex-1 py-4 rounded-2xl items-center justify-center border-2 
-                ${isSelected ? "bg-black border-black" : "bg-white border-gray-100"}
-              `}
-              style={!isSelected ? {
+              className={`flex-1 py-4 rounded-2xl items-center justify-center border-2`}
+              style={{
+                backgroundColor: isSelected ? theme.text : theme.background,
+                borderColor: isSelected ? theme.text : theme.border,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.05,
                 shadowRadius: 4,
                 elevation: 2,
-              } : {}}
+              }}
             >
               <Text
-                className={`font-bold text-xs tracking-widest uppercase 
-                  ${isSelected ? "text-white" : "text-gray-400"}
-                `}
+                className={`font-bold text-xs tracking-widest uppercase`}
+                style={{ color: isSelected ? theme.background : theme.textSecondary }}
               >
                 {u}
               </Text>
@@ -695,25 +699,28 @@ function DurationSelector({
 
       {/* Value Adjuster (Only if not Year, or show static "1" for Year) */}
       <View
-        className="flex-row items-center justify-between bg-gray-50 rounded-3xl p-2 border border-gray-100"
+        className="flex-row items-center justify-between rounded-3xl p-2 border"
+        style={{ backgroundColor: theme.surface, borderColor: theme.border }}
       >
         <TouchableOpacity
           onPress={() => handleValueChange(false)}
           disabled={unit === "year" || value <= 1}
-          className={`w-12 h-12 rounded-full items-center justify-center 
-            ${unit === "year" || value <= 1 ? "bg-transparent" : "bg-white border border-gray-200"}
-          `}
+          className={`w-12 h-12 rounded-full items-center justify-center border`}
+          style={{
+            backgroundColor: unit === "year" || value <= 1 ? "transparent" : theme.surface,
+            borderColor: unit === "year" || value <= 1 ? "transparent" : theme.border
+          }}
         >
           {unit !== "year" && value > 1 && (
-            <Text className="text-xl font-bold text-black">-</Text>
+            <Text className="text-xl font-bold" style={{ color: theme.text }}>-</Text>
           )}
         </TouchableOpacity>
 
         <View className="items-center">
-          <Text className="text-4xl font-black text-black tracking-tighter">
+          <Text className="text-4xl font-black tracking-tighter" style={{ color: theme.text }}>
             {value}
           </Text>
-          <Text className="text-[10px] font-bold text-swiss-red tracking-[3px] uppercase">
+          <Text className="text-[10px] font-bold tracking-[3px] uppercase" style={{ color: theme.accent }}>
             {unit === 'year' ? 'YEAR' : (value === 1 ? unit.slice(0, -1) : unit)}
           </Text>
         </View>
@@ -725,17 +732,21 @@ function DurationSelector({
             (unit === "months" && value >= 12) ||
             (unit === "days" && value >= 28)
           }
-          className={`w-12 h-12 rounded-full items-center justify-center 
-            ${unit === "year" || ((unit === "months" && value >= 12) || (unit === "days" && value >= 28))
-              ? "bg-transparent"
-              : "bg-white border border-gray-200"}
-          `}
+          className={`w-12 h-12 rounded-full items-center justify-center border`}
+          style={{
+            backgroundColor: unit === "year" || ((unit === "months" && value >= 12) || (unit === "days" && value >= 28))
+              ? "transparent"
+              : theme.surface,
+            borderColor: unit === "year" || ((unit === "months" && value >= 12) || (unit === "days" && value >= 28))
+              ? "transparent"
+              : theme.border
+          }}
         >
           {unit !== "year" && !(
             (unit === "months" && value >= 12) ||
             (unit === "days" && value >= 28)
           ) && (
-              <Text className="text-xl font-bold text-black">+</Text>
+              <Text className="text-xl font-bold" style={{ color: theme.text }}>+</Text>
             )}
         </TouchableOpacity>
       </View>

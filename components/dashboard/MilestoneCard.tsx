@@ -4,6 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, wit
 import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../../types';
 import React from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface MilestoneCardProps {
   onPress: () => void;
@@ -29,28 +30,33 @@ function PulsingDot() {
     opacity: opacity.value,
   }));
 
-  return <Animated.View style={animatedStyle} className="w-2 h-2 rounded-full bg-white" />;
+  const { theme } = useTheme();
+
+  return <Animated.View style={[animatedStyle, { backgroundColor: theme.accentForeground }]} className="w-2 h-2 rounded-full" />;
 }
 
 function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCardProps) {
+  const { theme } = useTheme();
+
   if (!milestone) {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
         <View
-          className="bg-swiss-red rounded-[32px] p-8 mb-6 "
+          className="rounded-[32px] p-8 mb-6"
+          style={{ backgroundColor: theme.accent }}
         >
-          <View className="flex-row justify-between items-start mb-6">
-            <View className="bg-black/20 px-3 py-1 rounded-full">
-              <Text className="text-white font-bold text-[10px] tracking-widest">PRIORITY: IMMEDIATE</Text>
+          <View className="flex-row justify-between items-start">
+            <View className="px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
+              <Text className="font-bold text-[10px] tracking-widest" style={{ color: theme.accentForeground }}>PRIORITY: IMMEDIATE</Text>
             </View>
-            <View className="bg-white/20 p-2 rounded-full">
-              <Ionicons name="add" size={20} color="white" />
+            <View className="p-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+              <Ionicons name="add" size={20} color={theme.accentForeground} />
             </View>
           </View>
 
-          <Text className="text-white/80 font-bold text-xs tracking-widest mb-1">CURRENT OBJECTIVE</Text>
-          <Text className="text-white font-black text-3xl mb-2">NOT DEFINED</Text>
-          <Text className="text-white/90 font-medium text-sm leading-5">
+          <Text className="font-bold text-xs tracking-widest mb-1" style={{ color: theme.accentForeground, opacity: 0.8 }}>CURRENT OBJECTIVE</Text>
+          <Text className="font-black text-3xl mb-2 uppercase" style={{ color: theme.textWhite }}>Create Your First Milestone</Text>
+          <Text className="font-medium text-sm leading-5" style={{ color: theme.accentForeground, opacity: 0.9 }}>
             Focus is built one step at a time. Tap to set your first milestone.
           </Text>
         </View>
@@ -61,32 +67,33 @@ function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCar
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View
-        className="bg-swiss-red rounded-[32px] p-8 mb-6  border border-red-600"
+        className="rounded-[32px] p-8 mb-6"
+        style={{ backgroundColor: theme.accent, padding: 32, borderRadius: 32 }}
       >
         <View className="flex-row justify-between items-start mb-8">
           <View className="flex-row items-center gap-2">
             <PulsingDot />
-            <Text className="text-white font-bold text-[10px] tracking-widest">CURRENT FOCUS</Text>
+            <Text className="font-bold text-[10px] tracking-widest" style={{ color: theme.accentForeground }}>CURRENT FOCUS</Text>
           </View>
-          <View className={`px-3 py-1 rounded-full flex-row items-center gap-1 ${(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? 'bg-yellow-400' : 'bg-black/20'}`}>
+          <View className={`px-3 py-1 rounded-full flex-row items-center gap-1 ${(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? 'bg-yellow-400' : ''}`} style={!(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? { backgroundColor: 'rgba(0,0,0,0.2)' } : {}}>
             {(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) && (
               <Ionicons name="warning" size={12} color="black" />
             )}
-            <Text className={`font-bold text-xs ${(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? 'text-black' : 'text-white'}`}>
+            <Text className={`font-bold text-xs ${(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? 'text-black' : ''}`} style={!(milestone.daysLeft !== undefined && milestone.daysLeft <= 3) ? { color: theme.accentForeground } : {}}>
               {milestone.daysLeft} DAYS LEFT
             </Text>
           </View>
         </View>
 
-        <Text className="text-white/80 font-bold text-xs tracking-widest mb-2">OBJECTIVE</Text>
-        <Text className="text-white font-black text-3xl leading-9 mb-8">
+        <Text className="font-bold text-xs tracking-widest mb-2" style={{ color: theme.accentForeground, opacity: 0.8 }}>OBJECTIVE</Text>
+        <Text className="font-black text-3xl leading-9 mb-8" style={{ color: theme.textWhite }}>
           {milestone.title}
         </Text>
 
-        <View className="flex-row items-center justify-between border-t border-white/20 pt-4">
+        <View className="flex-row items-center justify-between border-t pt-4" style={{ borderTopColor: 'rgba(255,255,255,0.2)' }}>
           <View className="flex-row items-center gap-2">
             <Ionicons name="flag" size={14} color="rgba(255,255,255,0.8)" />
-            <Text className="text-white/80 font-bold text-xs tracking-widest">DEADLINE: {milestone.deadline}</Text>
+            <Text className="font-bold text-xs tracking-widest" style={{ color: theme.accentForeground, opacity: 0.8 }}>DEADLINE: {milestone.deadline}</Text>
           </View>
 
           {onComplete && (
@@ -95,10 +102,11 @@ function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCar
                 e.stopPropagation();
                 onComplete();
               }}
-              className="bg-white px-4 py-2 rounded-full flex-row items-center gap-2"
+              className="px-4 py-2 rounded-full flex-row items-center gap-2"
+              style={{ backgroundColor: theme.accentForeground }}
             >
-              <Ionicons name="checkmark-circle" size={16} color="#EF4444" />
-              <Text className="text-swiss-red font-bold text-xs tracking-widest">COMPLETE</Text>
+              <Ionicons name="checkmark-circle" size={16} color={theme.accent} />
+              <Text className="font-bold text-xs tracking-widest" style={{ color: theme.accent }}>COMPLETE</Text>
             </TouchableOpacity>
           )}
         </View>

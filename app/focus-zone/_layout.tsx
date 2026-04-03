@@ -2,12 +2,15 @@ import { Stack, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WarRoomProvider, useWarRoom } from './_context';
+import { useTheme } from '../../contexts/ThemeContext';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useEffect } from 'react';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-function PulsingText({ children, className }: { children: React.ReactNode, className?: string }) {
+import { TextStyle, StyleProp } from 'react-native';
+
+function PulsingText({ children, className, style }: { children: React.ReactNode, className?: string, style?: StyleProp<TextStyle> }) {
   const opacity = useSharedValue(1);
 
   useEffect(() => {
@@ -26,7 +29,7 @@ function PulsingText({ children, className }: { children: React.ReactNode, class
   }));
 
   return (
-    <Animated.Text style={animatedStyle} className={className}>
+    <Animated.Text style={[animatedStyle, style]} className={className}>
       {children}
     </Animated.Text>
   );
@@ -35,16 +38,17 @@ function PulsingText({ children, className }: { children: React.ReactNode, class
 function WarRoomHeader() {
   const router = useRouter();
   const { draftStack, deployStack } = useWarRoom();
+  const { theme } = useTheme();
 
   return (
-    <SafeAreaView edges={['top']} className="bg-white border-b border-gray-100">
-      <View className="px-6 py-4 flex-row justify-between items-center bg-white">
+    <SafeAreaView edges={['top']} className="border-b" style={{ backgroundColor: theme.background, borderColor: theme.border }}>
+      <View className="px-6 py-4 flex-row justify-between items-center" style={{ backgroundColor: theme.background }}>
         <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-          <Ionicons name="close" size={24} color="black" />
+          <Ionicons name="close" size={24} color={theme.text} />
         </TouchableOpacity>
         <View className="items-center">
-          <Text className="font-black text-lg tracking-tighter">FOCUS ZONE</Text>
-          <PulsingText className="font-bold text-[10px] text-swiss-red tracking-[0.2em]">
+          <Text className="font-black text-lg tracking-tighter" style={{ color: theme.text }}>FOCUS ZONE</Text>
+          <PulsingText className="font-bold text-[10px] tracking-[0.2em]" style={{ color: theme.accent }}>
             {draftStack.length > 0 ? `${draftStack.length} STEPS STAGED` : 'LIVE UPLINK'}
           </PulsingText>
         </View>
@@ -53,7 +57,7 @@ function WarRoomHeader() {
           disabled={draftStack.length === 0}
           className={`p-2 -mr-2 ${draftStack.length > 0 ? 'opacity-100' : 'opacity-0'}`}
         >
-          <Ionicons name="checkmark-done" size={24} color="black" />
+          <Ionicons name="checkmark-done" size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

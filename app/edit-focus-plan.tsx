@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { addYears, addMonths, addDays } from 'date-fns';
 import { Milestone, LockedGoal } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 
 let cachedLocked: Milestone[] | null = null;
 let cachedEditable: Milestone[] | null = null;
@@ -17,6 +18,7 @@ let cachedArchived: Milestone[] | null = null;
 let cachedGoal: LockedGoal | null = null;
 
 export default function EditFocusPlanScreen() {
+    const { theme, themeName } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [lockedMilestones, setLockedMilestones] = useState<Milestone[]>(cachedLocked || []);
@@ -273,13 +275,26 @@ export default function EditFocusPlanScreen() {
                     activeOpacity={1}
                     style={[
                         styles.rowItem,
-                        isActive && styles.activeItem
+                        { borderColor: theme.border, backgroundColor: theme.background },
+                        isActive && {
+                            backgroundColor: theme.surface,
+                            borderColor: theme.accent,
+                            borderWidth: 1,
+                            borderRadius: 16,
+                            padding: 16,
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 10 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 20,
+                            elevation: 10,
+                            transform: [{ scale: 1.02 }]
+                        }
                     ]}
                 >
                     <View className="flex-row items-center gap-4">
                         {/* Drag Handle Indicator */}
                         <TouchableOpacity onPressIn={drag} className="p-2 opacity-50">
-                            <Ionicons name="menu" size={20} color="#000" />
+                            <Ionicons name="menu" size={20} color={theme.text} />
                         </TouchableOpacity>
 
                         <View className="flex-1">
@@ -287,10 +302,11 @@ export default function EditFocusPlanScreen() {
                                 {/* Editable Deadline Badge */}
                                 <TouchableOpacity
                                     onPress={() => handleDatePress(item.id)}
-                                    className="bg-gray-100 self-start px-2 py-1 rounded text-xs flex-row gap-1 items-center"
+                                    className="self-start px-2 py-1 rounded text-xs flex-row gap-1 items-center"
+                                    style={{ backgroundColor: theme.surfaceAlt }}
                                 >
-                                    <View className="w-1.5 h-1.5 bg-swiss-red rounded-full" />
-                                    <Text className="text-[10px] font-bold text-gray-900 tracking-wide">
+                                    <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.accent }} />
+                                    <Text className="text-[10px] font-bold tracking-wide" style={{ color: theme.text }}>
                                         {item.deadline}
                                     </Text>
                                 </TouchableOpacity>
@@ -299,9 +315,10 @@ export default function EditFocusPlanScreen() {
                             <TextInput
                                 value={item.title}
                                 onChangeText={(t) => handleTextChange(item.id, 'title', t)}
-                                className="font-black text-xl text-black py-0"
+                                className="font-black text-xl py-0"
+                                style={{ color: theme.text }}
                                 placeholder="Milestone Title"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={theme.textSecondary}
                                 multiline
                             />
                             {/* Optional Description - Keep it minimal */}
@@ -309,9 +326,10 @@ export default function EditFocusPlanScreen() {
                                 <TextInput
                                     value={item.description}
                                     onChangeText={(t) => handleTextChange(item.id, 'description', t)}
-                                    className="text-xs text-gray-500 font-medium mt-1"
+                                    className="text-xs font-medium mt-1"
+                                    style={{ color: theme.textSecondary }}
                                     placeholder="Add context..."
-                                    placeholderTextColor="#CCC"
+                                    placeholderTextColor={theme.textSecondary}
                                     multiline
                                 />
                             ) : null}
@@ -320,9 +338,10 @@ export default function EditFocusPlanScreen() {
                         {/* Archive Button */}
                         <TouchableOpacity
                             onPress={() => handleArchive(item.id)}
-                            className="p-2 ml-2  bg-gray-100 rounded-full"
+                            className="p-2 ml-2 rounded-full"
+                            style={{ backgroundColor: theme.surfaceAlt }}
                         >
-                            <Ionicons name="archive-outline" size={18} color="#FF0000" />
+                            <Ionicons name="archive-outline" size={18} color={theme.danger} />
                         </TouchableOpacity>
                     </View>
                 </TouchableOpacity>
@@ -332,33 +351,33 @@ export default function EditFocusPlanScreen() {
 
     if (loading) {
         return (
-            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-white items-center justify-center">
-                <ActivityIndicator size="large" color="#FF3B30" />
+            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: theme.background }} className="flex-1 items-center justify-center">
+                <ActivityIndicator size="large" color={theme.accent} />
             </View>
         );
     }
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-white">
-                <StatusBar barStyle="dark-content" />
+            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: theme.background }} className="flex-1">
+                <StatusBar barStyle={themeName === 'dark' || themeName === 'catppuccin' ? 'light-content' : 'dark-content'} />
                 {/* Header */}
-                <View className="px-6 py-4 bg-white flex-row justify-between items-center z-10">
+                <View className="px-6 py-4 flex-row justify-between items-center z-10" style={{ backgroundColor: theme.background }}>
                     <View className="flex-row items-center gap-4">
-                        <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-black rounded-full">
-                            <Ionicons name="arrow-back" size={24} color="white" />
+                        <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full" style={{ backgroundColor: theme.text }}>
+                            <Ionicons name="arrow-back" size={24} color={theme.background} />
                         </TouchableOpacity>
-                        <Text className="font-black text-lg tracking-tight">EDIT MILESTONES</Text>
+                        <Text className="font-black text-lg tracking-tight" style={{ color: theme.text }}>EDIT MILESTONES</Text>
                     </View>
-                    <TouchableOpacity onPress={handleSave} className="bg-swiss-black px-5 py-2 rounded-full">
-                        <Text className="text-white font-bold text-xs tracking-wider">SAVE</Text>
+                    <TouchableOpacity onPress={handleSave} className="px-5 py-2 rounded-full" style={{ backgroundColor: theme.text }}>
+                        <Text className="font-bold text-xs tracking-wider" style={{ color: theme.background }}>SAVE</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Sub Header for Archives Link */}
                 <View className="px-6 pb-2 items-end">
                     <TouchableOpacity onPress={() => router.push('/archived-milestones')}>
-                        <Text className="text-gray-400 font-bold text-[10px] tracking-widest underline">VIEW ARCHIVES</Text>
+                        <Text className="font-bold text-[10px] tracking-widest underline" style={{ color: theme.textSecondary }}>VIEW ARCHIVES</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -372,18 +391,18 @@ export default function EditFocusPlanScreen() {
                         <View>
                             {lockedMilestones.length > 0 && (
                                 <View className="mb-8">
-                                    <Text className="font-black text-[10px] text-gray-400 tracking-[0.2em] uppercase mb-4 ml-1">
+                                    <Text className="font-black text-[10px] tracking-[0.2em] uppercase mb-4 ml-1" style={{ color: theme.textSecondary }}>
                                         LOCKED IN HISTORY
                                     </Text>
-                                    <View className="bg-gray-50 p-4 rounded-3xl border border-gray-100">
+                                    <View className="p-4 rounded-3xl border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
                                         {lockedMilestones.map((m, i) => (
-                                            <View key={m.id} className={`flex-row items-center gap-3 ${i < lockedMilestones.length - 1 ? 'mb-4 border-b border-gray-100 pb-4' : ''}`}>
-                                                <View className="w-6 h-6 rounded-full bg-gray-200 items-center justify-center">
-                                                    <Ionicons name="lock-closed" size={12} color="#999" />
+                                            <View key={m.id} className={`flex-row items-center gap-3 ${i < lockedMilestones.length - 1 ? 'mb-4 border-b pb-4' : ''}`} style={{ borderBottomColor: theme.border }}>
+                                                <View className="w-6 h-6 rounded-full items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
+                                                    <Ionicons name="lock-closed" size={12} color={theme.textSecondary} />
                                                 </View>
                                                 <View className="flex-1">
-                                                    <Text className="font-bold text-gray-400 line-through text-md">{m.title}</Text>
-                                                    <Text className="text-[10px] text-gray-400 font-bold">{m.deadline}</Text>
+                                                    <Text className="font-bold line-through text-md" style={{ color: theme.textSecondary }}>{m.title}</Text>
+                                                    <Text className="text-[10px] font-bold" style={{ color: theme.textSecondary }}>{m.deadline}</Text>
                                                 </View>
                                             </View>
                                         ))}
@@ -392,8 +411,8 @@ export default function EditFocusPlanScreen() {
                             )}
 
                             <View className="flex-row items-center mb-6">
-                                <View className="w-1 h-4 bg-swiss-red mr-3" />
-                                <Text className="font-black text-[10px] text-black tracking-[0.2em] uppercase">
+                                <View className="w-1 h-4 mr-3" style={{ backgroundColor: theme.accent }} />
+                                <Text className="font-black text-[10px] tracking-[0.2em] uppercase" style={{ color: theme.text }}>
                                     Strategic Timeline
                                 </Text>
                             </View>
@@ -402,11 +421,11 @@ export default function EditFocusPlanScreen() {
                 />
 
                 {showDatePicker && (
-                    <View className="absolute bottom-0 left-0 right-0 bg-white shadow-2xl rounded-t-[32px] z-50 p-6 border-t border-gray-100 items-center pb-10">
+                    <View className="absolute bottom-0 left-0 right-0 shadow-2xl rounded-t-[32px] z-50 p-6 border-t items-center pb-10" style={{ backgroundColor: theme.surface, borderTopColor: theme.border }}>
                         <View className="w-full flex-row justify-between items-center mb-4">
-                            <Text className="font-black text-lg">Reschedule</Text>
-                            <TouchableOpacity onPress={() => setShowDatePicker(false)} className="bg-gray-100 px-4 py-2 rounded-full">
-                                <Text className="text-black font-bold text-xs">DONE</Text>
+                            <Text className="font-black text-lg" style={{ color: theme.text }}>Reschedule</Text>
+                            <TouchableOpacity onPress={() => setShowDatePicker(false)} className="px-4 py-2 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+                                <Text className="font-bold text-xs" style={{ color: theme.text }}>DONE</Text>
                             </TouchableOpacity>
                         </View>
                         <DateTimePicker
@@ -426,7 +445,7 @@ export default function EditFocusPlanScreen() {
                                 }
                             })()}
                             style={Platform.OS === 'ios' ? { width: '100%', height: 160 } : undefined}
-                            textColor="black"
+                            textColor={theme.text}
                         />
                     </View>
                 )}
@@ -437,23 +456,8 @@ export default function EditFocusPlanScreen() {
 
 const styles = StyleSheet.create({
     rowItem: {
-        backgroundColor: 'white',
         paddingVertical: 12,
         marginBottom: 16,
         borderBottomWidth: 1,
-        borderColor: '#F3F4F6', // Very light gray border
-    },
-    activeItem: {
-        backgroundColor: 'white',
-        borderColor: '#FF3B30', // Swiss Red
-        borderWidth: 1,
-        borderRadius: 16,
-        padding: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-        transform: [{ scale: 1.02 }]
     }
 });

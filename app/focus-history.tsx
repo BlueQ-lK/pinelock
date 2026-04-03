@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SessionHistory {
     id: string;
@@ -23,6 +24,7 @@ const ITEM_NOTE_HEIGHT = 97;    // row with note present
 
 export default function FocusHistoryScreen() {
     const router = useRouter();
+    const { theme } = useTheme();
     const [history, setHistory] = useState<SessionHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const insets = useSafeAreaInsets();
@@ -83,31 +85,32 @@ export default function FocusHistoryScreen() {
     const renderItem = useCallback(({ item, index }: { item: SessionHistory; index: number }) => (
         <Animated.View
             entering={index < 10 ? FadeInDown.delay(index * 50) : undefined}
-            className="mb-3 px-6 py-3 bg-white border-2 border-zinc-300 rounded-full"
+            className="mb-3 px-6 py-3 border-2 rounded-full"
+            style={{ backgroundColor: theme.surface, borderColor: theme.border }}
         >
             <View className="flex-row justify-between items-center">
                 <View className="flex-row items-center gap-3">
-                    <Text className="text-black font-black text-xl tracking-widest uppercase">{formatDate(item.date)}</Text>
+                    <Text className="font-black text-xl tracking-widest uppercase" style={{ color: theme.text }}>{formatDate(item.date)}</Text>
                 </View>
 
                 <View className="flex-row items-center gap-4">
-                    <Text className="text-black font-black text-2xl tracking-tighter font-mono">
+                    <Text className="font-black text-2xl tracking-tighter font-mono" style={{ color: theme.text }}>
                         {formatTime(item.duration)}
                     </Text>
                 </View>
             </View>
             {item.note ? (
-                <View className="border-b border-zinc-300" />
+                <View className="border-b" style={{ borderColor: theme.border }} />
             ) : null}
             {item.note ? (
-                <View className="bg-gray-50 px-3 rounded-full mx-auto">
-                    <Text className="text-black text-sm font-bold italic">
+                <View className="px-3 rounded-full mx-auto" style={{ backgroundColor: theme.surfaceAlt }}>
+                    <Text className="text-sm font-bold italic" style={{ color: theme.textSecondary }}>
                         {item.note}
                     </Text>
                 </View>
             ) : null}
         </Animated.View>
-    ), []);
+    ), [theme]);
     // ──────────────────────────────────────────────────────────────────────
 
     return (
@@ -116,7 +119,7 @@ export default function FocusHistoryScreen() {
                 expo-linear-gradient runs on a single GPU pass with no overdraw,
                 eliminating the expensive mask pass of the two rounded Views.   */}
             <LinearGradient
-                colors={['#111111', '#EF3124']}
+                colors={[theme.blackBackground, theme.accent]}
                 locations={[0.42, 0.42]}
                 style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             />
@@ -125,24 +128,24 @@ export default function FocusHistoryScreen() {
             <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1">
                 {/* Header */}
                 <View className="flex-row items-center gap-4 px-6 py-4 z-10">
-                    <TouchableOpacity onPress={() => router.back()} className="p-2 bg-swiss-red rounded-full">
-                        <Ionicons name="arrow-back" size={24} color="white" />
+                    <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full" style={{ backgroundColor: theme.accent }}>
+                        <Ionicons name="arrow-back" size={24} color={theme.accentForeground} />
                     </TouchableOpacity>
                     <View className="items-center">
-                        <Text className="font-black text-lg tracking-tight text-white">SESSION LOG</Text>
+                        <Text className="font-black text-lg tracking-tight" style={{ color: theme.textWhite }}>SESSION LOG</Text>
                     </View>
                 </View>
 
                 {/* Content */}
                 {isLoading ? (
                     <View className="flex-1 items-center justify-center">
-                        <ActivityIndicator size="large" color="black" />
+                        <ActivityIndicator size="large" color={theme.text} />
                     </View>
                 ) : history.length === 0 ? (
                     <Animated.View entering={FadeIn} className="flex-1 items-center justify-center px-10">
-                        <Ionicons name="folder-open-outline" size={64} color="#F3F4F6" className="mb-6" />
-                        <Text className="text-black font-black text-2xl tracking-tight text-center mb-2 uppercase italic">NO SESSIONS YET</Text>
-                        <Text className="text-gray-400 font-bold text-center tracking-wide">Complete a focus session to build your history.</Text>
+                        <Ionicons name="folder-open-outline" size={64} color={theme.surfaceAlt} className="mb-6" />
+                        <Text className="font-black text-2xl tracking-tight text-center mb-2 uppercase italic" style={{ color: theme.text }}>NO SESSIONS YET</Text>
+                        <Text className="font-bold text-center tracking-wide" style={{ color: theme.textSecondary }}>Complete a focus session to build your history.</Text>
                     </Animated.View>
                 ) : (
                     <FlatList

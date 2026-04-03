@@ -14,11 +14,13 @@ import * as Haptics from 'expo-haptics';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
+import { useTheme } from '../contexts/ThemeContext';
 
 // ─── FT-3: Lazy-load sprite components ───────────────────────────────────────
 // Each module is only loaded when required by the active timer state.
 import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 import { MusicPlayer } from '../components/dashboard/MusicPlayer';
+import { BoatingSprite } from '../components/dashboard/BoatingSprite';
 const WorkoutSprite = lazy(() =>
     import('../components/dashboard/WorkoutSprite').then(m => ({ default: m.WorkoutSprite }))
 );
@@ -44,6 +46,7 @@ const MOTIVATIONAL_QUOTES = [
 
 export default function FocusTimerScreen() {
     const router = useRouter();
+    const { theme } = useTheme();
     const [timerMode, setTimerMode] = useState<TimerMode>('open');
     const [sessionNote, setSessionNote] = useState('');
     const [timerState, setTimerState] = useState<TimerState>('idle');
@@ -278,20 +281,20 @@ export default function FocusTimerScreen() {
     // ────────────────────────────────────────────────────────────────────────
 
     return (
-        <View className="flex-1 bg-white">
+        <View className="flex-1" style={{ backgroundColor: theme.background }}>
             <SafeAreaView className="flex-1">
                 {/* Common Header */}
                 <Animated.View entering={FadeInUp} className="flex-row justify-between items-center px-6 py-4 z-10">
-                    <TouchableOpacity onPress={handleClose} className="p-2 -ml-2 bg-white rounded-full">
-                        <Ionicons name="close" size={28} color="black" />
+                    <TouchableOpacity onPress={handleClose} className="p-2 -ml-2 rounded-full" style={{ backgroundColor: theme.surface }}>
+                        <Ionicons name="close" size={28} color={theme.text} />
                     </TouchableOpacity>
                     {timerState === 'active' || timerState === 'complete' ? (
-                        <View className="bg-white px-3 py-1 rounded-full z-10">
-                            <Text className="text-black font-bold text-sm tracking-widest">LOCKED IN</Text>
+                        <View className="px-3 py-1 rounded-full z-10" style={{ backgroundColor: theme.surface }}>
+                            <Text className="font-bold text-sm tracking-widest" style={{ color: theme.text }}>LOCKED IN</Text>
                         </View>
                     ) : (
-                        <TouchableOpacity onPress={() => router.push('/focus-history')} className="bg-white px-3 py-1 rounded-full z-10">
-                            <Text className="text-black font-bold text-sm tracking-widest">SESSION LOG</Text>
+                        <TouchableOpacity onPress={() => router.push('/focus-history')} className="px-3 py-1 rounded-full z-10" style={{ backgroundColor: theme.surface }}>
+                            <Text className="font-bold text-sm tracking-widest" style={{ color: theme.text }}>SESSION LOG</Text>
                         </TouchableOpacity>
                     )}
                 </Animated.View>
@@ -307,11 +310,11 @@ export default function FocusTimerScreen() {
                     <View className="flex-1 px-6 justify-center">
                         <Animated.View entering={FadeInDown.delay(200)}>
                             <View className="mb-12">
-                                <View className="flex-row items-center gap-2 bg-black self-start px-3 py-1 rounded-full mb-4">
-                                    <View className="w-1.5 h-1.5 rounded-full bg-swiss-red animate-pulse" />
-                                    <Text className="text-white font-black text-[10px] tracking-[0.3em] uppercase">READY</Text>
+                                <View className="flex-row items-center gap-2 self-start px-3 py-1 rounded-full mb-4" style={{ backgroundColor: theme.text }}>
+                                    <View className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: theme.accent }} />
+                                    <Text className="font-black text-[10px] tracking-[0.3em] uppercase" style={{ color: theme.background }}>READY</Text>
                                 </View>
-                                <Text className="text-black font-black text-6xl tracking-tighter uppercase leading-[54px] italic">
+                                <Text className="font-black text-6xl tracking-tighter uppercase leading-[54px] italic" style={{ color: theme.text }}>
                                     LOCK IN
                                 </Text>
                             </View>
@@ -319,7 +322,7 @@ export default function FocusTimerScreen() {
 
                         {/* Sprite Bento Card */}
                         <Animated.View entering={FadeInDown.delay(400)}>
-                            <View className="bg-gray-50 border-2 border-gray-200 rounded-[40px] p-8 mb-8 items-center relative overflow-hidden">
+                            <View className="border-2 rounded-[40px] p-8 mb-8 items-center relative overflow-hidden" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
                                 <View className="scale-110">
                                     <ScannerSprite
                                         state={'IDLE'}
@@ -331,32 +334,33 @@ export default function FocusTimerScreen() {
 
                         {/* Pomodoro Toggle */}
                         <Animated.View entering={FadeInDown.delay(300)}>
-                            <View className="mb-8 flex-row bg-gray-100 p-1 rounded-full self-start">
+                            <View className="mb-8 flex-row p-1 rounded-full self-start" style={{ backgroundColor: theme.surfaceAlt }}>
                                 <TouchableOpacity
                                     onPress={() => { setTimerMode('open'); liveRef.current.timerMode = 'open'; }}
-                                    className={`px-6 py-3 rounded-full ${timerMode === 'open' ? 'bg-white border border-black/5' : ''}`}
+                                    className={`px-6 py-3 rounded-full border ${timerMode === 'open' ? '' : 'border-transparent'}`}
+                                    style={timerMode === 'open' ? { backgroundColor: theme.surface, borderColor: 'rgba(0,0,0,0.05)' } : {}}
                                 >
-                                    <Text className={`font-bold text-xs ${timerMode === 'open' ? 'text-black' : 'text-gray-400'} tracking-widest uppercase`}>OPEN</Text>
+                                    <Text className={`font-bold text-xs tracking-widest uppercase`} style={{ color: timerMode === 'open' ? theme.text : theme.textSecondary }}>OPEN</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => { setTimerMode('pomodoro'); liveRef.current.timerMode = 'pomodoro'; }}
-                                    className={`px-6 py-3 rounded-full ${timerMode === 'pomodoro' ? 'bg-white border border-black/5' : ''}`}
+                                    className={`px-6 py-3 rounded-full border ${timerMode === 'pomodoro' ? '' : 'border-transparent'}`}
+                                    style={timerMode === 'pomodoro' ? { backgroundColor: theme.surface, borderColor: 'rgba(0,0,0,0.05)' } : {}}
                                 >
-                                    <Text className={`font-bold text-xs ${timerMode === 'pomodoro' ? 'text-black' : 'text-gray-400'} tracking-widest uppercase`}>POMODORO</Text>
+                                    <Text className={`font-bold text-xs tracking-widest uppercase`} style={{ color: timerMode === 'pomodoro' ? theme.text : theme.textSecondary }}>POMODORO</Text>
                                 </TouchableOpacity>
                             </View>
                         </Animated.View>
 
-                        {/* Goal Badge */}
                         {goal && (
                             <Animated.View entering={FadeInDown.delay(500)}>
-                                <View className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4">
-                                    <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
-                                        <Ionicons name="flash" size={20} color="white" />
+                                <View className="border-2 rounded-[28px] p-6 mb-12 flex-row items-center gap-4" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+                                    <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: theme.text }}>
+                                        <Ionicons name="flash" size={20} color={theme.surface} />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-400 font-black text-[10px] tracking-[0.2em] uppercase mb-1">WORKING ON</Text>
-                                        <Text className="text-black font-black text-lg uppercase tracking-tight" numberOfLines={1}>{goal}</Text>
+                                        <Text className="font-black text-[10px] tracking-[0.2em] uppercase mb-1" style={{ color: theme.textSecondary }}>WORKING ON</Text>
+                                        <Text className="font-black text-lg uppercase tracking-tight" style={{ color: theme.text }} numberOfLines={1}>{goal}</Text>
                                     </View>
                                 </View>
                             </Animated.View>
@@ -367,23 +371,23 @@ export default function FocusTimerScreen() {
                             <View className="items-center">
                                 <TouchableOpacity
                                     onPress={handleStart}
-                                    className="bg-swiss-red w-full h-20 rounded-[24px] flex-row items-center justify-center shadow-xl shadow-swiss-red/20 gap-4 px-12"
+                                    className="w-full h-20 rounded-[24px] flex-row items-center justify-center shadow-xl gap-4 px-12"
+                                    style={{ backgroundColor: theme.accent, shadowColor: theme.accent }}
                                 >
-                                    <MaterialCommunityIcons name="power" size={28} color="white" />
-                                    <Text className="text-white font-black text-xl tracking-[0.2em] uppercase">START</Text>
+                                    <MaterialCommunityIcons name="power" size={28} color={theme.accentForeground} />
+                                    <Text className="font-black text-xl tracking-[0.2em] uppercase" style={{ color: theme.accentForeground }}>START</Text>
                                 </TouchableOpacity>
-                                <Text className="text-gray-300 font-bold text-[10px] tracking-widest uppercase mt-4">Start your focus session</Text>
+                                <Text className="font-bold text-[10px] tracking-widest uppercase mt-4" style={{ color: theme.textSecondary }}>Start your focus session</Text>
                             </View>
                         </Animated.View>
                     </View>
                 )}
 
-                {/* ACTIVE STATE */}
                 {timerState === 'active' && (
                     <View className="flex-1 justify-center items-center px-8">
                         <View className="items-center justify-center flex-1">
                             <Animated.View entering={FadeIn}>
-                                <Text className="text-black font-black text-8xl tracking-tighter leading-none italic">
+                                <Text className="font-black text-8xl tracking-tighter leading-none italic" style={{ color: theme.text }}>
                                     {timerMode === 'pomodoro' ? formatTime(Math.max(0, 1500 - elapsedSeconds)) : formatTime(elapsedSeconds)}
                                 </Text>
                             </Animated.View>
@@ -397,40 +401,40 @@ export default function FocusTimerScreen() {
                         </View>
 
                         {goal && (
-                            <View className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4">
-                                <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
-                                    <Ionicons name="flash" size={20} color="white" />
+                            <View className="border-2 rounded-[28px] p-6 mb-12 flex-row items-center gap-4" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+                                <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: theme.text }}>
+                                    <Ionicons name="flash" size={20} color={theme.surface} />
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-gray-400 font-black text-[10px] tracking-[0.2em] uppercase mb-1">WORKING ON</Text>
-                                    <Text className="text-black font-black text-lg uppercase tracking-tight" numberOfLines={1}>{goal}</Text>
+                                    <Text className="font-black text-[10px] tracking-[0.2em] uppercase mb-1" style={{ color: theme.textSecondary }}>WORKING ON</Text>
+                                    <Text className="font-black text-lg uppercase tracking-tight" style={{ color: theme.text }} numberOfLines={1}>{goal}</Text>
                                 </View>
                             </View>
                         )}
 
                         <TouchableOpacity
                             onPress={() => handleEndRef.current()}
-                            className="bg-black px-12 py-5 rounded-full mb-8 shadow-lg"
+                            className="px-12 py-5 rounded-full mb-8 shadow-lg"
+                            style={{ backgroundColor: theme.text }}
                         >
-                            <Text className="text-white font-black tracking-widest">END SESSION</Text>
+                            <Text className="font-black tracking-widest" style={{ color: theme.background }}>END SESSION</Text>
                         </TouchableOpacity>
                     </View>
                 )}
 
-                {/* COMPLETE STATE */}
                 {timerState === 'complete' && (
                     <View className="flex-1 px-6">
                         <Animated.View entering={FadeIn} className="flex-1 justify-center">
                             <ViewShot ref={shareCardRef} options={{ format: 'png', quality: 1 }}>
-                                <View className="bg-swiss-red rounded-3xl p-8 items-center shadow-xl shadow-swiss-red/30">
-                                    <View className="flex-row items-center gap-2 bg-white/20 self-start px-3 py-1 rounded-full mb-6">
-                                        <View className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                                        <Text className="text-white font-black text-[10px] tracking-[0.3em] uppercase">SESSION COMPLETE</Text>
+                                <View className="rounded-3xl p-8 items-center shadow-xl" style={{ backgroundColor: theme.accent, shadowColor: theme.accent }}>
+                                    <View className="flex-row items-center gap-2 self-start px-3 py-1 rounded-full mb-6" style={{ backgroundColor: theme.accentForeground + '33' }}>
+                                        <View className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: theme.accentForeground }} />
+                                        <Text className="font-black text-[10px] tracking-[0.3em] uppercase" style={{ color: theme.accentForeground }}>SESSION COMPLETE</Text>
                                     </View>
 
                                     <View className="flex-row items-center gap-2 mb-2">
-                                        <Ionicons name="flame" size={24} color="white" />
-                                        <Text className="text-white font-black text-5xl">
+                                        <Ionicons name="flame" size={24} color={theme.accentForeground} />
+                                        <Text className="font-black text-5xl" style={{ color: theme.accentForeground }}>
                                             {formatDuration(elapsedSeconds)}
                                         </Text>
                                     </View>
@@ -441,18 +445,18 @@ export default function FocusTimerScreen() {
                                     </View>
 
                                     {sessionNote.trim().length > 0 && (
-                                        <View className="bg-black/20 px-4 py-3 rounded-xl mb-6 w-full items-center">
-                                            <Text className="text-white font-bold text-sm text-center">&quot;{sessionNote}&quot;</Text>
+                                        <View className="px-4 py-3 rounded-xl mb-6 w-full items-center" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
+                                            <Text className="font-bold text-sm text-center" style={{ color: theme.accentForeground }}>&quot;{sessionNote}&quot;</Text>
                                         </View>
                                     )}
 
-                                    <Text className="text-white font-medium text-lg text-center italic leading-6 mb-6">
+                                    <Text className="font-medium text-lg text-center italic leading-6 mb-6" style={{ color: theme.accentForeground }}>
                                         &quot;{quote}&quot;
                                     </Text>
 
-                                    <View className="border-t border-white/20 pt-4 w-full items-center">
-                                        <Text className="text-white/60 font-bold text-xs">{today}</Text>
-                                        <Text className="text-white font-black text-sm tracking-widest mt-1">
+                                    <View className="border-t pt-4 w-full items-center" style={{ borderColor: theme.accentForeground + '33' }}>
+                                        <Text className="font-bold text-xs" style={{ color: theme.accentForeground, opacity: 0.6 }}>{today}</Text>
+                                        <Text className="font-black text-sm tracking-widest mt-1" style={{ color: theme.accentForeground }}>
                                             LOCKIN26
                                         </Text>
                                     </View>
@@ -466,8 +470,9 @@ export default function FocusTimerScreen() {
                                     value={sessionNote}
                                     onChangeText={updateSessionNote}
                                     placeholder="Add a session note..."
-                                    placeholderTextColor="#9CA3AF"
-                                    className="bg-gray-100 px-4 py-4 rounded-xl text-black font-bold text-base border border-gray-200"
+                                    placeholderTextColor={theme.textSecondary}
+                                    className="px-4 py-4 rounded-xl font-bold text-base border"
+                                    style={{ backgroundColor: theme.surfaceAlt, color: theme.text, borderColor: theme.border }}
                                     returnKeyType="done"
                                 />
                             </View>
@@ -480,37 +485,38 @@ export default function FocusTimerScreen() {
                                     <TouchableOpacity
                                         onPress={handleSave}
                                         disabled={isCapturing}
-                                        className="flex-1 bg-white border-2 border-black py-4 rounded-xl items-center flex-row justify-center gap-2"
-                                        style={{ opacity: isCapturing ? 0.5 : 1 }}
+                                        className="flex-1 border-2 py-4 rounded-xl items-center flex-row justify-center gap-2"
+                                        style={{ backgroundColor: theme.surface, borderColor: theme.text, opacity: isCapturing ? 0.5 : 1 }}
                                     >
                                         {isCapturing
-                                            ? <ActivityIndicator size="small" color="#000" />
+                                            ? <ActivityIndicator size="small" color={theme.text} />
                                             : <>
-                                                <Ionicons name="download-outline" size={20} color="black" />
-                                                <Text className="text-black font-black text-xs tracking-widest">SAVE</Text>
+                                                <Ionicons name="download-outline" size={20} color={theme.text} />
+                                                <Text className="font-black text-xs tracking-widest" style={{ color: theme.text }}>SAVE</Text>
                                             </>
                                         }
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={handleShare}
                                         disabled={isCapturing}
-                                        className="flex-1 bg-white border-2 border-black py-4 rounded-xl items-center flex-row justify-center gap-2"
-                                        style={{ opacity: isCapturing ? 0.5 : 1 }}
+                                        className="flex-1 border-2 py-4 rounded-xl items-center flex-row justify-center gap-2"
+                                        style={{ backgroundColor: theme.surface, borderColor: theme.text, opacity: isCapturing ? 0.5 : 1 }}
                                     >
                                         {isCapturing
-                                            ? <ActivityIndicator size="small" color="#000" />
+                                            ? <ActivityIndicator size="small" color={theme.text} />
                                             : <>
-                                                <Ionicons name="share-outline" size={20} color="black" />
-                                                <Text className="text-black font-black text-xs tracking-widest">SHARE</Text>
+                                                <Ionicons name="share-outline" size={20} color={theme.text} />
+                                                <Text className="font-black text-xs tracking-widest" style={{ color: theme.text }}>SHARE</Text>
                                             </>
                                         }
                                     </TouchableOpacity>
                                 </View>
                                 <TouchableOpacity
                                     onPress={handleNewSession}
-                                    className="bg-black py-4 rounded-xl items-center shadow-lg"
+                                    className="py-4 rounded-xl items-center shadow-lg"
+                                    style={{ backgroundColor: theme.text }}
                                 >
-                                    <Text className="text-white font-black tracking-widest uppercase">NEW SESSION</Text>
+                                    <Text className="font-black tracking-widest uppercase" style={{ color: theme.background }}>NEW SESSION</Text>
                                 </TouchableOpacity>
                             </View>
                         </Animated.View>
@@ -518,9 +524,13 @@ export default function FocusTimerScreen() {
                 )}
 
                 {(timerState === 'idle' || timerState === 'active') && (
-                    <Suspense fallback={null}>
+                    <Suspense fallback={
                         <View className="absolute top-0 left-0 right-0 items-center" style={{ transform: [{ scaleY: -1 }] }}>
                             <Image source={require('../assets/images/waves2.png')} className='w-full' />
+                        </View>
+                    }>
+                        <View className="absolute top-0 left-0 right-0 items-center" style={{ transform: [{ scaleY: -1 }] }}>
+                            <BoatingSprite />
                         </View>
                     </Suspense>
                 )}

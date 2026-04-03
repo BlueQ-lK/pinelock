@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { DurationUnit } from './GoalInputStep';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ContractStepProps {
   goal: string;
@@ -39,6 +40,7 @@ export function ContractStep({
   onEditGoal,
   onEditMotivation
 }: ContractStepProps) {
+  const { theme } = useTheme();
   const translateX = useSharedValue(0);
   const [isLocked, setIsLocked] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
@@ -98,7 +100,7 @@ export function ContractStep({
       backgroundColor: interpolateColor(
         translateX.value,
         [0, SLIDER_WIDTH - KNOB_WIDTH],
-        ['#1a1a1a', '#FF3B30']
+        [theme.textSecondary, theme.accent]
       )
     };
   });
@@ -106,6 +108,7 @@ export function ContractStep({
   const fillStyle = useAnimatedStyle(() => {
     return {
       width: translateX.value + KNOB_WIDTH,
+      backgroundColor: theme.accent,
     };
   });
 
@@ -122,10 +125,10 @@ export function ContractStep({
   });
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>
         <Animated.View entering={FadeInDown.delay(300)}>
-          <Text className="font-black text-5xl text-black tracking-tighter mb-8 leading-none">
+          <Text className="font-black text-5xl tracking-tighter mb-8 leading-none" style={{ color: theme.text }}>
             THE CONTRACT.
           </Text>
         </Animated.View>
@@ -136,42 +139,45 @@ export function ContractStep({
           {/* Main Card: Objective */}
           <Animated.View
             entering={FadeInDown.delay(500)}
-            className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm"
+            className="p-6 rounded-3xl border shadow-sm"
+            style={{ backgroundColor: theme.surface, borderColor: theme.border }}
           >
             <View className="flex-row justify-between items-center mb-2">
               <View className="flex-row items-center gap-2">
-                <View className="w-2 h-2 rounded-full bg-swiss-red" />
-                <Text className="font-bold text-xs text-gray-400 tracking-widest uppercase">OBJECTIVE</Text>
+                <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent }} />
+                <Text className="font-bold text-xs tracking-widest uppercase" style={{ color: theme.textSecondary }}>OBJECTIVE</Text>
               </View>
               {onEditGoal && (
-                <TouchableOpacity onPress={onEditGoal} className="bg-gray-100 px-3 py-1 rounded-full">
-                  <Text className="text-black font-bold text-[10px] tracking-widest">EDIT</Text>
+                <TouchableOpacity onPress={onEditGoal} className="px-3 py-1 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+                  <Text className="font-bold text-[10px] tracking-widest" style={{ color: theme.text }}>EDIT</Text>
                 </TouchableOpacity>
               )}
             </View>
-            <Text className="font-bold text-3xl text-black leading-8 tracking-tight mb-2">
+            <Text className="font-bold text-3xl leading-8 tracking-tight mb-2" style={{ color: theme.text }}>
               {goal}
             </Text>
           </Animated.View>
 
           <Animated.View
             entering={FadeInDown.delay(600)}
-            className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm"
+            className="p-6 rounded-3xl border shadow-sm"
+            style={{ backgroundColor: theme.surface, borderColor: theme.border }}
           >
             <View className="flex-row justify-between items-center mb-2">
               <View className="flex-row items-center gap-2">
-                <View className="w-2 h-2 rounded-full bg-swiss-red" />
-                <Text className="font-bold text-xs text-gray-400 tracking-widest uppercase">MOTIVATION</Text>
+                <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent }} />
+                <Text className="font-bold text-xs tracking-widest uppercase" style={{ color: theme.textSecondary }}>MOTIVATION</Text>
               </View>
               {onEditMotivation && (
-                <TouchableOpacity onPress={onEditMotivation} className="bg-gray-100 px-3 py-1 rounded-full">
-                  <Text className="text-black font-bold text-[10px] tracking-widest">EDIT</Text>
+                <TouchableOpacity onPress={onEditMotivation} className="px-3 py-1 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+                  <Text className="font-bold text-[10px] tracking-widest" style={{ color: theme.text }}>EDIT</Text>
                 </TouchableOpacity>
               )}
             </View>
             <Text
-              className="font-medium text-lg text-black leading-6"
+              className="font-medium text-lg leading-6"
               numberOfLines={10}
+              style={{ color: theme.text }}
             >
               &quot;{motivation}&quot;
             </Text>
@@ -179,17 +185,18 @@ export function ContractStep({
 
           <Animated.View
             entering={FadeInDown.delay(700)}
-            className=" bg-swiss-red p-5 rounded-3xl justify-between"
+            className="p-5 rounded-3xl justify-between"
+            style={{ backgroundColor: theme.accent }}
           >
             <View className="flex-row items-center gap-2">
               <View className="w-2 h-2 rounded-full" />
-              <Text className="font-bold text-xs text-white tracking-widest uppercase">Timeline</Text>
+              <Text className="font-bold text-xs tracking-widest uppercase" style={{ color: theme.textWhite }}>Timeline</Text>
             </View>
             <View>
-              <Text className="font-bold text-7xl text-center text-white tracking-tighter leading-none">
+              <Text className="font-bold text-7xl text-center tracking-tighter leading-none" style={{ color: theme.textWhite }}>
                 {durationValue}
               </Text>
-              <Text className="font-bold text-lg text-center text-black tracking-widest uppercase">
+              <Text className="font-bold text-lg text-center tracking-widest uppercase" style={{ color: theme.textWhite, opacity: 0.8 }}>
                 {durationUnit === 'year' ? 'YEAR' : (durationValue === 1 ? durationUnit.slice(0, -1) : durationUnit)}
               </Text>
             </View>
@@ -197,8 +204,8 @@ export function ContractStep({
 
           {/* Legal Text */}
           <Animated.View entering={FadeInDown.delay(800)} className="mt-4 px-2">
-            <Text className="font-medium text-sm text-gray-400 text-center leading-5">
-              By sliding below, I legally bind myself to this objective for <Text className="text-black font-bold">{getDurationText()}</Text>. Breach of contract results in personal failure.
+            <Text className="font-medium text-sm text-center leading-5" style={{ color: theme.textSecondary }}>
+              By sliding below, I legally bind myself to this objective for <Text className="font-bold" style={{ color: theme.text }}>{getDurationText()}</Text>. Breach of contract results in personal failure.
             </Text>
           </Animated.View>
 
@@ -211,18 +218,18 @@ export function ContractStep({
         className="absolute bottom-10 left-6 right-6"
       >
         <View
-          className="bg-white rounded-full justify-center overflow-hidden relative shadow-lg"
-          style={{ height: SLIDER_HEIGHT, width: SLIDER_WIDTH }}
+          className="rounded-full justify-center overflow-hidden relative shadow-lg"
+          style={{ height: SLIDER_HEIGHT, width: SLIDER_WIDTH, backgroundColor: theme.surface }}
         >
           {/* Progress Fill */}
           <Animated.View
-            className="absolute left-0 top-0 bottom-0 bg-swiss-red rounded-full"
+            className="absolute left-0 top-0 bottom-0 rounded-full"
             style={fillStyle}
           />
           {/* Background Text */}
           <Animated.Text
-            className="absolute w-full text-center font-bold text-gray-500 tracking-widest text-lg"
-            style={textStyle}
+            className="absolute w-full text-center font-bold tracking-widest text-lg"
+            style={[textStyle, { color: theme.textSecondary }]}
           >
             SLIDE TO LOCK IN
           </Animated.Text>
@@ -230,8 +237,8 @@ export function ContractStep({
 
           {/* Success Text */}
           <Animated.Text
-            className="absolute w-full text-center font-black text-white tracking-widest text-lg"
-            style={successTextStyle}
+            className="absolute w-full text-center font-black tracking-widest text-lg"
+            style={[successTextStyle, { color: theme.textWhite }]}
           >
             COMMITTING...
           </Animated.Text>
@@ -242,7 +249,7 @@ export function ContractStep({
               className="absolute left-0 top-0 bottom-0 rounded-full justify-center items-center shadow-sm"
               style={[{ width: KNOB_WIDTH, height: SLIDER_HEIGHT, borderRadius: SLIDER_HEIGHT / 2 }, knobStyle]}
             >
-              <Ionicons name="arrow-forward" size={32} color="white" />
+              <Ionicons name="arrow-forward" size={32} color={theme.textWhite} />
             </Animated.View>
           </GestureDetector>
         </View>
@@ -250,7 +257,7 @@ export function ContractStep({
 
       {/* Success Modal Sequence (Recycled logic, updated style) */}
       <Modal visible={showSplash} animationType="fade" transparent={false}>
-        <View className="flex-1 bg-black justify-center items-center relative overflow-hidden">
+        <View className="flex-1 justify-center items-center relative overflow-hidden" style={{ backgroundColor: theme.background }}>
 
           {/* Phase 1: Mission */}
           {sequenceStep === 1 && (
@@ -259,8 +266,8 @@ export function ContractStep({
               exiting={FadeOut.duration(500)}
               className="px-8 items-center"
             >
-              <Text className="font-bold text-sm text-gray-500 tracking-[0.3em] mb-8">CONTRACT ACCEPTED</Text>
-              <Text className="font-black text-5xl text-white text-center leading-[1.1] tracking-tight">{goal}</Text>
+              <Text className="font-bold text-sm tracking-[0.3em] mb-8" style={{ color: theme.textSecondary }}>CONTRACT ACCEPTED</Text>
+              <Text className="font-black text-5xl text-center leading-[1.1] tracking-tight" style={{ color: theme.text }}>{goal}</Text>
             </Animated.View>
           )}
 
@@ -271,8 +278,8 @@ export function ContractStep({
               exiting={FadeOut.duration(500)}
               className="px-8 items-center"
             >
-              <Text className="font-bold text-sm text-gray-500 tracking-[0.3em] mb-8">TIMELINE LOCKED</Text>
-              <Text className="font-black text-8xl text-swiss-red text-center">{getDurationText()}</Text>
+              <Text className="font-bold text-sm tracking-[0.3em] mb-8" style={{ color: theme.textSecondary }}>TIMELINE LOCKED</Text>
+              <Text className="font-black text-8xl text-center" style={{ color: theme.accent }}>{getDurationText()}</Text>
             </Animated.View>
           )}
 
@@ -280,29 +287,30 @@ export function ContractStep({
           {sequenceStep >= 5 && (
             <Animated.View
               entering={FadeIn.duration(800)}
-              className="flex-1 bg-swiss-red w-full h-full absolute top-0 left-0 z-20"
+              className="flex-1 w-full h-full absolute top-0 left-0 z-20"
+              style={{ backgroundColor: theme.accent }}
             >
               <SafeAreaView className="flex-1 px-8 justify-between py-12">
                 <View className="mt-12">
                   <Animated.View entering={FadeInDown.delay(500).duration(800)} className="mb-12">
                     <View className="flex-row items-center gap-3 mb-2">
                       <View className="w-3 h-3 bg-white rounded-full" />
-                      <Text className="text-white/80 font-bold text-sm tracking-[0.2em]">STATUS REPORT</Text>
+                      <Text className="font-bold text-sm tracking-[0.2em]" style={{ color: theme.textWhite, opacity: 0.8 }}>STATUS REPORT</Text>
                     </View>
-                    <Text className="text-white font-black text-6xl tracking-tighter leading-none mb-1">CONTRACT</Text>
-                    <Text className="text-black font-black text-6xl tracking-tighter leading-none">SIGNED.</Text>
+                    <Text className="font-black text-6xl tracking-tighter leading-none mb-1" style={{ color: theme.textWhite }}>CONTRACT</Text>
+                    <Text className="font-black text-6xl tracking-tighter leading-none" style={{ color: theme.text }}>SIGNED.</Text>
                   </Animated.View>
 
                   <Animated.View entering={FadeInDown.delay(1200).duration(800)} className="mb-10">
-                    <View className="w-full h-[1px] bg-white/30 mb-6" />
+                    <View className="w-full h-[1px] mb-6" style={{ backgroundColor: theme.textWhite, opacity: 0.3 }} />
                     <View className="flex-row justify-between">
                       <View>
-                        <Text className="text-white/60 font-bold text-[10px] tracking-widest mb-1">DURATION</Text>
-                        <Text className="text-white font-black text-2xl tracking-tight">{getDurationText()}</Text>
+                        <Text className="font-bold text-[10px] tracking-widest mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>DURATION</Text>
+                        <Text className="font-black text-2xl tracking-tight" style={{ color: theme.textWhite }}>{getDurationText()}</Text>
                       </View>
                       <View className="items-end">
-                        <Text className="text-white/60 font-bold text-[10px] tracking-widest mb-1">PENALTY</Text>
-                        <Text className="text-white font-black text-2xl tracking-tight">FAILURE</Text>
+                        <Text className="font-bold text-[10px] tracking-widest mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>PENALTY</Text>
+                        <Text className="font-black text-2xl tracking-tight" style={{ color: theme.textWhite }}>FAILURE</Text>
                       </View>
                     </View>
                   </Animated.View>
@@ -311,9 +319,10 @@ export function ContractStep({
                 <Animated.View entering={FadeInDown.delay(2500).duration(800)}>
                   <TouchableOpacity
                     onPress={onLockIn}
-                    className="bg-black py-6 rounded-full items-center shadow-2xl w-full border border-white/10"
+                    className="py-6 rounded-full items-center shadow-2xl w-full border"
+                    style={{ backgroundColor: theme.text, borderColor: theme.border }}
                   >
-                    <Text className="text-white font-black text-xl tracking-[0.2em]">
+                    <Text className="font-black text-xl tracking-[0.2em]" style={{ color: theme.background }}>
                       BEGIN EXECUTION
                     </Text>
                   </TouchableOpacity>

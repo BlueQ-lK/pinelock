@@ -14,6 +14,7 @@ import {
     getTodayStr,
     StreakData
 } from '../../utils/streakUtils';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const GridBackground = React.memo(() => (
     <View className="absolute inset-0 w-full h-full opacity-60" pointerEvents="none">
@@ -30,6 +31,7 @@ const GridBackground = React.memo(() => (
 
 const PulseRings = React.memo(() => {
     const opacity = useSharedValue(0.2);
+    const { theme } = useTheme();
     useEffect(() => {
         opacity.value = withRepeat(
             withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -41,9 +43,9 @@ const PulseRings = React.memo(() => {
 
     return (
         <Animated.View style={animatedStyle} className="absolute items-center justify-center mb-14">
-            <View className="absolute w-[300px] h-[300px] rounded-full bg-[#FF3B30]/5" />
-            <View className="absolute w-[260px] h-[260px] rounded-full bg-[#FF3B30]/10" />
-            <View className="absolute w-[220px] h-[220px] rounded-full bg-[#FF3B30]/20" />
+            <View className="absolute w-[300px] h-[300px] rounded-full" style={{ backgroundColor: theme.accent, opacity: 0.05 }} />
+            <View className="absolute w-[260px] h-[260px] rounded-full" style={{ backgroundColor: theme.accent, opacity: 0.1 }} />
+            <View className="absolute w-[220px] h-[220px] rounded-full" style={{ backgroundColor: theme.accent, opacity: 0.2 }} />
         </Animated.View>
     );
 });
@@ -88,6 +90,7 @@ const StreakSkeleton = () => (
 );
 
 export default function Streak() {
+    const { theme } = useTheme();
     const [streakData, setStreakData] = useState<StreakData | null>(null);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
     const [checkedInToday, setCheckedInToday] = useState(false);
@@ -155,7 +158,7 @@ export default function Streak() {
     const endOfWeekDate = weekDates[6] ? format(weekDates[6], 'MMM d') : '-';
 
     return (
-        <View className="flex-1 bg-white" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        <View className="flex-1" style={{ paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: theme.background }}>
             {/* Grid Background */}
             <GridBackground />
 
@@ -169,8 +172,8 @@ export default function Streak() {
                         <View className="mb-8">
                             <View className="flex-row justify-between items-center">
                                 <View>
-                                    <Text className="font-black text-2xl tracking-tighter">STREAK</Text>
-                                    <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em] uppercase">DAILY DISCIPLINE</Text>
+                                    <Text className="font-black text-2xl tracking-tighter" style={{ color: theme.text }}>STREAK</Text>
+                                    <Text className="font-bold text-[10px] tracking-[0.2em] uppercase" style={{ color: theme.textSecondary }}>DAILY DISCIPLINE</Text>
                                 </View>
                             </View>
                         </View>
@@ -183,7 +186,7 @@ export default function Streak() {
                                 {/* Flame and Streak Text */}
                                 <View className="items-center z-10">
                                     <Text style={{ fontSize: 200 }}>🔥</Text>
-                                    <Text className="text-black font-black text-[90px] leading-[100px] tracking-tighter">
+                                    <Text className="font-black text-[90px] leading-[100px] tracking-tighter" style={{ color: theme.text }}>
                                         {streakData.currentStreak}
                                     </Text>
                                 </View>
@@ -193,27 +196,27 @@ export default function Streak() {
                         {/* Week Row */}
                         <View className="mb-6">
                             <View className="flex-row justify-between items-end mb-4 px-2">
-                                <Text className="font-bold text-xs text-gray-400 tracking-widest">THIS WEEK</Text>
-                                <Text className="font-bold text-xs text-black tracking-widest">{startOfWeekDate} - {endOfWeekDate}</Text>
+                                <Text className="font-bold text-xs tracking-widest" style={{ color: theme.textSecondary }}>THIS WEEK</Text>
+                                <Text className="font-bold text-xs tracking-widest" style={{ color: theme.text }}>{startOfWeekDate} - {endOfWeekDate}</Text>
                             </View>
-                            <View className="flex-row justify-between items-center bg-gray-50 p-4 rounded-3xl border border-gray-100">
+                            <View className="flex-row justify-between items-center p-4 rounded-3xl border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
                                 {displayWeekDates.map((item, i) => (
                                     <View key={i} className="items-center">
-                                        <Text className="text-[10px] font-bold text-gray-400 mb-2">{item.dayName}</Text>
+                                        <Text className="text-[10px] font-bold mb-2" style={{ color: theme.textSecondary }}>{item.dayName}</Text>
 
                                         {item.isCompleted ? (
-                                            <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center">
-                                                <Ionicons name="checkmark" size={16} color="white" />
+                                            <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: theme.accent }}>
+                                                <Ionicons name="checkmark" size={16} color={theme.accentForeground} />
                                             </View>
                                         ) : (
                                             <View
-                                                className={`w-10 h-10 rounded-full items-center justify-center ${item.isToday ? 'border-2 border-black bg-white' : 'bg-gray-200'
-                                                    }`}
+                                                className={`w-10 h-10 rounded-full items-center justify-center`}
+                                                style={item.isToday ? { backgroundColor: theme.surface, borderColor: theme.text, borderWidth: 2 } : { backgroundColor: theme.surfaceVariant }}
                                             >
                                                 {item.isToday ? (
-                                                    <View className="w-3 h-3 rounded-full bg-black" />
+                                                    <View className="w-3 h-3 rounded-full" style={{ backgroundColor: theme.text }} />
                                                 ) : (
-                                                    <Text className="text-xs font-bold text-gray-400">{item.dayDate}</Text>
+                                                    <Text className="text-xs font-bold" style={{ color: theme.textSecondary }}>{item.dayDate}</Text>
                                                 )}
                                             </View>
                                         )}
@@ -224,33 +227,34 @@ export default function Streak() {
 
                         {/* Additional Stats Row */}
                         <View className="flex-row gap-4 mb-6">
-                            <View className="flex-1 bg-gray-50 p-5 rounded-3xl border border-gray-100 items-center">
-                                <Text className="font-black text-3xl">{streakData.longestStreak}</Text>
-                                <Text className="text-[10px] font-bold text-gray-400 tracking-widest text-center mt-2">LONGEST STREAK</Text>
+                            <View className="flex-1 p-5 rounded-3xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+                                <Text className="font-black text-3xl" style={{ color: theme.text }}>{streakData.longestStreak}</Text>
+                                <Text className="text-[10px] font-bold tracking-widest text-center mt-2" style={{ color: theme.textSecondary }}>LONGEST STREAK</Text>
                             </View>
-                            <View className="flex-1 bg-gray-50 p-5 rounded-3xl border border-gray-100 items-center">
-                                <Text className="font-black text-3xl">{streakData.totalCheckIns}</Text>
-                                <Text className="text-[10px] font-bold text-gray-400 tracking-widest text-center mt-2">TOTAL CHECK-INS</Text>
+                            <View className="flex-1 p-5 rounded-3xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+                                <Text className="font-black text-3xl" style={{ color: theme.text }}>{streakData.totalCheckIns}</Text>
+                                <Text className="text-[10px] font-bold tracking-widest text-center mt-2" style={{ color: theme.textSecondary }}>TOTAL CHECK-INS</Text>
                             </View>
                         </View>
 
                         {/* 30-Day Heatmap */}
                         <View className="mb-10">
-                            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 px-2">LAST 30 DAYS</Text>
-                            <View className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                            <Text className="font-bold text-xs tracking-widest mb-4 px-2" style={{ color: theme.textSecondary }}>LAST 30 DAYS</Text>
+                            <View className="p-5 rounded-3xl border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
                                 <View className="flex-row flex-wrap gap-2">
                                     {heatmapSquares.map((sq) => (
                                         <View
                                             key={sq.id}
-                                            className={`w-6 h-6 rounded-md ${sq.isCompleted ? 'bg-swiss-red' : 'bg-gray-200'} border border-black/5`}
+                                            className="w-6 h-6 rounded-md border"
+                                            style={{ backgroundColor: sq.isCompleted ? theme.accent : theme.surfaceAlt, borderColor: 'rgba(0,0,0,0.05)' }}
                                         />
                                     ))}
                                 </View>
                                 <View className="flex-row items-center gap-2 mt-4 ml-1">
-                                    <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Missed</Text>
-                                    <View className="w-3 h-3 rounded-sm bg-gray-200" />
-                                    <View className="w-3 h-3 rounded-sm bg-swiss-red" />
-                                    <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Locked In</Text>
+                                    <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textSecondary }}>Missed</Text>
+                                    <View className="w-3 h-3 rounded-sm" style={{ backgroundColor: theme.surfaceAlt }} />
+                                    <View className="w-3 h-3 rounded-sm" style={{ backgroundColor: theme.accent }} />
+                                    <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textSecondary }}>Locked In</Text>
                                 </View>
                             </View>
                         </View>
@@ -258,8 +262,8 @@ export default function Streak() {
 
                     {/* Check In Button Container */}
                     <View
-                        className="absolute bottom-0 left-0 right-0 p-6 bg-white/90"
-                        style={{ paddingBottom: 40 }}
+                        className="absolute bottom-0 left-0 right-0 p-6"
+                        style={{ paddingBottom: 40, backgroundColor: theme.background + 'e6' }}
                     >
                         <Pressable
                             onPress={handleCheckIn}
@@ -269,19 +273,18 @@ export default function Streak() {
                             ]}
                         >
                             <View
-
-                                className={`flex-row items-center justify-center gap-2 p-5 rounded-full ${checkedInToday ? 'bg-black' : 'bg-swiss-red'
-                                    }`}
+                                className="flex-row items-center justify-center gap-2 p-5 rounded-full"
+                                style={{ backgroundColor: checkedInToday ? theme.blackBackground : theme.accent }}
                             >
                                 {checkedInToday ? (
                                     <>
-                                        <Text className="text-white font-black tracking-widest text-base">DONE</Text>
-                                        <Ionicons name="checkmark-circle" size={20} color="white" />
+                                        <Text className="font-black tracking-widest text-base" style={{ color: theme.textWhite }}>DONE</Text>
+                                        <Ionicons name="checkmark-circle" size={20} color={theme.textWhite} />
                                     </>
                                 ) : (
                                     <>
-                                        <Text className="text-white font-black tracking-widest text-base">CHECK IN TODAY</Text>
-                                        <Ionicons name="flame" size={20} color="white" />
+                                        <Text className="font-black tracking-widest text-base" style={{ color: theme.accentForeground }}>CHECK IN TODAY</Text>
+                                        <Ionicons name="flame" size={20} color={theme.accentForeground} />
                                     </>
                                 )}
                             </View>

@@ -1,15 +1,17 @@
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StatusBar } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../contexts/ThemeContext';
 import { TimeLeftStep } from '../../components/onboarding/TimeLeftStep';
 import { GoalInputStep, DurationUnit } from '../../components/onboarding/GoalInputStep';
 import { MotivationStep } from '../../components/onboarding/MotivationStep';
 import { ContractStep } from '../../components/onboarding/ContractStep';
 
 export default function OnboardingScreen() {
+  const { theme, themeName } = useTheme();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<{
     goal: string;
@@ -60,27 +62,28 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar barStyle={themeName === 'dark' || themeName === 'catppuccin' ? 'light-content' : 'dark-content'} />
       {/* Navigation Header */}
-      <View className="flex-row justify-between items-center px-6 py-2 z-10">
+      <View className="flex-row justify-between items-center px-6 py-2 z-10" style={{ backgroundColor: theme.background }}>
         <TouchableOpacity
           onPress={handleBack}
           disabled={step === 0}
-          className={`p-2 -ml-2 rounded-full active:bg-gray-100 ${step === 0 ? 'opacity-0' : 'opacity-100'}`}
+          className={`p-2 -ml-2 rounded-full ${step === 0 ? 'opacity-0' : 'opacity-100'}`}
+          style={{ backgroundColor: step === 0 ? 'transparent' : theme.surfaceAlt }}
         >
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
 
         <View className="flex-row gap-1.5 items-center">
           {[0, 1, 2, 3].map((i) => (
             <View
               key={i}
-              className={`h-1.5 rounded-full ${i === step
-                ? 'w-8 bg-swiss-red'
-                : i < step
-                  ? 'w-4 bg-black'
-                  : 'w-2 bg-gray-200'
-                }`}
+              className={`h-1.5 rounded-full`}
+              style={{
+                width: i === step ? 32 : i < step ? 16 : 8,
+                backgroundColor: i === step ? theme.accent : i < step ? theme.text : theme.border
+              }}
             />
           ))}
         </View>

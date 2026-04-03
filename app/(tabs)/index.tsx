@@ -14,8 +14,7 @@ import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
 import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
 import { checkInToday } from '../../utils/streakUtils';
-
-
+import { useTheme } from '../../contexts/ThemeContext';
 const DashboardSkeleton = () => {
   const opacity = useSharedValue(0.5);
 
@@ -82,6 +81,7 @@ const CURRENT_YEAR = new Date().getFullYear().toString();
 
 export default function Dashboard() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [goal, setGoal] = useState('Loading...');
   const [motivation, setMotivation] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -196,7 +196,7 @@ export default function Dashboard() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }} edges={['top']}>
       {goal === 'Loading...' ? (
         <DashboardSkeleton />
       ) : (
@@ -214,22 +214,24 @@ export default function Dashboard() {
             {/* Header Section */}
             <View className="flex-row justify-between items-center mb-8">
               <View>
-                <Text className="font-black text-2xl tracking-tighter">LOCKIN {CURRENT_YEAR}</Text>
-                <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD</Text>
+                <Text className="font-black text-2xl tracking-tighter" style={{ color: theme.text }}>LOCKIN {CURRENT_YEAR}</Text>
+                <Text className="font-bold text-[10px] tracking-[0.2em]" style={{ color: theme.textSecondary }}>FOCUS DASHBOARD</Text>
 
               </View>
               <View className="flex-row gap-3">
                 <TouchableOpacity
                   onPress={() => router.push('/focus-timer')}
-                  className="bg-black rounded-full p-3"
+                  className="rounded-full p-3"
+                  style={{ backgroundColor: theme.text }}
                 >
-                  <Ionicons name="timer-outline" size={20} color="white" />
+                  <Ionicons name="timer-outline" size={20} color={theme.background} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => router.push('/focus-zone')}
-                  className="bg-swiss-red rounded-full p-3"
+                  onPress={() => router.push('/focus-zone/manual')}
+                  className="rounded-full p-3"
+                  style={{ backgroundColor: theme.accent }}
                 >
-                  <Ionicons name="add" size={20} color="white" />
+                  <Ionicons name="add" size={20} color={theme.accentForeground} />
                 </TouchableOpacity>
 
               </View>
@@ -246,23 +248,23 @@ export default function Dashboard() {
               onPress={() => router.push('/milestones')}
               className="mb-8"
             >
-              <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">FOCUS PATH</Text>
-              <View className="bg-white p-5 rounded-2xl  border border-gray-100 flex-row justify-between items-center">
+              <Text className="font-bold text-xs tracking-widest mb-4 ml-2" style={{ color: theme.textSecondary }}>FOCUS PATH</Text>
+              <View className="p-5 rounded-2xl border flex-row justify-between items-center" style={{ borderColor: theme.border }}>
                 <View className="flex-row items-center gap-4">
-                  <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center ">
-                    <Text className="text-white font-black text-xl">
+                  <View className="w-12 h-12 rounded-xl items-center justify-center " style={{ backgroundColor: theme.accent }}>
+                    <Text className="font-black text-xl" style={{ color: theme.accentForeground }}>
                       {completedCount}
                     </Text>
                   </View>
                   <View>
-                    <Text className="font-black text-lg">FOCUS LOG</Text>
-                    <Text className="text-xs text-gray-500 font-medium">
+                    <Text className="font-black text-lg" style={{ color: theme.text }}>FOCUS LOG</Text>
+                    <Text className="text-xs font-medium" style={{ color: theme.textSecondary }}>
                       {milestoneStack.length} Milestones Scheduled
                     </Text>
                   </View>
                 </View>
-                <View className="bg-gray-50 p-3 rounded-full">
-                  <Ionicons name="chevron-forward" size={20} color="black" />
+                <View className="p-3 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+                  <Ionicons name="chevron-forward" size={20} color={theme.text} />
                 </View>
               </View>
             </TouchableOpacity>
@@ -276,7 +278,7 @@ export default function Dashboard() {
                     params: { milestone: JSON.stringify(activeMilestone) }
                   });
                 } else {
-                  router.push('/focus-zone');
+                  router.push('/focus-zone/manual');
                 }
               }}
               onComplete={handleCompleteMilestone}
@@ -288,7 +290,7 @@ export default function Dashboard() {
             </View>
 
             {/* Motivation Section */}
-            <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">YOUR CONTRACT</Text>
+            <Text className="font-bold text-xs tracking-widest mb-4 ml-2" style={{ color: theme.textSecondary }}>YOUR CONTRACT</Text>
             <MotivationCard
               goal={goal}
               motivation={motivation}

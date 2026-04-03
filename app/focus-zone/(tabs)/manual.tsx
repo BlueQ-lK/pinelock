@@ -7,9 +7,11 @@ import { Milestone, Todo } from '../../../types';
 import { scheduleNotificationAtDate } from '../../../services/notifications';
 import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 
 export default function ManualEntry() {
+    const { theme } = useTheme();
     const { draftStack, setDraftStack, goal, deployedStack } = useWarRoom();
     const [manualTitle, setManualTitle] = useState('');
     const [manualDesc, setManualDesc] = useState('');
@@ -145,14 +147,15 @@ export default function ManualEntry() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 bg-white"
+            className="flex-1"
+            style={{ backgroundColor: theme.background }}
         >
             <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 140 }}>
                 {/* Builder Sprite Header */}
                 <View className="flex-row justify-between items-center mb-6">
                     <View>
-                        <Text className="text-2xl font-black">MANUAL INPUT</Text>
-                        <Text className="text-xs font-bold text-gray-400 tracking-widest">BUILD YOUR PLAN</Text>
+                        <Text className="text-2xl font-black" style={{ color: theme.text }}>MANUAL INPUT</Text>
+                        <Text className="text-xs font-bold tracking-widest" style={{ color: theme.textSecondary }}>BUILD YOUR PLAN</Text>
                     </View>
                     <View className="scale-75 origin-right h-24 w-24 justify-center items-center">
                         <View className="absolute">
@@ -164,38 +167,43 @@ export default function ManualEntry() {
                     </View>
                 </View>
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">MISSION TITLE</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>MISSION TITLE</Text>
                 <TextInput
-                    className="bg-gray-50 p-4 rounded-xl font-bold text-lg mb-6"
+                    className="p-4 rounded-xl font-bold text-lg mb-6"
+                    style={{ backgroundColor: theme.surface, color: theme.text }}
                     placeholder="e.g. Launch MVP"
+                    placeholderTextColor={theme.textSecondary}
                     value={manualTitle}
                     onChangeText={setManualTitle}
                 />
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">TACTICAL DESCRIPTION</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>TACTICAL DESCRIPTION</Text>
                 <TextInput
-                    className="bg-gray-50 p-4 rounded-xl font-medium text-sm mb-6 h-32"
+                    className="p-4 rounded-xl font-medium text-sm mb-6 h-32"
+                    style={{ backgroundColor: theme.surface, color: theme.text }}
                     placeholder="Describe the objective..."
+                    placeholderTextColor={theme.textSecondary}
                     multiline
                     textAlignVertical="top"
                     value={manualDesc}
                     onChangeText={setManualDesc}
                 />
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">DEADLINE</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>DEADLINE</Text>
                 <TouchableOpacity
                     onPress={() => setShowDatePicker(true)}
-                    className={`bg-gray-50 p-4 rounded-xl ${deadlineError ? 'mb-2 border-2 border-red-500' : 'mb-6'}`}
+                    className={`p-4 rounded-xl ${deadlineError ? 'mb-2 border-2' : 'mb-6'}`}
+                    style={{ backgroundColor: theme.surface, borderColor: deadlineError ? theme.danger : theme.border }}
                 >
-                    <Text className="font-medium text-sm text-black">
+                    <Text className="font-medium text-sm" style={{ color: theme.text }}>
                         {format(manualDeadline, 'MMMM d, yyyy')}
                     </Text>
                 </TouchableOpacity>
 
                 {deadlineError && (
-                    <View className="bg-red-50 p-3 rounded-lg mb-6 flex-row items-start gap-2">
-                        <Ionicons name="warning" size={16} color="#EF4444" />
-                        <Text className="flex-1 text-xs font-bold text-red-500 leading-4">
+                    <View className="p-3 rounded-lg mb-6 flex-row items-start gap-2" style={{ backgroundColor: theme.danger + '1A' }}>
+                        <Ionicons name="warning" size={16} color={theme.danger} />
+                        <Text className="flex-1 text-xs font-bold leading-4" style={{ color: theme.danger }}>
                             {deadlineError}
                         </Text>
                     </View>
@@ -217,83 +225,86 @@ export default function ManualEntry() {
                 {Platform.OS === 'ios' && showDatePicker && (
                     <TouchableOpacity
                         onPress={() => setShowDatePicker(false)}
-                        className="bg-gray-100 p-2 rounded-lg items-center mb-6"
+                        className="p-2 rounded-lg items-center mb-6"
+                        style={{ backgroundColor: theme.surfaceAlt }}
                     >
-                        <Text className="text-blue-500 font-bold">Done</Text>
+                        <Text className="font-bold" style={{ color: theme.accent }}>Done</Text>
                     </TouchableOpacity>
                 )}
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">IMPACT LEVEL</Text>
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>IMPACT LEVEL</Text>
                 <View className="flex-row gap-3 mb-8">
                     {(['HIGH', 'CRITICAL'] as const).map((level) => (
                         <TouchableOpacity
                             key={level}
                             onPress={() => setManualImpact(level)}
-                            className={`flex-1 py-4 rounded-xl border-2 items-center ${manualImpact === level
-                                ? 'bg-black border-black'
-                                : 'bg-white border-gray-200'
-                                }`}
+                            className={`flex-1 py-4 rounded-xl border-2 items-center`}
+                            style={{
+                                backgroundColor: manualImpact === level ? theme.accent : theme.surface,
+                                borderColor: manualImpact === level ? theme.accent : theme.border
+                            }}
                         >
-                            <Text className={`font-bold text-xs tracking-widest ${manualImpact === level ? 'text-white' : 'text-gray-400'
-                                }`}>
+                            <Text className={`font-bold text-xs tracking-widest`} style={{ color: manualImpact === level ? theme.background : theme.textSecondary }}>
                                 {level}
                             </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">TACTICAL MOMENTUM</Text>
-                <View className="bg-gray-50 rounded-xl p-4 mb-8">
+                <Text className="text-xs font-bold mb-2 tracking-widest" style={{ color: theme.textSecondary }}>TACTICAL MOMENTUM</Text>
+                <View className="rounded-xl p-4 mb-8" style={{ backgroundColor: theme.surface }}>
                     {/* Input */}
                     <View className="flex-row items-center gap-3 mb-4">
-                        <View className="w-8 h-8 rounded-full bg-white border border-gray-200 items-center justify-center">
-                            <Ionicons name="add" size={16} color="black" />
+                        <View className="w-8 h-8 rounded-full items-center justify-center" style={{ backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 }}>
+                            <Ionicons name="add" size={16} color={theme.text} />
                         </View>
                         <TextInput
                             className="flex-1 font-bold text-sm"
+                            style={{ color: theme.text }}
                             placeholder="Add actionable step..."
+                            placeholderTextColor={theme.textSecondary}
                             value={newTodo}
                             onChangeText={setNewTodo}
                             onSubmitEditing={handleAddTodo}
                         />
                         {newTodo.length > 0 && (
-                            <TouchableOpacity onPress={handleAddTodo} className="bg-black px-3 py-1.5 rounded-lg">
-                                <Text className="text-white text-[10px] font-bold tracking-wider">ADD</Text>
+                            <TouchableOpacity onPress={handleAddTodo} className="px-3 py-1.5 rounded-lg" style={{ backgroundColor: theme.text }}>
+                                <Text className="text-[10px] font-bold tracking-wider" style={{ color: theme.background }}>ADD</Text>
                             </TouchableOpacity>
                         )}
                     </View>
 
                     {/* List */}
                     {manualTodos.map((todo, index) => (
-                        <View key={todo.id} className="flex-row items-center justify-between py-3 border-t border-gray-100">
+                        <View key={todo.id} className="flex-row items-center justify-between py-3 border-t" style={{ borderTopColor: theme.border }}>
                             <View className="flex-row items-center gap-4 flex-1">
-                                <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center">
-                                    <Text className="text-sm font-bold text-gray-500">{index + 1}</Text>
+                                <View className="w-8 h-8 rounded-full items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
+                                    <Text className="text-sm font-bold" style={{ color: theme.textSecondary }}>{index + 1}</Text>
                                 </View>
-                                <Text className="font-bold text-base text-gray-800 flex-1">{todo.task}</Text>
+                                <Text className="font-bold text-base flex-1" style={{ color: theme.text }}>{todo.task}</Text>
                             </View>
                             <TouchableOpacity onPress={() => handleDeleteTodo(todo.id)} className="p-2 opacity-50">
-                                <Ionicons name="close" size={14} color="black" />
+                                <Ionicons name="close" size={14} color={theme.text} />
                             </TouchableOpacity>
                         </View>
                     ))}
                     {manualTodos.length === 0 && (
                         <View className="py-4 items-center">
-                            <Text className="text-[10px] font-bold text-gray-300 tracking-widest uppercase">No steps defined</Text>
+                            <Text className="text-[10px] font-bold tracking-widest uppercase" style={{ color: theme.textSecondary, opacity: 0.5 }}>No steps defined</Text>
                         </View>
                     )}
                 </View>
             </ScrollView>
 
             {/* Fixed Bottom Button */}
-            <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100" style={{ paddingBottom: 40 }}>
+            <View className="absolute bottom-0 left-0 right-0 p-6 border-t" style={{ paddingBottom: 40, backgroundColor: theme.background, borderTopColor: theme.border }}>
                 <TouchableOpacity
                     onPress={handleManualSubmit}
                     disabled={!manualTitle.trim()}
-                    className={`py-4 rounded-xl items-center ${manualTitle.trim() ? 'bg-swiss-red' : 'bg-gray-200'
-                        }`}
+                    className={`py-4 rounded-xl items-center`}
+                    style={{ backgroundColor: manualTitle.trim() ? theme.accent : theme.surfaceAlt }}
                 >
-                    <Text className="text-white font-bold tracking-widest">ADD TO FOCUS ZONE</Text>
+                    <Text className="font-bold tracking-widest" style={{ color: manualTitle.trim() ? theme.accentForeground : theme.textSecondary }}>ADD TO FOCUS ZONE</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
