@@ -20,7 +20,7 @@
     "@expo-google-fonts/roboto-mono": "^0.4.1",
     "@expo/ngrok": "^4.1.0",
     "@expo/vector-icons": "^15.0.3",
-    "@google/genai": "^1.34.0",
+
     "@notifee/react-native": "^9.1.8",
     "@radix-ui/react-compose-refs": "^1.1.2",
     "@radix-ui/react-slot": "^1.2.4",
@@ -32,7 +32,7 @@
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
     "expo": "~54.0.33",
-    "expo-ai-kit": "^0.1.21",
+
     "expo-android-usagestats": "^1.2.0",
     "expo-asset": "~12.0.12",
     "expo-audio": "^1.1.1",

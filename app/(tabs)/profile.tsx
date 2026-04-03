@@ -9,8 +9,7 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Milestone } from '../../types';
-import { useAI } from '../../contexts/AIContext';
-import { saveCustomApiKey, getCustomApiKey, testApiKey } from '../../services/gemini';
+
 import { StreakData } from '../../utils/streakUtils';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { StorageService } from '../../utils/StorageService';
@@ -83,7 +82,6 @@ const STATS_PANEL_HEIGHT = 272; // approximate px for 3-row grid + gaps
 
 export default function Profile() {
   const router = useRouter();
-  const { aiProvider, refreshProvider } = useAI();
 
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true); // P-4
@@ -96,11 +94,6 @@ export default function Profile() {
   const [reminderTime, setReminderTime] = useState({ hour: 21, minute: 0 });
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // AI Settings
-  const [customApiKey, setCustomApiKey] = useState('');
-  const [isTestingKey, setIsTestingKey] = useState(false);
-  const [isSavingKey, setIsSavingKey] = useState(false);
-  const [hasExistingKey, setHasExistingKey] = useState(false);
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
   // ─── P-1: Debounced name write ──────────────────────────────────────────
@@ -146,15 +139,13 @@ export default function Profile() {
       savedGoal,
       savedMotivation,
       savedNotifs,
-      rawStreak,       // <-- raw string, not a nested call
-      existingKey
+      rawStreak,
     ] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.USER_NAME),
       AsyncStorage.getItem(STORAGE_KEYS.MAIN_GOAL),
       AsyncStorage.getItem(STORAGE_KEYS.MOTIVATION),
       AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED),
-      AsyncStorage.getItem('streakData'),    // same key as streakUtils uses
-      getCustomApiKey()
+      AsyncStorage.getItem('streakData'),
     ]);
 
     if (savedName) setUserName(savedName);
@@ -193,11 +184,6 @@ export default function Profile() {
       longestStreak: streakData.longestStreak
     });
 
-    setHasExistingKey(!!existingKey);
-    if (existingKey) {
-      setCustomApiKey('••••••••' + existingKey.slice(-4));
-    }
-
     setIsLoading(false); // P-4: reveal real UI
   };
   // ────────────────────────────────────────────────────────────────────────
@@ -209,100 +195,8 @@ export default function Profile() {
     }, [])
   );
 
-  // ─── P-6: Memoized provider helpers ─────────────────────────────────────
-  const providerLabel = useMemo(() => {
-    switch (aiProvider) {
-      case 'ondevice': return 'On-Device AI';
-      case 'gemini': return 'Gemini (Default)';
-      case 'gemini-custom': return 'Gemini (Custom Key)';
-      default: return 'Not Configured';
-    }
-  }, [aiProvider]);
 
-  const providerDescription = useMemo(() => {
-    switch (aiProvider) {
-      case 'ondevice': return 'Fastest & fully private.';
-      case 'gemini': return 'Shared quota. Add your key to avoid limits.';
-      case 'gemini-custom': return 'Using your personal Gemini Flash quota.';
-      default: return 'No AI available. Add a key below.';
-    }
-  }, [aiProvider]);
 
-  const providerColor = useMemo(() => {
-    switch (aiProvider) {
-      case 'ondevice': return '#10B981';
-      case 'gemini': return '#3B82F6';
-      case 'gemini-custom': return '#000000';
-      default: return '#EF4444';
-    }
-  }, [aiProvider]);
-  // ────────────────────────────────────────────────────────────────────────
-
-  const handleTestKey = async () => {
-    const keyToTest = customApiKey.startsWith('••') ? null : customApiKey;
-    if (!keyToTest) {
-      Alert.alert('Enter Key', 'Please enter a new API key to test.');
-      return;
-    }
-    setIsTestingKey(true);
-    try {
-      const result = await testApiKey(keyToTest);
-      if (result.valid) {
-        Alert.alert('Success ✓', 'API key is valid and working!');
-      } else {
-        Alert.alert('Invalid Key', result.error || 'The API key is not valid.');
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Failed to test API key.');
-    } finally {
-      setIsTestingKey(false);
-    }
-  };
-
-  const handleSaveKey = async () => {
-    const keyToSave = customApiKey.startsWith('••') ? null : customApiKey.trim();
-    if (!keyToSave) {
-      Alert.alert('Enter Key', 'Please enter an API key to save.');
-      return;
-    }
-    setIsSavingKey(true);
-    try {
-      const result = await testApiKey(keyToSave);
-      if (!result.valid) {
-        Alert.alert('Invalid Key', result.error || 'Please enter a valid API key.');
-        return;
-      }
-      await saveCustomApiKey(keyToSave);
-      setHasExistingKey(true);
-      setCustomApiKey('••••••••' + keyToSave.slice(-4));
-      await refreshProvider();
-      Alert.alert('Saved ✓', 'Your API key has been saved. AI is now using your key.');
-    } catch (e) {
-      Alert.alert('Error', 'Failed to save API key.');
-    } finally {
-      setIsSavingKey(false);
-    }
-  };
-
-  const handleClearKey = async () => {
-    Alert.alert(
-      'Clear API Key?',
-      'This will remove your custom API key. The app will use the default key (if available).',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            await saveCustomApiKey('');
-            setCustomApiKey('');
-            setHasExistingKey(false);
-            await refreshProvider();
-          }
-        }
-      ]
-    );
-  };
 
   const handleReset = async () => {
     Alert.alert(
@@ -486,94 +380,6 @@ export default function Profile() {
         </Animated.View>
 
         {!isStatsExpanded && <View className="mb-4" />}
-
-        {/* AI Settings Section */}
-        <Text className="font-bold text-xs text-gray-400 mb-4 uppercase tracking-widest">AI Settings</Text>
-
-        <View className="bg-white border border-gray-100 rounded-xl overflow-hidden mb-8">
-          {/* Current Provider Status */}
-          <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
-            <View className="flex-row items-center gap-3 flex-1">
-              <View className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center">
-                <Ionicons name="hardware-chip-outline" size={16} color="black" />
-              </View>
-              <View className="flex-1 pr-4">
-                <Text className="font-bold text-sm">AI Provider</Text>
-                {/* P-6: memoized values used directly */}
-                <Text className="text-xs font-medium" style={{ color: providerColor }}>{providerLabel}</Text>
-                <Text className="text-[10px] text-gray-400 mt-1">{providerDescription}</Text>
-              </View>
-            </View>
-            <View className="w-3 h-3 rounded-full" style={{ backgroundColor: providerColor }} />
-          </View>
-
-          {/* Custom API Key Input */}
-          <View className="p-4">
-            <Text className="font-bold text-xs text-gray-500 mb-2">Gemini API Key</Text>
-            <View className="flex-row gap-2">
-              <TextInput
-                className="flex-1 bg-gray-50 px-4 py-3 rounded-lg font-mono text-sm border border-gray-200"
-                placeholder="Enter your Gemini API key..."
-                value={customApiKey}
-                onChangeText={(text) => {
-                  if (!text.startsWith('••')) {
-                    setCustomApiKey(text);
-                  }
-                }}
-                onFocus={() => {
-                  if (customApiKey.startsWith('••')) {
-                    setCustomApiKey('');
-                  }
-                }}
-                secureTextEntry={!customApiKey.startsWith('••')}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View className="flex-row gap-2 mt-3">
-              <TouchableOpacity
-                onPress={handleTestKey}
-                disabled={isTestingKey}
-                className="flex-1 bg-gray-100 py-3 rounded-lg items-center"
-              >
-                {isTestingKey ? (
-                  <ActivityIndicator size="small" color="#000" />
-                ) : (
-                  <Text className="font-bold text-sm">Test Key</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleSaveKey}
-                disabled={isSavingKey}
-                className="flex-1 bg-black py-3 rounded-lg items-center"
-              >
-                {isSavingKey ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text className="font-bold text-sm text-white">Save Key</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {hasExistingKey && (
-              <TouchableOpacity onPress={handleClearKey} className="mt-3">
-                <Text className="text-swiss-red text-xs font-bold text-center">Clear Custom Key</Text>
-              </TouchableOpacity>
-            )}
-
-            <Text className="text-[10px] text-gray-400 mt-3 text-center">
-              Get your API key from{' '}
-              <Text
-                className="text-gray-500 underline"
-                onPress={() => Linking.openURL('https://aistudio.google.com')}
-              >
-                aistudio.google.com
-              </Text>
-            </Text>
-          </View>
-        </View>
 
         {/* Preferences Section */}
         <Text className="font-bold text-xs text-gray-400 mb-4 uppercase tracking-widest">Preferences</Text>

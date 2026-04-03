@@ -26,33 +26,3 @@ export interface Milestone {
   order: number;
   isArchived?: boolean;
 }
-
-export interface ShinyObjectAnalysis {
-  isDistraction: boolean;
-  score: number;
-  reasoning: string;
-  advice: string;
-}
-
-export interface StrategyOption {
-  label: string;
-  value: string;
-  action: 'reply' | 'lock_milestone';
-}
-
-export interface StrategyResponse {
-  message: string;
-  options: StrategyOption[];
-  draftMilestone?: Milestone;
-}
-
-export interface ChatMessage {
-  role: 'user' | 'ai';
-  content: string;
-}
-
-export interface AlignmentValidation {
-  isValid: boolean;
-  reasoning: string;
-  suggestion?: string;
-}

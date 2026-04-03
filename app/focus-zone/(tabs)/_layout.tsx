@@ -17,7 +17,7 @@ export default function TabsLayout() {
                 tabBarInactiveTintColor: '#9CA3AF',
             }}
         >
-            <MaterialTopTabs.Screen name="index" options={{ title: 'QUICK ACTIONS' }} />
+            <MaterialTopTabs.Screen name="index" options={{ title: 'STRATEGY AI' }} />
             <MaterialTopTabs.Screen name="manual" options={{ title: 'MANUAL' }} />
             <MaterialTopTabs.Screen name="staged" options={{ title: 'STAGED INTEL' }} />
         </MaterialTopTabs>

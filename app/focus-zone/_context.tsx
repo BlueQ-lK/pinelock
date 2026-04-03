@@ -2,20 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 // Context for Focus Zone
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Milestone, LockedGoal, StrategyOption } from '../../types';
+import { Milestone, LockedGoal } from '../../types';
 import { StorageService } from '../../utils/StorageService';
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'system' | 'user';
-  timestamp: number;
-  options?: StrategyOption[];
-}
-
 interface WarRoomContextType {
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   draftStack: Milestone[];
   setDraftStack: React.Dispatch<React.SetStateAction<Milestone[]>>;
   goal: LockedGoal | null;
@@ -29,7 +19,6 @@ const WarRoomContext = createContext<WarRoomContextType | undefined>(undefined);
 
 export function WarRoomProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([]);
   const [draftStack, setDraftStack] = useState<Milestone[]>([]);
   const [goal, setGoal] = useState<LockedGoal | null>(null);
   const [deployedStack, setDeployedStack] = useState<Milestone[]>([]);
@@ -62,22 +51,19 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
     if (stackStr) {
       setDeployedStack(JSON.parse(stackStr));
     }
-
-    // Context-aware greeting
-    // (Existing greeting logic is fine, though we removed chat UI, it doesn't hurt to keep if we ever switch back)
   };
 
   const deployStack = async () => {
     if (draftStack.length === 0) return;
 
-    const existing = await StorageService.getJSON<Milestone[]>('milestoneStack') || []; // Use getJSON
+    const existing = await StorageService.getJSON<Milestone[]>('milestoneStack') || [];
 
     const startOrder = existing.length > 0 ? Math.max(...existing.map(m => m.order)) + 1 : 1;
     const newMilestones = draftStack.map((m, i) => ({ ...m, order: startOrder + i }));
 
     const combined = [...existing, ...newMilestones];
 
-    const active = await StorageService.getJSON<Milestone>('activeMilestone'); // Use getJSON
+    const active = await StorageService.getJSON<Milestone>('activeMilestone');
     let finalStack = combined;
 
     const updates: [string, string][] = [];
@@ -88,7 +74,7 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
       updates.push(['activeMilestone', JSON.stringify(first)]);
       finalStack = combined.map(m => m.id === first.id ? { ...m, status: 'ACTIVE' } : m);
     } else if (active) {
-      const activeObj = active; // active is already parsed
+      const activeObj = active;
       const inStack = finalStack.find(m => m.id === activeObj.id);
       if (inStack) {
         finalStack = finalStack.map(m => m.id === activeObj.id ? { ...m, status: 'ACTIVE' } : m);
@@ -104,7 +90,7 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <WarRoomContext.Provider value={{ messages, setMessages, draftStack, setDraftStack, goal, deployedStack, deployStack, draftOptions, setDraftOptions }}>
+    <WarRoomContext.Provider value={{ draftStack, setDraftStack, goal, deployedStack, deployStack, draftOptions, setDraftOptions }}>
       {children}
     </WarRoomContext.Provider>
   );
