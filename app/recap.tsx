@@ -47,20 +47,20 @@ const StatCard = React.memo(function StatCard({
         >
             <Text
                 className={`text-xs font-bold tracking-[0.2em] mb-3`}
-                style={{ color: highlight ? theme.textWhite : theme.textSecondary }}
+                style={{ color: highlight ? theme.textAlt : theme.textSecondary }}
             >
                 {label.toUpperCase()}
             </Text>
             <Text
                 className={`font-black tracking-tighter leading-none mb-1 ${isLarge ? 'text-7xl' : 'text-4xl'}`}
-                style={{ color: highlight ? theme.textWhite : theme.text }}
+                style={{ color: highlight ? theme.textAlt : theme.text }}
             >
                 {value}
             </Text>
             {subtext && (
                 <Text
                     className={`font-medium text-xs`}
-                    style={{ color: highlight ? theme.textWhite : theme.textSecondary, opacity: 0.8 }}
+                    style={{ color: highlight ? theme.textAlt : theme.textSecondary, opacity: 0.8 }}
                 >
                     {subtext}
                 </Text>
@@ -83,7 +83,7 @@ const MilestoneRow = React.memo(function MilestoneRow({ title, status, index }: 
                 style={{ backgroundColor: isCompleted ? theme.accent : theme.surfaceAlt }}
             >
                 {isCompleted ? (
-                    <Ionicons name="checkmark" size={16} color={theme.textWhite} />
+                    <Ionicons name="checkmark" size={16} color={theme.textAlt} />
                 ) : (
                     <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.border }} />
                 )}
@@ -328,7 +328,7 @@ export default function RecapPage() {
                     {/* Header Badge */}
                     <View className="flex-row justify-between items-start">
                         <View className="px-4 py-2 rounded-full" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                            <Text className="font-bold text-[10px] tracking-[0.3em] uppercase" style={{ color: theme.textWhite }}>
+                            <Text className="font-bold text-[10px] tracking-[0.3em] uppercase" style={{ color: theme.textAlt }}>
                                 MISSION DEBRIEF
                             </Text>
                         </View>
@@ -341,8 +341,8 @@ export default function RecapPage() {
                     {/* Main Content */}
                     <View className="flex-1 justify-center my-4">
                         <View className="flex-row items-center gap-2 mb-4">
-                            <Ionicons name="medal" size={24} color={theme.textWhite} style={{ opacity: 0.8 }} />
-                            <Text className="font-bold text-sm tracking-widest uppercase" style={{ color: theme.textWhite, opacity: 0.8 }}>
+                            <Ionicons name="medal" size={24} color={theme.textAlt} style={{ opacity: 0.8 }} />
+                            <Text className="font-bold text-sm tracking-widest uppercase" style={{ color: theme.textAlt, opacity: 0.8 }}>
                                 OBJECTIVE COMPLETE
                             </Text>
                         </View>
@@ -351,34 +351,34 @@ export default function RecapPage() {
                             className="font-black text-5xl leading-[50px] tracking-tight mb-6"
                             adjustsFontSizeToFit
                             numberOfLines={3}
-                            style={{ color: theme.textWhite }}
+                            style={{ color: theme.textAlt }}
                         >
                             {stats?.goalTitle.toUpperCase() || 'GOAL'}
                         </Text>
 
-                        <View className="h-1 w-20 rounded-full mb-8" style={{ backgroundColor: theme.textWhite, opacity: 0.3 }} />
+                        <View className="h-1 w-20 rounded-full mb-8" style={{ backgroundColor: theme.textAlt, opacity: 0.3 }} />
 
                         <View className="flex-row gap-4 mb-8">
                             <View className="px-5 py-4 rounded-2xl border flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                                <Text className="font-bold text-[10px] tracking-widest uppercase mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>
+                                <Text className="font-bold text-[10px] tracking-widest uppercase mb-1" style={{ color: theme.textAlt, opacity: 0.6 }}>
                                     COMPLETION
                                 </Text>
-                                <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.textWhite }}>
+                                <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.textAlt }}>
                                     {stats?.completionPercentage}%
                                 </Text>
                             </View>
                             <View className="px-5 py-4 rounded-2xl border flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                                <Text className="font-bold text-[10px] tracking-widest uppercase mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>
+                                <Text className="font-bold text-[10px] tracking-widest uppercase mb-1" style={{ color: theme.textAlt, opacity: 0.6 }}>
                                     DURATION
                                 </Text>
-                                <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.textWhite }}>
+                                <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.textAlt }}>
                                     {stats?.daysElapsed}D
                                 </Text>
                             </View>
                         </View>
 
                         <View className="px-6 py-4 rounded-2xl border mx-[-8]" style={{ backgroundColor: 'rgba(0,0,0,0.05)', borderColor: 'rgba(255,255,255,0.05)' }}>
-                            <Text className="font-medium text-lg italic text-center" style={{ color: theme.textWhite }}>
+                            <Text className="font-medium text-lg italic text-center" style={{ color: theme.textAlt }}>
                                 &quot;{stats?.motivation}&quot;
                             </Text>
                         </View>
@@ -387,11 +387,11 @@ export default function RecapPage() {
                     {/* Footer Section */}
                     <View className="flex-row justify-between items-end">
                         <View>
-                            <Text className="text-[10px] font-bold tracking-[0.4em] mb-2 uppercase" style={{ color: theme.textWhite, opacity: 0.6 }}>SECURED ON</Text>
-                            <Text className="font-black text-2xl tracking-tighter" style={{ color: theme.textWhite }}>LOCKIN 2026</Text>
+                            <Text className="text-[10px] font-bold tracking-[0.4em] mb-2 uppercase" style={{ color: theme.textAlt, opacity: 0.6 }}>SECURED ON</Text>
+                            <Text className="font-black text-2xl tracking-tighter" style={{ color: theme.textAlt }}>LOCKIN 2026</Text>
                             <View className="mt-1 flex-row gap-2 items-center">
                                 <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.accent }} />
-                                <Text className="text-[9px] font-bold uppercase" style={{ color: theme.textWhite, opacity: 0.5 }}>System Optimal</Text>
+                                <Text className="text-[9px] font-bold uppercase" style={{ color: theme.textAlt, opacity: 0.5 }}>System Optimal</Text>
                             </View>
                         </View>
 

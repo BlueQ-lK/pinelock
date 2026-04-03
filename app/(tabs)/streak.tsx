@@ -278,8 +278,8 @@ export default function Streak() {
                             >
                                 {checkedInToday ? (
                                     <>
-                                        <Text className="font-black tracking-widest text-base" style={{ color: theme.textWhite }}>DONE</Text>
-                                        <Ionicons name="checkmark-circle" size={20} color={theme.textWhite} />
+                                        <Text className="font-black tracking-widest text-base" style={{ color: theme.textAlt }}>DONE</Text>
+                                        <Ionicons name="checkmark-circle" size={20} color={theme.textAlt} />
                                     </>
                                 ) : (
                                     <>

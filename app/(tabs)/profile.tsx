@@ -15,6 +15,7 @@ import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { StorageService } from '../../utils/StorageService';
 import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '../../services/notifications';
 import { useTheme, themes } from '../../contexts/ThemeContext';
+import { AppearanceTab } from '../../components/profile/appearance';
 
 // ─── P-4: Skeleton loader ────────────────────────────────────────────────────
 function SkeletonBox({ width, height, className }: { width?: number | string; height: number; className?: string }) {
@@ -96,7 +97,7 @@ export default function Profile() {
   const [reminderTime, setReminderTime] = useState({ hour: 21, minute: 0 });
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const [isStatsExpanded, setIsStatsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
 
   // ─── P-1: Debounced name write ──────────────────────────────────────────
   const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,22 +117,22 @@ export default function Profile() {
   }, []);
   // ────────────────────────────────────────────────────────────────────────
 
-  // ─── P-3: Reanimated stats panel ────────────────────────────────────────
-  const statsHeight = useSharedValue(0);
-
-  const animatedStatsStyle = useAnimatedStyle(() => ({
-    height: statsHeight.value,
-    overflow: 'hidden',
-  }));
-
-  const toggleStats = () => {
-    const next = !isStatsExpanded;
-    setIsStatsExpanded(next);
-    statsHeight.value = withTiming(next ? STATS_PANEL_HEIGHT : 0, {
-      duration: 260,
-      easing: Easing.inOut(Easing.ease),
-    });
-  };
+  // ─── P-3: Detail View Header ──────────────────────────────────────────
+  const SubHeader = ({ title }: { title: string }) => (
+    <View className="flex-row items-center gap-4 mb-10">
+      <TouchableOpacity
+        onPress={() => setActiveTab(null)}
+        className="w-12 h-12 rounded-2xl items-center justify-center border"
+        style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}
+      >
+        <Ionicons name="chevron-back" size={20} color={theme.text} />
+      </TouchableOpacity>
+      <View>
+        <Text className="font-black text-2xl tracking-tighter uppercase" style={{ color: theme.text }}>{title}</Text>
+        <Text className="font-bold text-[10px] tracking-[0.2em] opacity-60" style={{ color: theme.textSecondary }}>CONFIGURATION SECTOR</Text>
+      </View>
+    </View>
+  );
   // ────────────────────────────────────────────────────────────────────────
 
   // ─── P-2: loadData – reads streak raw string in same Promise.all ────────
@@ -308,149 +309,249 @@ export default function Profile() {
   }
   // ────────────────────────────────────────────────────────────────────────
 
-  return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: theme.background }}>
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 24 }}>
-        {/* Header */}
-        <View className="mb-8 items-center">
-          <View
-            className="w-24 h-24 rounded-full items-center justify-center mb-4"
-            style={{ backgroundColor: theme.text }}
-          >
-            <Text className="font-black text-4xl" style={{ color: theme.background }}>
-              {userName.charAt(0).toUpperCase() || 'L'}
-            </Text>
-          </View>
+  const renderContent = () => {
+    if (activeTab === 'statistics') {
+      return (
+        <View className="flex-1">
+          <SubHeader title="STATISTICS" />
 
-          <TextInput
-            value={userName}
-            onChangeText={handleNameChange}
-            className="font-black text-2xl tracking-tighter text-center"
-            placeholder="Your Name"
-            placeholderTextColor={theme.textSecondary}
-            style={{ color: theme.text }}
-          />
-        </View>
-
-        {/* Mission Card */}
-        <View className="p-6 rounded-2xl mb-8" style={{ backgroundColor: theme.accent }}>
-          <View className="flex-row justify-between items-start mb-4">
-            <View>
-              <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: theme.accentForeground, opacity: 0.7 }}>CURRENT GOAL</Text>
-              <Text className="font-black text-xl leading-6" style={{ color: theme.accentForeground }}>{goal}</Text>
-            </View>
-            <Ionicons name="lock-closed" size={20} color={theme.accentForeground} />
-          </View>
-          <View className="h-px my-4" style={{ backgroundColor: theme.accentForeground, opacity: 0.2 }} />
-          <Text className="text-xs italic" style={{ color: theme.accentForeground, opacity: 0.8 }}>"{motivation}"</Text>
-        </View>
-
-        {/* Stats Grid – P-3: Reanimated controlled panel */}
-        <TouchableOpacity
-          onPress={toggleStats}
-          className="flex-row items-center justify-between border-b-2 mb-4 py-4"
-          style={{ borderBottomColor: theme.border }}
-        >
-          <Text className="font-bold text-xs uppercase tracking-widest" style={{ color: theme.text }}>Statistics</Text>
-          <Ionicons name={isStatsExpanded ? "chevron-up" : "chevron-down"} size={16} color={theme.text} />
-        </TouchableOpacity>
-
-        <Animated.View style={animatedStatsStyle}>
-          <View className="flex-row flex-wrap gap-4 mb-8">
-            <View className="w-[47%] p-4 rounded-xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-              <Text className="font-black text-2xl">{stats.completed}</Text>
-              <Text className="text-[10px] font-bold text-gray-400 tracking-wider text-center mt-1">MILESTONES DONE</Text>
-            </View>
-            <View className="w-[47%] p-4 rounded-xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-              <Text className="font-black text-2xl" style={{ color: theme.text }}>{stats.total}</Text>
-              <Text className="text-[10px] font-bold tracking-wider text-center mt-1" style={{ color: theme.textSecondary }}>TOTAL MILESTONES</Text>
-            </View>
-            <View className="w-[47%] p-4 rounded-xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-              <Text className="font-black text-2xl" style={{ color: theme.text }}>{stats.daysActive}</Text>
-              <Text className="text-[10px] font-bold tracking-wider text-center mt-1" style={{ color: theme.textSecondary }}>DAYS ACTIVE</Text>
-            </View>
-            <View className="w-[47%] p-4 rounded-xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-              <Text className="font-black text-2xl" style={{ color: theme.text }}>{stats.currentStreak}</Text>
-              <Text className="text-[10px] font-bold tracking-wider text-center mt-1" style={{ color: theme.textSecondary }}>CURRENT STREAK</Text>
-            </View>
-            <View className="w-[47%] p-4 rounded-xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-              <Text className="font-black text-2xl" style={{ color: theme.text }}>{stats.longestStreak}</Text>
-              <Text className="text-[10px] font-bold tracking-wider text-center mt-1" style={{ color: theme.textSecondary }}>LONGEST STREAK</Text>
-            </View>
-            <View className="w-[47%] p-4 rounded-xl border items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-              <Text className="font-black text-2xl" style={{ color: theme.text }}>{stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%</Text>
-              <Text className="text-[10px] font-bold tracking-wider text-center mt-1" style={{ color: theme.textSecondary }}>COMPLETION RATE</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {!isStatsExpanded && <View className="mb-4" />}
-
-        {/* Appearance Section */}
-        <Text className="font-bold text-xs uppercase tracking-widest mb-4" style={{ color: theme.textSecondary }}>Appearance</Text>
-        <View className="rounded-xl overflow-hidden mb-8 border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <View className="p-4">
-            <Text className="font-bold text-sm mb-4" style={{ color: theme.text }}>Color Theme</Text>
-            <View className="flex-row flex-wrap gap-3">
-              {Object.keys(themes).map((tKey) => {
-                const isActive = themeName === tKey;
-                return (
-                  <TouchableOpacity
-                    key={tKey}
-                    onPress={() => setThemeName(tKey)}
-                    className="px-4 py-2 rounded-full border-2 flex-row items-center gap-2"
-                    style={{
-                      backgroundColor: themes[tKey].surface,
-                      borderColor: isActive ? theme.accent : themes[tKey].border
-                    }}
-                  >
-                    <View className="w-3 h-3 rounded-full" style={{ backgroundColor: themes[tKey].accent }} />
-                    <Text className="font-bold text-xs" style={{ color: themes[tKey].text, textTransform: 'capitalize' }}>
-                      {tKey}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-
-        {/* Preferences Section */}
-        <Text className="font-bold text-xs uppercase tracking-widest mb-4" style={{ color: theme.textSecondary }}>Preferences</Text>
-
-        <View className="rounded-xl overflow-hidden mb-8 border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: theme.border }}>
-            <View className="flex-row items-center gap-3">
-              <View className="w-8 h-8 rounded-full items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
-                <Ionicons name="notifications" size={16} color={theme.text} />
+          <Text className="font-bold text-[10px] tracking-[0.2em] mb-4 ml-2 opacity-60" style={{ color: theme.text }}>OVERVIEW</Text>
+          <View className="flex-row gap-4 mb-6">
+            <View className="flex-1 p-6 rounded-[32px] items-center border" style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}>
+              <Text className="font-black text-3xl mb-1 tracking-tighter" style={{ color: theme.text }}>{stats.completed}</Text>
+              <Text className="text-[10px] font-bold opacity-60 text-center tracking-widest uppercase" style={{ color: theme.text }}>Milestones</Text>
+              <View className="mt-4 p-2 rounded-xl" style={{ backgroundColor: theme.surface }}>
+                <Ionicons name="medal-outline" size={16} color={theme.accent} />
               </View>
-              <Text className="font-bold text-sm" style={{ color: theme.text }}>Push Notifications</Text>
             </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={handleToggleNotifications}
-              trackColor={{ false: '#E5E7EB', true: '#000000' }}
-            />
+            <View className="flex-1 p-6 rounded-[32px] items-center border" style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}>
+              <Text className="font-black text-3xl mb-1 tracking-tighter" style={{ color: theme.text }}>{stats.daysActive}</Text>
+              <Text className="text-[10px] font-bold opacity-60 text-center tracking-widest uppercase" style={{ color: theme.text }}>Days Active</Text>
+              <View className="mt-4 p-2 rounded-xl" style={{ backgroundColor: theme.surface }}>
+                <Ionicons name="calendar-outline" size={16} color={theme.accent} />
+              </View>
+            </View>
           </View>
 
+          <View className="flex-row gap-4 mb-8">
+            <View className="flex-1 p-6 rounded-[32px] items-center border" style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}>
+              <Text className="font-black text-3xl mb-1 tracking-tighter" style={{ color: theme.text }}>{stats.currentStreak}</Text>
+              <Text className="text-[10px] font-bold opacity-60 text-center tracking-widest uppercase" style={{ color: theme.text }}>Streak</Text>
+              <View className="mt-4 p-2 rounded-xl" style={{ backgroundColor: theme.surface }}>
+                <Ionicons name="flame-outline" size={16} color={theme.accent} />
+              </View>
+            </View>
+            <View className="flex-1 p-6 rounded-[32px] items-center border" style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}>
+              <Text className="font-black text-3xl mb-1 tracking-tighter" style={{ color: theme.text }}>{stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%</Text>
+              <Text className="text-[10px] font-bold opacity-60 text-center tracking-widest uppercase" style={{ color: theme.text }}>Rate</Text>
+              <View className="mt-4 p-2 rounded-xl" style={{ backgroundColor: theme.surface }}>
+                <Ionicons name="trending-up-outline" size={16} color={theme.accent} />
+              </View>
+            </View>
+          </View>
+
+          <Text className="font-bold text-[10px] tracking-[0.2em] mb-4 ml-2 opacity-60" style={{ color: theme.text }}>ENGAGEMENT</Text>
+          <View className="p-6 rounded-[32px] border flex-row justify-between items-center mb-4" style={{ backgroundColor: theme.surfaceAlt, borderColor: theme.border }}>
+            <View className="flex-row items-center gap-4">
+              <View className="w-12 h-12 rounded-2xl items-center justify-center" style={{ backgroundColor: theme.surface }}>
+                <Ionicons name="time-outline" size={24} color={theme.accent} />
+              </View>
+              <View>
+                <Text className="font-black text-lg tracking-tight" style={{ color: theme.text }}>READ DURATION</Text>
+                <Text className="text-[10px] font-bold opacity-60 tracking-widest uppercase" style={{ color: theme.textSecondary }}>0 MINUTES TOTAL</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    if (activeTab === 'appearance') {
+      return (
+        <View className="flex-1">
+          <SubHeader title="APPEARANCE" />
+          <AppearanceTab />
+        </View>
+      );
+    }
+
+    if (activeTab === 'data') {
+      return (
+        <View className="flex-1">
+          <SubHeader title="Data and storage" />
           <TouchableOpacity
-            onPress={() => setShowTimePicker(true)}
-            className="flex-row items-center justify-between p-4"
+            onPress={handleExportData}
+            className="flex-row items-center justify-between p-5 rounded-3xl mb-4"
+            style={{ backgroundColor: theme.surfaceAlt }}
           >
-            <View className="flex-row items-center gap-3">
-              <View className="w-8 h-8 rounded-full items-center justify-center">
-                <Ionicons name="time-outline" size={16} color={notificationsEnabled ? theme.text : theme.textSecondary} />
-              </View>
-              <Text className={`font-medium text-sm`} style={{ color: notificationsEnabled ? theme.text : theme.textSecondary }}>Daily Reminder Time</Text>
+            <View className="flex-row items-center gap-4">
+              <Ionicons name="download-outline" size={24} color={theme.text} />
+              <Text className="font-bold text-lg" style={{ color: theme.text }}>Export My Data</Text>
             </View>
-            <View className="flex-row items-center gap-2">
-              <Text className={`font-bold text-sm`} style={{ color: notificationsEnabled ? theme.text : theme.textSecondary }}>
-                {formatTime(reminderTime.hour, reminderTime.minute)}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={notificationsEnabled ? theme.text : theme.textSecondary} />
-            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
+      );
+    }
+
+    if (activeTab === 'security') {
+      return (
+        <View className="flex-1">
+          <SubHeader title="Security and privacy" />
+
+          <Text className="font-bold text-xs uppercase tracking-widest mb-4 opacity-50" style={{ color: theme.text }}>Notifications</Text>
+          <View className="rounded-3xl overflow-hidden mb-8" style={{ backgroundColor: theme.surfaceAlt }}>
+            <View className="flex-row items-center justify-between p-5 border-b" style={{ borderBottomColor: theme.border }}>
+              <View className="flex-row items-center gap-4">
+                <Ionicons name="notifications-outline" size={24} color={theme.text} />
+                <Text className="font-bold text-lg" style={{ color: theme.text }}>Push Notifications</Text>
+              </View>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={handleToggleNotifications}
+                trackColor={{ false: '#E5E7EB', true: theme.accent }}
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setShowTimePicker(true)}
+              className="flex-row items-center justify-between p-5"
+            >
+              <View className="flex-row items-center gap-4">
+                <Ionicons name="time-outline" size={24} color={notificationsEnabled ? theme.text : theme.textSecondary} />
+                <Text className="font-bold text-lg" style={{ color: notificationsEnabled ? theme.text : theme.textSecondary }}>Reminder Time</Text>
+              </View>
+              <Text className="font-black text-lg" style={{ color: notificationsEnabled ? theme.accent : theme.textSecondary }}>
+                {formatTime(reminderTime.hour, reminderTime.minute)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text className="font-bold text-xs uppercase tracking-widest mb-4 opacity-50" style={{ color: theme.danger }}>Danger Zone</Text>
+          <TouchableOpacity
+            onPress={handleReset}
+            className="flex-row items-center justify-between p-5 rounded-3xl"
+            style={{ backgroundColor: theme.danger + '15' }}
+          >
+            <View className="flex-row items-center gap-4">
+              <Ionicons name="trash-outline" size={24} color={theme.danger} />
+              <Text className="font-bold text-lg" style={{ color: theme.danger }}>Reset All Data</Text>
+            </View>
+            <Ionicons name="warning-outline" size={20} color={theme.danger} />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (activeTab === 'about') {
+      return (
+        <View className="flex-1">
+          <SubHeader title="About" />
+          <View className="rounded-3xl overflow-hidden" style={{ backgroundColor: theme.surfaceAlt }}>
+            <View className="p-5 border-b flex-row justify-between items-center" style={{ borderBottomColor: theme.border }}>
+              <Text className="font-bold text-lg" style={{ color: theme.text }}>Version</Text>
+              <Text className="font-black text-lg" style={{ color: theme.accent }}>{Constants.expoConfig?.version || '1.0.0'}</Text>
+            </View>
+            <TouchableOpacity onPress={() => Linking.openURL('https://lockin.app/privacy')} className="p-5 border-b flex-row justify-between items-center" style={{ borderBottomColor: theme.border }}>
+              <Text className="font-medium text-lg" style={{ color: theme.text }}>Privacy Policy</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL('https://lockin.app/terms')} className="p-5 border-b flex-row justify-between items-center" style={{ borderBottomColor: theme.border }}>
+              <Text className="font-medium text-lg" style={{ color: theme.text }}>Terms of Service</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL('mailto:hello@lockin.app')} className="p-5 flex-row justify-between items-center">
+              <Text className="font-medium text-lg" style={{ color: theme.text }}>Contact / Feedback</Text>
+              <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View className="flex-1">
+        {/* Header Section */}
+        <View className="flex-row justify-between items-center mb-10">
+          <View>
+            <Text className="font-black text-2xl tracking-tighter uppercase" style={{ color: theme.text }}>{userName || 'USER'}</Text>
+            <Text className="font-bold text-[10px] tracking-[0.2em]" style={{ color: theme.textSecondary }}>OPERATOR PROFILE</Text>
+          </View>
+          <TouchableOpacity
+            className="w-14 h-14 rounded-full items-center justify-center overflow-hidden border-2"
+            style={{ backgroundColor: theme.text, borderColor: theme.accent }}
+          >
+            <Text className="font-black text-2xl" style={{ color: theme.background }}>
+              {userName.charAt(0).toUpperCase() || 'L'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Motivation Card Styled Version */}
+        <View className="rounded-[32px] p-8 mb-8 border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+          <View className="flex-row justify-between items-start mb-6">
+            <View className="flex-row items-center gap-2 px-3 py-1 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+              <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent }} />
+              <Text className="font-bold text-[10px] tracking-widest uppercase" style={{ color: theme.textSecondary }}>Active Commitment</Text>
+            </View>
+            <Ionicons name="lock-closed" size={16} color={theme.text} />
+          </View>
+
+          <Text className="font-black text-3xl leading-9 mb-8 tracking-tighter" style={{ color: theme.text }}>
+            {goal || 'SET YOUR GOAL'}
+          </Text>
+
+          <View className="flex-row items-start gap-4">
+            <View className="w-[2px] h-10 rounded-full" style={{ backgroundColor: theme.accent, opacity: 0.3 }} />
+            <View className="flex-1">
+              <Text className="font-bold text-[10px] tracking-widest mb-1 uppercase" style={{ color: theme.textSecondary }}>THE PLEDGE</Text>
+              <Text className="font-medium text-sm leading-6 opacity-70" style={{ color: theme.text }}>
+                {motivation || 'Your motivation will appear here...'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <Text className="font-bold text-xs tracking-widest mb-4 ml-2 opacity-60" style={{ color: theme.textSecondary }}>PREFERENCES</Text>
+
+        {/* Vertical Tabs / Menu Items - matching War Path Summary Widget */}
+        <View className="gap-3">
+          {[
+            { id: 'appearance', label: 'APPEARANCE', icon: 'color-palette-outline' },
+            { id: 'data', label: 'DATA & STORAGE', icon: 'server-outline' },
+            { id: 'security', label: 'SECURITY & PRIVACY', icon: 'shield-checkmark-outline' },
+            { id: 'statistics', label: 'STATISTICS', icon: 'stats-chart-outline' },
+            { id: 'about', label: 'ABOUT LOCKIN', icon: 'information-circle-outline' },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => setActiveTab(item.id)}
+              className="p-5 rounded-2xl border flex-row justify-between items-center"
+              style={{ backgroundColor: theme.surface, borderColor: theme.border }}
+            >
+              <View className="flex-row items-center gap-4">
+                <View className="w-12 h-12 rounded-xl items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
+                  <Ionicons name={item.icon as any} size={22} color={theme.accent} />
+                </View>
+                <View>
+                  <Text className="font-black text-lg tracking-tighter" style={{ color: theme.text }}>{item.label}</Text>
+                  <Text className="text-[10px] font-bold opacity-50 tracking-widest" style={{ color: theme.textSecondary }}>MANAGE SECTION</Text>
+                </View>
+              </View>
+              <View className="p-2 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+                <Ionicons name="chevron-forward" size={18} color={theme.text} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: theme.background }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
+        {renderContent()}
 
         {showTimePicker && (
           <DateTimePicker
@@ -465,72 +566,6 @@ export default function Profile() {
             onChange={handleTimeChange}
           />
         )}
-
-        {/* Data Section */}
-        <Text className="font-bold text-xs uppercase tracking-widest mb-4" style={{ color: theme.textSecondary }}>Data Management</Text>
-        <View className="rounded-xl overflow-hidden mb-8 border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <TouchableOpacity
-            onPress={handleExportData}
-            className="flex-row items-center justify-between p-4"
-          >
-            <View className="flex-row items-center gap-3">
-              <Ionicons name="download-outline" size={20} color={theme.text} />
-              <Text className="font-bold text-sm" style={{ color: theme.text }}>Export My Data</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Danger Zone */}
-        <Text className="font-bold text-xs uppercase tracking-widest mb-4" style={{ color: theme.danger }}>Danger Zone</Text>
-        <TouchableOpacity
-          onPress={handleReset}
-          className="flex-row items-center justify-between p-4 rounded-xl border mb-8"
-          style={{ backgroundColor: theme.danger + '10', borderColor: theme.danger + '40' }}
-        >
-          <View className="flex-row items-center gap-3">
-            <Ionicons name="trash-outline" size={20} color={theme.danger} />
-            <Text className="font-bold" style={{ color: theme.danger }}>Reset All Data</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={theme.danger} />
-        </TouchableOpacity>
-
-        {/* About Section */}
-        <Text className="font-bold text-xs uppercase tracking-widest mb-4" style={{ color: theme.textSecondary }}>About LockIn</Text>
-        <View className="rounded-xl overflow-hidden border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: theme.border, backgroundColor: theme.surfaceAlt }}>
-            <Text className="font-medium text-sm" style={{ color: theme.textSecondary }}>Version</Text>
-            <Text className="font-bold text-sm" style={{ color: theme.text }}>{Constants.expoConfig?.version || '1.0.0'} (BETA)</Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => Linking.openURL('https://lockin.app/privacy')}
-            className="flex-row items-center justify-between p-4 border-b"
-            style={{ borderBottomColor: theme.border }}
-          >
-            <Text className="font-medium text-sm" style={{ color: theme.textSecondary }}>Privacy Policy</Text>
-            <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => Linking.openURL('https://lockin.app/terms')}
-            className="flex-row items-center justify-between p-4 border-b"
-            style={{ borderBottomColor: theme.border }}
-          >
-            <Text className="font-medium text-sm" style={{ color: theme.textSecondary }}>Terms of Service</Text>
-            <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => Linking.openURL('mailto:hello@lockin.app')}
-            className="flex-row items-center justify-between p-4"
-          >
-            <Text className="font-medium text-sm" style={{ color: theme.textSecondary }}>Contact / Feedback</Text>
-            <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        <View className="h-10" />
       </ScrollView>
     </View>
   );

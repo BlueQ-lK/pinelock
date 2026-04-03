@@ -55,7 +55,7 @@ function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCar
           </View>
 
           <Text className="font-bold text-xs tracking-widest mb-1" style={{ color: theme.accentForeground, opacity: 0.8 }}>CURRENT OBJECTIVE</Text>
-          <Text className="font-black text-3xl mb-2 uppercase" style={{ color: theme.textWhite }}>Create Your First Milestone</Text>
+          <Text className="font-black text-3xl mb-2 uppercase" style={{ color: theme.textAlt }}>Create Your First Milestone</Text>
           <Text className="font-medium text-sm leading-5" style={{ color: theme.accentForeground, opacity: 0.9 }}>
             Focus is built one step at a time. Tap to set your first milestone.
           </Text>
@@ -86,7 +86,7 @@ function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCar
         </View>
 
         <Text className="font-bold text-xs tracking-widest mb-2" style={{ color: theme.accentForeground, opacity: 0.8 }}>OBJECTIVE</Text>
-        <Text className="font-black text-3xl leading-9 mb-8" style={{ color: theme.textWhite }}>
+        <Text className="font-black text-3xl leading-9 mb-8" style={{ color: theme.textAlt }}>
           {milestone.title}
         </Text>
 

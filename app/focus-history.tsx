@@ -132,7 +132,7 @@ export default function FocusHistoryScreen() {
                         <Ionicons name="arrow-back" size={24} color={theme.accentForeground} />
                     </TouchableOpacity>
                     <View className="items-center">
-                        <Text className="font-black text-lg tracking-tight" style={{ color: theme.textWhite }}>SESSION LOG</Text>
+                        <Text className="font-black text-lg tracking-tight" style={{ color: theme.textAlt }}>SESSION LOG</Text>
                     </View>
                 </View>
 

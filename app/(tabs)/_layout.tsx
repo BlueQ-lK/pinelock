@@ -10,7 +10,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.background,
           borderTopWidth: 0,
           height: Platform.OS === 'ios' ? 88 : 68,
           paddingTop: 12,

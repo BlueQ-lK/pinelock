@@ -190,13 +190,13 @@ export function ContractStep({
           >
             <View className="flex-row items-center gap-2">
               <View className="w-2 h-2 rounded-full" />
-              <Text className="font-bold text-xs tracking-widest uppercase" style={{ color: theme.textWhite }}>Timeline</Text>
+              <Text className="font-bold text-xs tracking-widest uppercase" style={{ color: theme.textAlt }}>Timeline</Text>
             </View>
             <View>
-              <Text className="font-bold text-7xl text-center tracking-tighter leading-none" style={{ color: theme.textWhite }}>
+              <Text className="font-bold text-7xl text-center tracking-tighter leading-none" style={{ color: theme.textAlt }}>
                 {durationValue}
               </Text>
-              <Text className="font-bold text-lg text-center tracking-widest uppercase" style={{ color: theme.textWhite, opacity: 0.8 }}>
+              <Text className="font-bold text-lg text-center tracking-widest uppercase" style={{ color: theme.textAlt, opacity: 0.8 }}>
                 {durationUnit === 'year' ? 'YEAR' : (durationValue === 1 ? durationUnit.slice(0, -1) : durationUnit)}
               </Text>
             </View>
@@ -238,7 +238,7 @@ export function ContractStep({
           {/* Success Text */}
           <Animated.Text
             className="absolute w-full text-center font-black tracking-widest text-lg"
-            style={[successTextStyle, { color: theme.textWhite }]}
+            style={[successTextStyle, { color: theme.textAlt }]}
           >
             COMMITTING...
           </Animated.Text>
@@ -249,7 +249,7 @@ export function ContractStep({
               className="absolute left-0 top-0 bottom-0 rounded-full justify-center items-center shadow-sm"
               style={[{ width: KNOB_WIDTH, height: SLIDER_HEIGHT, borderRadius: SLIDER_HEIGHT / 2 }, knobStyle]}
             >
-              <Ionicons name="arrow-forward" size={32} color={theme.textWhite} />
+              <Ionicons name="arrow-forward" size={32} color={theme.textAlt} />
             </Animated.View>
           </GestureDetector>
         </View>
@@ -295,22 +295,22 @@ export function ContractStep({
                   <Animated.View entering={FadeInDown.delay(500).duration(800)} className="mb-12">
                     <View className="flex-row items-center gap-3 mb-2">
                       <View className="w-3 h-3 bg-white rounded-full" />
-                      <Text className="font-bold text-sm tracking-[0.2em]" style={{ color: theme.textWhite, opacity: 0.8 }}>STATUS REPORT</Text>
+                      <Text className="font-bold text-sm tracking-[0.2em]" style={{ color: theme.textAlt, opacity: 0.8 }}>STATUS REPORT</Text>
                     </View>
-                    <Text className="font-black text-6xl tracking-tighter leading-none mb-1" style={{ color: theme.textWhite }}>CONTRACT</Text>
+                    <Text className="font-black text-6xl tracking-tighter leading-none mb-1" style={{ color: theme.textAlt }}>CONTRACT</Text>
                     <Text className="font-black text-6xl tracking-tighter leading-none" style={{ color: theme.text }}>SIGNED.</Text>
                   </Animated.View>
 
                   <Animated.View entering={FadeInDown.delay(1200).duration(800)} className="mb-10">
-                    <View className="w-full h-[1px] mb-6" style={{ backgroundColor: theme.textWhite, opacity: 0.3 }} />
+                    <View className="w-full h-[1px] mb-6" style={{ backgroundColor: theme.textAlt, opacity: 0.3 }} />
                     <View className="flex-row justify-between">
                       <View>
-                        <Text className="font-bold text-[10px] tracking-widest mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>DURATION</Text>
-                        <Text className="font-black text-2xl tracking-tight" style={{ color: theme.textWhite }}>{getDurationText()}</Text>
+                        <Text className="font-bold text-[10px] tracking-widest mb-1" style={{ color: theme.textAlt, opacity: 0.6 }}>DURATION</Text>
+                        <Text className="font-black text-2xl tracking-tight" style={{ color: theme.textAlt }}>{getDurationText()}</Text>
                       </View>
                       <View className="items-end">
-                        <Text className="font-bold text-[10px] tracking-widest mb-1" style={{ color: theme.textWhite, opacity: 0.6 }}>PENALTY</Text>
-                        <Text className="font-black text-2xl tracking-tight" style={{ color: theme.textWhite }}>FAILURE</Text>
+                        <Text className="font-bold text-[10px] tracking-widest mb-1" style={{ color: theme.textAlt, opacity: 0.6 }}>PENALTY</Text>
+                        <Text className="font-black text-2xl tracking-tight" style={{ color: theme.textAlt }}>FAILURE</Text>
                       </View>
                     </View>
                   </Animated.View>

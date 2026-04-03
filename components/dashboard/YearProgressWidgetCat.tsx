@@ -236,7 +236,7 @@ function YearProgressWidgetCatComponent() {
 
     return (
         <View
-            className="bg-[#2F3132] rounded-[32px] p-8 w-full border border-gray-100 relative"
+            className="bg-[#2F3132] rounded-[32px] p-8 w-full border  relative"
         >
             {/* Background "26" Overlay */}
             <View className="absolute inset-0 flex items-center justify-center opacity-[0.08]">
