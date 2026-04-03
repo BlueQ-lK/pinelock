@@ -80,7 +80,7 @@ export default function StagedMilestonesScreen() {
                     <View className="flex-1 justify-center items-center py-20 opacity-50">
                         <Ionicons name="layers-outline" size={64} color="#D1D5DB" />
                         <Text className="text-gray-400 font-medium mt-4 text-center max-w-[200px]">
-                            No intel currently staged. Generate and select milestones in "Quick Actions".
+                            No intel currently staged. Generate and select milestones in &quot;Quick Actions&quot;.
                         </Text>
                     </View>
                 ) : (

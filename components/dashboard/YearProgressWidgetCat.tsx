@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Dimensions, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, AppState } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -6,13 +6,11 @@ import Animated, {
     withTiming,
     withRepeat,
     Easing,
-    withDelay
 } from 'react-native-reanimated';
 import { differenceInDays, endOfYear, startOfYear, addYears, addMonths, addDays } from 'date-fns';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons'; // Added Ionicons import
 
 // --- Sweat Drop Particle ---
 const SweatDrop = () => {

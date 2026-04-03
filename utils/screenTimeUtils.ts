@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 
 // Defensive import for the native module
 let UsageStats: any = null;
@@ -44,8 +44,19 @@ export const checkScreenTimePermission = async (): Promise<boolean> => {
 };
 
 export const requestScreenTimePermission = (): void => {
-    if (Platform.OS === 'android' && UsageStats) {
-        UsageStats.requestUsageStatsPermission();
+    if (Platform.OS === 'android') {
+        if (UsageStats && typeof UsageStats.requestUsageStatsPermission === 'function') {
+            try {
+                UsageStats.requestUsageStatsPermission();
+                return;
+            } catch (e) {
+                console.warn('Native module failed to request permission', e);
+            }
+        }
+        // Fallback or missing module
+        Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS').catch(() => {
+            console.warn('Failed to launch USAGE_ACCESS_SETTINGS intent');
+        });
     }
 };
 

@@ -8,7 +8,6 @@ import Animated, {
     withRepeat,
     withDelay,
     cancelAnimation,
-    runOnJS
 } from 'react-native-reanimated';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Svg, { Path } from 'react-native-svg';

@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "lint": "expo lint"
   },
   "dependencies": {
     "@bacons/apple-targets": "^3.0.6",
@@ -32,6 +33,7 @@
     "date-fns": "^3.6.0",
     "expo": "~54.0.33",
     "expo-ai-kit": "^0.1.21",
+    "expo-android-usagestats": "^1.2.0",
     "expo-asset": "~12.0.12",
     "expo-audio": "^1.1.1",
     "expo-av": "~16.0.8",
@@ -75,6 +77,8 @@
     "@babel/core": "^7.20.0",
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.10",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
     "patch-package": "^8.0.1",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",

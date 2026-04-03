@@ -80,10 +80,12 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
     const active = await StorageService.getJSON<Milestone>('activeMilestone'); // Use getJSON
     let finalStack = combined;
 
+    const updates: [string, string][] = [];
+
     if (!active && newMilestones.length > 0) {
       const first = newMilestones[0];
       first.status = 'ACTIVE';
-      await AsyncStorage.setItem('activeMilestone', JSON.stringify(first));
+      updates.push(['activeMilestone', JSON.stringify(first)]);
       finalStack = combined.map(m => m.id === first.id ? { ...m, status: 'ACTIVE' } : m);
     } else if (active) {
       const activeObj = active; // active is already parsed
@@ -93,7 +95,9 @@ export function WarRoomProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    await AsyncStorage.setItem('milestoneStack', JSON.stringify(finalStack));
+    updates.push(['milestoneStack', JSON.stringify(finalStack)]);
+    await StorageService.multiSet(updates);
+
     setDeployedStack(finalStack);
     setDraftStack([]);
     router.replace('/(tabs)');

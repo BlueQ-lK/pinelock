@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { View, Text, Platform } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  withSequence, 
-  withDelay, 
+import { View, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
   withTiming,
   runOnJS
 } from 'react-native-reanimated';
@@ -29,7 +27,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
   const showAlert = useCallback((title: string, message: string, type: AlertType = 'info') => {
     setAlert({ title, message, type });
-    
+
     // Reset values
     translateY.value = -150;
     scale.value = 0.5;
@@ -91,13 +89,13 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     <AlertContext.Provider value={{ showAlert }}>
       {children}
       {alert && (
-        <Animated.View 
+        <Animated.View
           style={[
-            animatedStyle, 
-            { 
-              position: 'absolute', 
-              top: 0, 
-              alignSelf: 'center', 
+            animatedStyle,
+            {
+              position: 'absolute',
+              top: 0,
+              alignSelf: 'center',
               zIndex: 9999,
               backgroundColor: 'black',
               borderRadius: 30,

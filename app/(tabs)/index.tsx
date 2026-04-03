@@ -1,9 +1,10 @@
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { StorageService } from '../../utils/StorageService';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { calculateDaysLeft } from '../../utils/milestoneUtils';
 import { DateWidget } from '../../components/dashboard/DateWidget';
 import { DayProgressWidgetCat } from '../../components/dashboard/DayProgressWidgetCat';
@@ -12,53 +13,70 @@ import { MotivationCard } from '../../components/dashboard/MotivationCard';
 import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
 import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
-import { useAI } from '../../contexts/AIContext';
 import { checkInToday } from '../../utils/streakUtils';
-// ... imports
 
 
-const DashboardSkeleton = () => (
-  <ScrollView
-    contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
-    showsVerticalScrollIndicator={false}
-  >
-    {/* Header Section Skeleton */}
-    <View className="flex-row justify-between items-center mb-8">
-      <View>
-        <View className="w-40 h-8 bg-gray-100 rounded-lg mb-2 animate-pulse" />
-        <View className="w-24 h-4 bg-gray-100 rounded animate-pulse" />
+const DashboardSkeleton = () => {
+  const opacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1000 }),
+        withTiming(0.5, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  return (
+    <ScrollView
+      contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header Section Skeleton */}
+      <View className="flex-row justify-between items-center mb-8">
+        <View>
+          <Animated.View style={animatedStyle} className="w-40 h-8 bg-gray-100 rounded-lg mb-2" />
+          <Animated.View style={animatedStyle} className="w-24 h-4 bg-gray-100 rounded" />
+        </View>
+        <View className="flex-row gap-3">
+          <Animated.View style={animatedStyle} className="w-10 h-10 bg-gray-100 rounded-full" />
+          <Animated.View style={animatedStyle} className="w-10 h-10 bg-gray-100 rounded-full" />
+        </View>
       </View>
-      <View className="flex-row gap-3">
-        <View className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
-        <View className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
+
+      {/* Top Row Widgets Skeleton */}
+      <View className="flex-row gap-4 mb-6">
+        <Animated.View style={animatedStyle} className="flex-1 h-32 bg-gray-100 rounded-3xl" />
+        <Animated.View style={animatedStyle} className="flex-1 h-32 bg-gray-100 rounded-3xl" />
       </View>
-    </View>
 
-    {/* Top Row Widgets Skeleton */}
-    <View className="flex-row gap-4 mb-6">
-      <View className="flex-1 h-32 bg-gray-100 rounded-3xl animate-pulse" />
-      <View className="flex-1 h-32 bg-gray-100 rounded-3xl animate-pulse" />
-    </View>
+      {/* War Path Summary Skeleton */}
+      <View className="mb-8">
+        <Animated.View style={animatedStyle} className="w-24 h-4 bg-gray-100 rounded mb-4 ml-2" />
+        <Animated.View style={animatedStyle} className="h-20 bg-gray-100 rounded-2xl" />
+      </View>
 
-    {/* War Path Summary Skeleton */}
-    <View className="mb-8">
-      <View className="w-24 h-4 bg-gray-100 rounded mb-4 ml-2 animate-pulse" />
-      <View className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
-    </View>
+      {/* Primary Action Skeleton */}
+      <Animated.View style={animatedStyle} className="h-[300px] bg-gray-100 rounded-[32px] mb-8" />
 
-    {/* Primary Action Skeleton */}
-    <View className="h-[300px] bg-gray-100 rounded-[32px] mb-8 animate-pulse" />
+      {/* Year Progress Skeleton */}
+      <View className="mb-8">
+        <Animated.View style={animatedStyle} className="h-32 bg-gray-100 rounded-3xl" />
+      </View>
 
-    {/* Year Progress Skeleton */}
-    <View className="mb-8">
-      <View className="h-32 bg-gray-100 rounded-3xl animate-pulse" />
-    </View>
-
-    {/* Motivation Skeleton */}
-    <View className="w-32 h-4 bg-gray-100 rounded mb-4 ml-2 animate-pulse" />
-    <View className="h-40 bg-gray-100 rounded-[32px] animate-pulse" />
-  </ScrollView>
-);
+      {/* Motivation Skeleton */}
+      <Animated.View style={animatedStyle} className="w-32 h-4 bg-gray-100 rounded mb-4 ml-2" />
+      <Animated.View style={animatedStyle} className="h-40 bg-gray-100 rounded-[32px]" />
+    </ScrollView>
+  );
+};
 
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
@@ -70,14 +88,13 @@ export default function Dashboard() {
   const [showVictory, setShowVictory] = useState(false);
   const [activeMilestone, setActiveMilestone] = useState<Milestone | undefined>(undefined);
   const [milestoneStack, setMilestoneStack] = useState<Milestone[]>([]);
-  const [isFocusActive, setIsFocusActive] = useState(false);
-  const [focusSessionCount, setFocusSessionCount] = useState(0);
-  const [lastFocusSession, setLastFocusSession] = useState<any | null>(null);
 
-  const { generate, isReady } = useAI();
-  const [isGenerating, setIsGenerating] = useState(false);
 
-  const loadData = async () => {
+  const completedCount = useMemo(() =>
+    milestoneStack.filter(m => m.status === 'COMPLETED').length,
+    [milestoneStack]);
+
+  const loadData = useCallback(async () => {
     const [
       savedGoal,
       savedMotivation,
@@ -85,7 +102,7 @@ export default function Dashboard() {
     ] = await StorageService.multiGet([
       'mainGoal',
       'motivation',
-      'focusStartTime', 
+      'focusStartTime',
     ]);
 
     if (savedGoal[1]) setGoal(savedGoal[1]);
@@ -110,119 +127,19 @@ export default function Dashboard() {
     } else {
       setMilestoneStack([]);
     }
-
-    setIsFocusActive(!!savedActiveFocusVal[1]); 
-
-    const history = await StorageService.getJSON<any[]>('focusSessionHistory'); 
-    if (history && history.length > 0) {
-      setFocusSessionCount(history.length);
-      setLastFocusSession(history[0]); // Set lastFocusSession
-    } else {
-      setFocusSessionCount(0);
-      setLastFocusSession(null);
-    }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [])
+    }, [loadData])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  }, []);
-
-  const generateBattlePlan = async (currentGoal: string, currentMotivation: string) => {
-    if (isGenerating || !isReady) return;
-    setIsGenerating(true);
-
-    try {
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const todayStr = currentDate.toISOString().split('T')[0];
-
-      const prompt = `You are a strategic planning AI. The user has a goal: "${currentGoal}". Motivation: "${currentMotivation}". 
-      
-      CRITICAL DATE INFORMATION:
-      - TODAY IS: ${todayStr}
-      - CURRENT YEAR IS: ${currentYear}
-      - ALL DEADLINES MUST BE AFTER ${todayStr}
-      - NEVER use past dates or past years like 2024
-      - Only use dates in ${currentYear} or ${currentYear + 1}
-      
-      Create a tactical plan with 5 distinct, sequential milestones to achieve this goal. 
-      Return ONLY a raw JSON array. No markdown, no code blocks. 
-      Each object must have: 
-      - title (string)
-      - description (string)
-      - deadline (MUST BE FUTURE DATE in format YYYY-MM-DD, starting from ${todayStr})
-      - impact ('HIGH' or 'CRITICAL')
-      - tasks (array of strings, 3-5 actionable steps per milestone)
-      
-      IMPORTANT: First milestone should be 2-3 weeks from today (${todayStr}). Space milestones 3-4 weeks apart.
-      
-      Example format for TODAY being ${todayStr}:
-      [{"title": "...", "description": "...", "deadline": "${new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}", "impact": "HIGH", "tasks": ["step 1", "step 2"]}]`;
-
-      const response = await generate(prompt);
-
-      // Clean request
-      const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
-      const plan = JSON.parse(jsonStr);
-
-      const newMilestones: Milestone[] = plan.map((item: any, index: number) => {
-        let deadline = item.deadline;
-        const deadlineDate = new Date(deadline);
-
-        // Aggressive date correction - if date is in the past or invalid, fix it
-        if (!deadline || isNaN(deadlineDate.getTime()) || deadlineDate < currentDate) {
-          const futureDate = new Date(currentDate);
-          futureDate.setDate(futureDate.getDate() + (14 * (index + 1)));
-          deadline = futureDate.toISOString().split('T')[0];
-        }
-
-        return {
-          id: Date.now().toString() + index,
-          title: item.title,
-          description: item.description,
-          deadline: deadline,
-          impact: item.impact,
-          status: index === 0 ? 'ACTIVE' : 'PENDING',
-          order: index,
-          todos: item.tasks?.map((t: string, i: number) => ({
-            id: `todo-${Date.now()}-${index}-${i}`,
-            task: t,
-            completed: false
-          })) || []
-        };
-      });
-
-      const firstActive = newMilestones[0];
-
-      setMilestoneStack(newMilestones);
-      setActiveMilestone(firstActive);
-
-      await StorageService.multiSet([
-        ['milestoneStack', JSON.stringify(newMilestones)],
-        ['activeMilestone', JSON.stringify(firstActive)]
-      ]);
-
-    } catch (e) {
-      console.error('Failed to generate battle plan:', e);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  useEffect(() => {
-    // Only auto-generate if we have a goal, no milestones, AI is ready, and we aren't already generating
-    if (goal && goal !== 'Loading...' && milestoneStack.length === 0 && !activeMilestone && isReady && !isGenerating) {
-      generateBattlePlan(goal, motivation);
-    }
-  }, [goal, motivation, milestoneStack, activeMilestone, isReady]);
+  }, [loadData]);
 
   const handleCompleteMilestone = async () => {
     if (!activeMilestone) return;
@@ -242,22 +159,26 @@ export default function Dashboard() {
       // We look through updatedFullStack, respecting order
       const nextMilestone = updatedFullStack.find(m => m.status === 'PENDING' && !m.isArchived);
 
+      const updates: [string, string][] = [
+        ['milestoneStack', JSON.stringify(updatedFullStack)]
+      ];
+
       if (nextMilestone) {
         // Mark it as active in the full stack
         // Note: We need to find it by ID to be safe
         const index = updatedFullStack.findIndex(m => m.id === nextMilestone.id);
         if (index !== -1) {
           updatedFullStack[index].status = 'ACTIVE';
-          await StorageService.setItem('activeMilestone', JSON.stringify(updatedFullStack[index]));
+          updates.push(['activeMilestone', JSON.stringify(updatedFullStack[index])]);
           // Update nextMilestone ref for local state uses
           Object.assign(nextMilestone, updatedFullStack[index]);
         }
       } else {
-        await StorageService.removeItem('activeMilestone');
+        updates.push(['activeMilestone', '']); // Remove activeMilestone by setting to empty string
       }
 
       // 4. Save the FULL stack
-      await StorageService.setItem('milestoneStack', JSON.stringify(updatedFullStack));
+      await StorageService.multiSet(updates);
 
       // 5. Update Local State (Filtered)
       // We filter out archived ones for the UI
@@ -329,7 +250,7 @@ export default function Dashboard() {
                 <View className="flex-row items-center gap-4">
                   <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center ">
                     <Text className="text-white font-black text-xl">
-                      {milestoneStack.filter(m => m.status === 'COMPLETED').length}
+                      {completedCount}
                     </Text>
                   </View>
                   <View>
@@ -345,27 +266,20 @@ export default function Dashboard() {
               </View>
             </TouchableOpacity>
             {/* Primary Action: Milestone */}
-            {isGenerating ? (
-              <View className="bg-black p-6 rounded-[32px] mb-8 min-h-[300px] items-center justify-center">
-                <Text className="text-white font-bold text-lg mb-2">GENERATING FOCUS PLAN...</Text>
-                <Text className="text-gray-400 text-xs tracking-widest">ANALYZING FOCUS PATH</Text>
-              </View>
-            ) : (
-              <MilestoneCard
-                milestone={activeMilestone}
-                onPress={() => {
-                  if (activeMilestone) {
-                    router.push({
-                      pathname: '/active-milestone',
-                      params: { milestone: JSON.stringify(activeMilestone) }
-                    });
-                  } else {
-                    router.push('/focus-zone');
-                  }
-                }}
-                onComplete={handleCompleteMilestone}
-              />
-            )}
+            <MilestoneCard
+              milestone={activeMilestone}
+              onPress={() => {
+                if (activeMilestone) {
+                  router.push({
+                    pathname: '/active-milestone',
+                    params: { milestone: JSON.stringify(activeMilestone) }
+                  });
+                } else {
+                  router.push('/focus-zone');
+                }
+              }}
+              onComplete={handleCompleteMilestone}
+            />
 
             {/* Year Progress Widget */}
             <View className="mb-8">

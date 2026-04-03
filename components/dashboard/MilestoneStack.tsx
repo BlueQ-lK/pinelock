@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { Milestone } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -24,10 +24,10 @@ export function MilestoneStack({ milestones }: MilestoneStackProps) {
             <View
               key={m.id}
               className={`w-12 h-12 rounded-xl items-center justify-center border ${isActive
-                  ? 'bg-swiss-red border-swiss-red'
-                  : isCompleted
-                    ? 'bg-black border-black'
-                    : 'bg-white border-gray-200'
+                ? 'bg-swiss-red border-swiss-red'
+                : isCompleted
+                  ? 'bg-black border-black'
+                  : 'bg-white border-gray-200'
                 }`}
             >
               {isCompleted ? (

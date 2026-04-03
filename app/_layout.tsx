@@ -3,7 +3,6 @@ import { useFonts, Inter_400Regular, Inter_700Bold, Inter_900Black } from '@expo
 import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import "../global.css";
-import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '../services/notifications';
 import { AIProvider } from '../contexts/AIContext';

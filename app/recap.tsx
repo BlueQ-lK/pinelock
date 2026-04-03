@@ -1,26 +1,20 @@
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, Share, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useState, useEffect, useRef } from 'react';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
     FadeInDown,
     FadeInUp,
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    withSpring,
-    withDelay,
-    Easing
 } from 'react-native-reanimated';
 import { getRecapStats, resetGoalData, RecapStats } from '../utils/goalStatus';
-import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 
-const { width } = Dimensions.get('window');
+// C-1: Lazy load ScannerSprite
+const ScannerSprite = lazy(() => import('../components/dashboard/ScannerSprite').then(m => ({ default: m.ScannerSprite })));
 
-function StatCard({
+const StatCard = React.memo(function StatCard({
     label,
     value,
     subtext,
@@ -60,14 +54,14 @@ function StatCard({
             )}
         </Animated.View>
     );
-}
+});
 
-function MilestoneRow({ title, status, index }: { title: string, status: 'COMPLETED' | 'ACTIVE' | 'PENDING' | 'FAILED', index: number }) {
+const MilestoneRow = React.memo(function MilestoneRow({ title, status, index }: { title: string, status: 'COMPLETED' | 'ACTIVE' | 'PENDING' | 'FAILED', index: number }) {
     const isCompleted = status === 'COMPLETED';
 
     return (
         <Animated.View
-            entering={FadeInDown.springify().damping(15).stiffness(100).delay(800 + (index * 100))}
+            entering={FadeInDown.springify().damping(15).stiffness(100).delay(200 + (index * 60))}
             className="flex-row items-center mb-4"
         >
             <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${isCompleted ? 'bg-swiss-red' : 'bg-gray-100'}`}>
@@ -82,12 +76,13 @@ function MilestoneRow({ title, status, index }: { title: string, status: 'COMPLE
             </Text>
         </Animated.View>
     );
-}
+});
 
 export default function RecapPage() {
     const router = useRouter();
     const [stats, setStats] = useState<RecapStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSharing, setIsSharing] = useState(false);
     const shareViewRef = useRef<View>(null);
 
     // Animation values for progressive counting could go here
@@ -97,9 +92,14 @@ export default function RecapPage() {
     }, []);
 
     const loadStats = async () => {
-        const data = await getRecapStats();
-        setStats(data);
-        setLoading(false);
+        try {
+            const data = await getRecapStats();
+            setStats(data);
+        } catch (e) {
+            console.error('Recap stats failed', e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleStartNew = async () => {
@@ -109,23 +109,29 @@ export default function RecapPage() {
 
     const handleShare = async () => {
         if (!stats) return;
-        try {
-            if (shareViewRef.current) {
-                const uri = await captureRef(shareViewRef, {
-                    format: "png",
-                    quality: 0.9,
-                    result: "tmpfile",
-                });
+        setIsSharing(true);
+        // allow the hidden view to render before capturing
+        setTimeout(async () => {
+            try {
+                if (shareViewRef.current) {
+                    const uri = await captureRef(shareViewRef, {
+                        format: "png",
+                        quality: 0.9,
+                        result: "tmpfile",
+                    });
 
-                await Sharing.shareAsync(uri, {
-                    dialogTitle: 'Mission Debrief',
-                    mimeType: 'image/png',
-                    UTI: 'public.png'
-                });
+                    await Sharing.shareAsync(uri, {
+                        dialogTitle: 'Mission Debrief',
+                        mimeType: 'image/png',
+                        UTI: 'public.png'
+                    });
+                }
+            } catch (error) {
+                console.error("Share failed", error);
+            } finally {
+                setIsSharing(false);
             }
-        } catch (error) {
-            console.error("Share failed", error);
-        }
+        }, 100);
     };
 
     if (loading) {
@@ -163,18 +169,20 @@ export default function RecapPage() {
                     <View>
                         <Text className="font-bold text-xs text-swiss-red tracking-[0.3em] mb-2">MISSION DEBRIEF</Text>
                         <Text className="font-black text-5xl tracking-tighter leading-tight text-black">
-                            TIME'S UP.
+                            TIME&apos;S UP.
                         </Text>
                         <Text className="font-medium text-lg text-gray-400 mt-2">
-                            Let's review your performance.
+                            Let&apos;s review your performance.
                         </Text>
                     </View>
                     <View>
-                        <ScannerSprite
-                            state="IDLE"
-                            showLabels={true}
-                            excitementLevel={stats.completionPercentage >= 90 ? 3 : 1}
-                        />
+                        <Suspense fallback={<View className="w-24 h-24" />}>
+                            <ScannerSprite
+                                state="IDLE"
+                                showLabels={true}
+                                excitementLevel={stats.completionPercentage >= 90 ? 3 : 1}
+                            />
+                        </Suspense>
                     </View>
                 </Animated.View>
 
@@ -184,7 +192,7 @@ export default function RecapPage() {
                     <Text className="font-black text-2xl mb-4">{stats.goalTitle}</Text>
                     <View className="h-[1px] bg-gray-100 w-full mb-4" />
                     <Text className="font-bold text-xs text-gray-400 tracking-widest mb-2">MOTIVATION</Text>
-                    <Text className="font-medium text-base text-gray-600 italic">"{stats.motivation}"</Text>
+                    <Text className="font-medium text-base text-gray-600 italic">&quot;{stats.motivation}&quot;</Text>
 
                     <View className="h-[1px] bg-gray-100 w-full my-4" />
 
@@ -272,105 +280,106 @@ export default function RecapPage() {
                 </TouchableOpacity>
             </Animated.View>
             {/* Hidden Share Card View */}
-            <View
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: -5000,
-                    width: 420,
-                    height: 600,
-                    backgroundColor: '#FF3B30', // Swiss Red
-                    padding: 32,
-                    justifyContent: 'space-between'
-                }}
-                ref={shareViewRef}
-                collapsable={false}
-            >
-                {/* Header Badge */}
-                <View className="flex-row justify-between items-start">
-                    <View className="bg-black/20 px-4 py-2 rounded-full backdrop-blur-md">
-                        <Text className="text-white/90 font-bold text-[10px] tracking-[0.3em] uppercase">
-                            MISSION DEBRIEF
-                        </Text>
+            {isSharing && (
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: -5000,
+                        width: 420,
+                        height: 600,
+                        backgroundColor: '#FF3B30', // Swiss Red
+                        padding: 32,
+                        justifyContent: 'space-between'
+                    }}
+                    ref={shareViewRef}
+                    collapsable={false}
+                >
+                    {/* Header Badge */}
+                    <View className="flex-row justify-between items-start">
+                        <View className="bg-black/20 px-4 py-2 rounded-full backdrop-blur-md">
+                            <Text className="text-white/90 font-bold text-[10px] tracking-[0.3em] uppercase">
+                                MISSION DEBRIEF
+                            </Text>
+                        </View>
+                        <View className="mb-6 items-center">
+                            <Suspense fallback={<View className="h-48" />}>
+                                <ScannerSprite state="HAPPY" showLabels={false} excitementLevel={3} />
+                            </Suspense>
+                        </View>
                     </View>
-                    <View className="flex-row gap-1">
-                        <View className="w-2 h-2 rounded-full bg-white/40" />
-                        <View className="w-2 h-2 rounded-full bg-white/40" />
-                        <View className="w-2 h-2 rounded-full bg-white/40" />
+                    {/* Main Content */}
+                    <View className="flex-1 justify-center my-4">
+                        <View className="flex-row items-center gap-2 mb-4">
+                            <Ionicons name="medal" size={24} color="rgba(255,255,255,0.8)" />
+                            <Text className="text-white/80 font-bold text-sm tracking-widest uppercase">
+                                OBJECTIVE COMPLETE
+                            </Text>
+                        </View>
+
+                        <Text
+                            className="text-white font-black text-5xl leading-[50px] tracking-tight mb-6"
+                            adjustsFontSizeToFit
+                            numberOfLines={3}
+                        >
+                            {stats?.goalTitle.toUpperCase() || 'GOAL'}
+                        </Text>
+
+                        <View className="h-1 w-20 bg-white/30 rounded-full mb-8" />
+
+                        <View className="flex-row gap-4 mb-8">
+                            <View className="bg-white/20 px-5 py-4 rounded-2xl border border-white/10 flex-1">
+                                <Text className="text-white/60 font-bold text-[10px] tracking-widest uppercase mb-1">
+                                    COMPLETION
+                                </Text>
+                                <Text className="text-white font-black text-4xl tracking-tighter">
+                                    {stats?.completionPercentage}%
+                                </Text>
+                            </View>
+                            <View className="bg-white/20 px-5 py-4 rounded-2xl border border-white/10 flex-1">
+                                <Text className="text-white/60 font-bold text-[10px] tracking-widest uppercase mb-1">
+                                    DURATION
+                                </Text>
+                                <Text className="text-white font-black text-4xl tracking-tighter">
+                                    {stats?.daysElapsed}D
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View className="bg-black/10 px-6 py-4 rounded-2xl border border-white/5 mx-[-8]">
+                            <Text className="text-white font-medium text-lg italic text-center">
+                                &quot;{stats?.motivation}&quot;
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Footer Section */}
+                    <View className="flex-row justify-between items-end">
+                        <View>
+                            <Text className="text-white/60 text-[10px] font-bold tracking-[0.4em] mb-2 uppercase">SECURED ON</Text>
+                            <Text className="text-white font-black text-2xl tracking-tighter">LOCKIN 2026</Text>
+                            <View className="mt-1 flex-row gap-2 items-center">
+                                <View className="w-1.5 h-1.5 bg-green-300 rounded-full" />
+                                <Text className="text-white/50 text-[9px] font-bold uppercase">System Optimal</Text>
+                            </View>
+                        </View>
+
+                        {/* Character Stamp */}
+                        <View className="items-center justify-center -mr-4 -mb-4">
+                            <View className="scale-75">
+                                <ScannerSprite
+                                    state="APPROVED"
+                                    showLabels={false}
+                                    excitementLevel={3}
+                                />
+                            </View>
+                            <View className="bg-white px-3 py-1 rounded-full -mt-2 border border-swiss-red shadow-sm">
+                                <Text className="text-swiss-red font-black text-[10px] tracking-widest uppercase">VERIFIED</Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
-
-                {/* Main Content */}
-                <View className="flex-1 justify-center my-4">
-                    <View className="flex-row items-center gap-2 mb-4">
-                        <Ionicons name="medal" size={24} color="rgba(255,255,255,0.8)" />
-                        <Text className="text-white/80 font-bold text-sm tracking-widest uppercase">
-                            OBJECTIVE COMPLETE
-                        </Text>
-                    </View>
-
-                    <Text
-                        className="text-white font-black text-5xl leading-[50px] tracking-tight mb-6"
-                        adjustsFontSizeToFit
-                        numberOfLines={3}
-                    >
-                        {stats?.goalTitle.toUpperCase() || 'GOAL'}
-                    </Text>
-
-                    <View className="h-1 w-20 bg-white/30 rounded-full mb-8" />
-
-                    <View className="flex-row gap-4 mb-8">
-                        <View className="bg-white/20 px-5 py-4 rounded-2xl border border-white/10 flex-1">
-                            <Text className="text-white/60 font-bold text-[10px] tracking-widest uppercase mb-1">
-                                COMPLETION
-                            </Text>
-                            <Text className="text-white font-black text-4xl tracking-tighter">
-                                {stats?.completionPercentage}%
-                            </Text>
-                        </View>
-                        <View className="bg-white/20 px-5 py-4 rounded-2xl border border-white/10 flex-1">
-                            <Text className="text-white/60 font-bold text-[10px] tracking-widest uppercase mb-1">
-                                DURATION
-                            </Text>
-                            <Text className="text-white font-black text-4xl tracking-tighter">
-                                {stats?.daysElapsed}D
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View className="bg-black/10 px-6 py-4 rounded-2xl border border-white/5 mx-[-8]">
-                        <Text className="text-white font-medium text-lg italic text-center">
-                            "{stats?.motivation}"
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Footer Section */}
-                <View className="flex-row justify-between items-end">
-                    <View>
-                        <Text className="text-white/60 text-[10px] font-bold tracking-[0.4em] mb-2 uppercase">SECURED ON</Text>
-                        <Text className="text-white font-black text-2xl tracking-tighter">LOCKIN 2026</Text>
-                        <View className="mt-1 flex-row gap-2 items-center">
-                            <View className="w-1.5 h-1.5 bg-green-300 rounded-full" />
-                            <Text className="text-white/50 text-[9px] font-bold uppercase">System Optimal</Text>
-                        </View>
-                    </View>
-
-                    {/* Character Stamp */}
-                    <View className="items-center justify-center -mr-4 -mb-4">
-                        <View className="scale-75">
-                            <ScannerSprite
-                                state="APPROVED"
-                                showLabels={false}
-                                excitementLevel={3}
-                            />
-                        </View>
-                        <View className="bg-white px-3 py-1 rounded-full -mt-2 border border-swiss-red shadow-sm">
-                            <Text className="text-swiss-red font-black text-[10px] tracking-widest uppercase">VERIFIED</Text>
-                        </View>
-                    </View>
-                </View>
-            </View>
+            )}
         </SafeAreaView>
     );
 }

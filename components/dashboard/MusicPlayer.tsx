@@ -1,20 +1,36 @@
 import { View, Text, Pressable, Image } from "react-native";
 import { useAudioPlayer } from "expo-audio";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export function MusicPlayer() {
+export function MusicPlayer({ isPaused = false }: { isPaused?: boolean }) {
     const player = useAudioPlayer("http://ec6.yesstreaming.net:1740/stream");
-    const [playPause, setplayPause] = useState(true);
+    const [isPlaying, setIsPlaying] = useState(false); // Initially paused
 
-    const playerConrol = () => {
-        if (playPause) {
-            player.play()
-        } else {
-            player.pause()
+    useEffect(() => {
+        if (isPaused && isPlaying) {
+            try {
+                player.pause();
+            } catch (e) {
+                console.warn('Could not pause player:', e);
+            }
+            setIsPlaying(false);
         }
-        setplayPause(!playPause)
-    }
+    }, [isPaused, isPlaying, player]);
+
+    const playerControl = () => {
+        const nextIsPlaying = !isPlaying;
+        try {
+            if (nextIsPlaying) {
+                player.play();
+            } else {
+                player.pause();
+            }
+            setIsPlaying(nextIsPlaying);
+        } catch (e) {
+            console.warn('Could not control player:', e);
+        }
+    };
 
     return (
         <View className="items-center justify-center">
@@ -30,12 +46,12 @@ export function MusicPlayer() {
                 </View>
                 <View className="bg-black rounded-full flex justify-center items-center" style={{ width: 49, height: 49 }}>
                     <Pressable
-                        onPress={playerConrol}
+                        onPress={playerControl}
                     >
-                        {playPause ? (
-                            <MaterialCommunityIcons name="play" color={'#fff'} size={40} />
-                        ) : (
+                        {isPlaying ? (
                             <MaterialCommunityIcons name="pause" color={'#fff'} size={40} />
+                        ) : (
+                            <MaterialCommunityIcons name="play" color={'#fff'} size={40} />
                         )}
                     </Pressable>
                 </View>

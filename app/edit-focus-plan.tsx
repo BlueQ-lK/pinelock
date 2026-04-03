@@ -3,13 +3,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/StorageService';
 import { Ionicons } from '@expo/vector-icons';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format, addYears, addMonths, addDays } from 'date-fns';
+import { addYears, addMonths, addDays } from 'date-fns';
 import { Milestone, LockedGoal } from '../types';
-import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 
 let cachedLocked: Milestone[] | null = null;
 let cachedEditable: Milestone[] | null = null;
@@ -39,7 +39,7 @@ export default function EditFocusPlanScreen() {
             setLoading(true);
         }
         try {
-            const savedStack = await AsyncStorage.getItem('milestoneStack');
+            const savedStack = await StorageService.getItem('milestoneStack');
             if (savedStack) {
                 const all: Milestone[] = JSON.parse(savedStack);
                 // Sort by order first to ensure correct initial state
@@ -246,13 +246,16 @@ export default function EditFocusPlanScreen() {
                 return { ...m, status: 'PENDING' as const };
             });
 
-            await AsyncStorage.setItem('milestoneStack', JSON.stringify(finalizedStatus));
+            const updates: [string, string][] = [['milestoneStack', JSON.stringify(finalizedStatus)]];
 
             // Update activeMilestone too
             const active = finalizedStatus.find(m => m.status === 'ACTIVE');
             if (active) {
-                await AsyncStorage.setItem('activeMilestone', JSON.stringify(active));
+                updates.push(['activeMilestone', JSON.stringify(active)]);
+            } else {
+                updates.push(['activeMilestone', '']);
             }
+            await StorageService.multiSet(updates);
 
             Alert.alert('Plan Updated', 'Your tactical plan has been realigned.');
         } catch (e) {

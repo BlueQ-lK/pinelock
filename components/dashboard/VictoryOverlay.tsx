@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { ScannerSprite } from './ScannerSprite';
-import { Ionicons } from '@expo/vector-icons';
 
 interface VictoryOverlayProps {
   visible: boolean;

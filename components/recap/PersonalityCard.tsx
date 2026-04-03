@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { PersonalityConfig } from '../../utils/personalityTypes';

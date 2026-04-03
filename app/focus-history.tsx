@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface SessionHistory {
     id: string;
@@ -12,6 +13,13 @@ interface SessionHistory {
     duration: number;
     note: string;
 }
+
+// ─── FH-2: Fixed item heights for getItemLayout ───────────────────────────
+// mb-3 = 12px. Pill row: py-3 (12px top+bottom = 24px) + content ~28px ≈ 64px total with margin.
+// With note: adds divider (~1px) + note row (~32px) ≈ 97px total.
+const ITEM_BASE_HEIGHT = 64;    // row with no note (px, including mb-3)
+const ITEM_NOTE_HEIGHT = 97;    // row with note present
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function FocusHistoryScreen() {
     const router = useRouter();
@@ -50,9 +58,31 @@ export default function FocusHistoryScreen() {
         }).toUpperCase();
     };
 
-    const renderItem = ({ item, index }: { item: SessionHistory; index: number }) => (
+    // ─── FH-2: Precompute per-item offsets once when history changes ──────
+    const itemLayout = useMemo(() => {
+        const offsets: number[] = [];
+        let offset = 0;
+        for (const item of history) {
+            offsets.push(offset);
+            offset += item.note ? ITEM_NOTE_HEIGHT : ITEM_BASE_HEIGHT;
+        }
+        return offsets;
+    }, [history]);
+
+    const getItemLayout = useCallback(
+        (_: any, index: number) => ({
+            length: history[index]?.note ? ITEM_NOTE_HEIGHT : ITEM_BASE_HEIGHT,
+            offset: itemLayout[index] ?? 0,
+            index,
+        }),
+        [history, itemLayout]
+    );
+    // ──────────────────────────────────────────────────────────────────────
+
+    // ─── FH-1: Only animate the first 10 items ────────────────────────────
+    const renderItem = useCallback(({ item, index }: { item: SessionHistory; index: number }) => (
         <Animated.View
-            entering={FadeInDown.delay(Math.min(index * 50, 500))}
+            entering={index < 10 ? FadeInDown.delay(index * 50) : undefined}
             className="mb-3 px-6 py-3 bg-white border-2 border-zinc-300 rounded-full"
         >
             <View className="flex-row justify-between items-center">
@@ -71,20 +101,27 @@ export default function FocusHistoryScreen() {
             ) : null}
             {item.note ? (
                 <View className="bg-gray-50 px-3 rounded-full mx-auto">
-                    <Text
-                        className="text-black text-sm font-bold italic"
-                    >
+                    <Text className="text-black text-sm font-bold italic">
                         {item.note}
                     </Text>
                 </View>
             ) : null}
         </Animated.View>
-    );
+    ), []);
+    // ──────────────────────────────────────────────────────────────────────
 
     return (
         <View className="flex-1">
-            <View className="bg-swiss-black absolute w-full h-2/4 rounded-b-full " />
-            <View className="bg-swiss-red absolute w-full h-2/4 bottom-0 rounded-t-full" />
+            {/* ─── FH-3: LinearGradient replaces two large rounded Views ───────
+                expo-linear-gradient runs on a single GPU pass with no overdraw,
+                eliminating the expensive mask pass of the two rounded Views.   */}
+            <LinearGradient
+                colors={['#111111', '#EF3124']}
+                locations={[0.42, 0.42]}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            />
+            {/* ─────────────────────────────────────────────────────────────── */}
+
             <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1">
                 {/* Header */}
                 <View className="flex-row items-center gap-4 px-6 py-4 z-10">
@@ -114,6 +151,8 @@ export default function FocusHistoryScreen() {
                         renderItem={renderItem}
                         contentContainerStyle={{ padding: 20 }}
                         showsVerticalScrollIndicator={false}
+                        getItemLayout={getItemLayout}  // FH-2
+                        removeClippedSubviews={true}
                     />
                 )}
 

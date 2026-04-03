@@ -1,9 +1,9 @@
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
-import Animated, { SharedValue, FadeInDown, useSharedValue, useAnimatedStyle, withTiming, withSpring, interpolate, Extrapolate, withRepeat, withSequence, Easing, withDelay, useAnimatedProps, createAnimatedComponent } from 'react-native-reanimated';
+import Animated, { SharedValue, FadeInDown, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence, Easing, withDelay, useAnimatedProps, createAnimatedComponent, useAnimatedKeyboard } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { ScannerSprite } from '../dashboard/ScannerSprite';
-import { useAnimatedKeyboard } from "react-native-reanimated";
+
 
 
 const AnimatedPath = createAnimatedComponent(Path);

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -11,7 +11,7 @@ import Animated, {
     runOnJS
 } from 'react-native-reanimated';
 import { useState, useEffect, useCallback } from 'react';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 // --- The Supervisor (Execution List Sprite) ---
 // Sits at the bottom of the list, watching you work.

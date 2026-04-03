@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, memo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../../types';
-import React from 'react'; // Added React import
+import React from 'react';
 
 interface MilestoneCardProps {
   onPress: () => void;
@@ -107,4 +107,4 @@ function MilestoneCardComponent({ onPress, onComplete, milestone }: MilestoneCar
   );
 }
 
-export const MilestoneCard = React.memo(MilestoneCardComponent);
+export const MilestoneCard = memo(MilestoneCardComponent);

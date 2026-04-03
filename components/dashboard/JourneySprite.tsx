@@ -1,14 +1,12 @@
 import { View } from 'react-native';
 import Animated, {
-    useSharedValue,
     useAnimatedStyle,
-    withSpring,
     interpolate,
     Extrapolate,
     useDerivedValue,
     SharedValue
 } from 'react-native-reanimated';
-import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 export type SpriteMood = 'IDLE' | 'HAPPY' | 'SCARED' | 'DIZZY';
 

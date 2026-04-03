@@ -5,6 +5,8 @@ import { WarRoomProvider, useWarRoom } from './_context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useEffect } from 'react';
 
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 function PulsingText({ children, className }: { children: React.ReactNode, className?: string }) {
   const opacity = useSharedValue(1);
 
@@ -29,8 +31,6 @@ function PulsingText({ children, className }: { children: React.ReactNode, class
     </Animated.Text>
   );
 }
-
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 function WarRoomHeader() {
   const router = useRouter();

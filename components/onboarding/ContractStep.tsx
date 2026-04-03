@@ -173,7 +173,7 @@ export function ContractStep({
               className="font-medium text-lg text-black leading-6"
               numberOfLines={10}
             >
-              "{motivation}"
+              &quot;{motivation}&quot;
             </Text>
           </Animated.View>
 

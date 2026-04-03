@@ -1,7 +1,8 @@
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useState, useEffect } from 'react';
-import { useIsFocused } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
@@ -10,10 +11,42 @@ import {
     loadStreakData,
     checkInToday,
     getWeekDates,
-    isCheckedInOnDate,
     getTodayStr,
     StreakData
 } from '../../utils/streakUtils';
+
+const GridBackground = React.memo(() => (
+    <View className="absolute inset-0 w-full h-full opacity-60" pointerEvents="none">
+        <Svg width="100%" height="100%">
+            <Defs>
+                <Pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <Path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+                </Pattern>
+            </Defs>
+            <Rect width="100%" height="100%" fill="url(#grid)" />
+        </Svg>
+    </View>
+));
+
+const PulseRings = React.memo(() => {
+    const opacity = useSharedValue(0.2);
+    useEffect(() => {
+        opacity.value = withRepeat(
+            withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+            -1,
+            true
+        );
+    }, []);
+    const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+    return (
+        <Animated.View style={animatedStyle} className="absolute items-center justify-center mb-14">
+            <View className="absolute w-[300px] h-[300px] rounded-full bg-[#FF3B30]/5" />
+            <View className="absolute w-[260px] h-[260px] rounded-full bg-[#FF3B30]/10" />
+            <View className="absolute w-[220px] h-[220px] rounded-full bg-[#FF3B30]/20" />
+        </Animated.View>
+    );
+});
 
 const StreakSkeleton = () => (
     <>
@@ -58,57 +91,75 @@ export default function Streak() {
     const [streakData, setStreakData] = useState<StreakData | null>(null);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
     const [checkedInToday, setCheckedInToday] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingIn, setIsCheckingIn] = useState(false);
     const insets = useSafeAreaInsets();
 
-    const fetchData = async () => {
-        if (!streakData) {
-            setIsLoading(true);
-        }
-        const data = await loadStreakData();
-        setStreakData(data);
+    const { heatmapSquares, completedSet } = useMemo(() => {
+        const set = new Set(streakData?.checkIns || []);
+        const today = new Date();
+        const squares = Array.from({ length: 30 }).map((_, i) => {
+            const date = subDays(today, 29 - i);
+            const dateStr = format(date, 'yyyy-MM-dd');
+            return {
+                id: i,
+                isCompleted: set.has(dateStr)
+            };
+        });
+        return { heatmapSquares: squares, completedSet: set };
+    }, [streakData]);
 
-        const dates = getWeekDates();
-        setWeekDates(dates);
+    const displayWeekDates = useMemo(() => {
+        const todayStrFn = getTodayStr();
+        return weekDates.map(date => {
+            const dateStr = format(date, 'yyyy-MM-dd');
+            return {
+                dateStr,
+                isToday: dateStr === todayStrFn,
+                isCompleted: completedSet.has(dateStr),
+                dayName: format(date, 'EEEE').charAt(0),
+                dayDate: format(date, 'd')
+            };
+        });
+    }, [weekDates, completedSet]);
 
-        setCheckedInToday(data.lastCheckedIn === getTodayStr());
-        setIsLoading(false);
-    };
-
-    const isFocused = useIsFocused();
-    useEffect(() => {
-        if (isFocused) {
-            fetchData();
-        }
-    }, [isFocused]);
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+            const fetch = async () => {
+                const data = await loadStreakData();
+                if (isActive) {
+                    setStreakData(data);
+                    setWeekDates(getWeekDates());
+                    setCheckedInToday(data.lastCheckedIn === getTodayStr());
+                }
+            };
+            fetch();
+            return () => { isActive = false; };
+        }, [])
+    );
 
     const handleCheckIn = async () => {
-        if (checkedInToday || isLoading) return;
+        if (checkedInToday || isCheckingIn) return;
 
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const newData = await checkInToday();
-        setStreakData(newData);
-        setCheckedInToday(true);
+        setIsCheckingIn(true);
+        try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            const newData = await checkInToday();
+            setStreakData(newData);
+            setCheckedInToday(true);
+        } finally {
+            setIsCheckingIn(false);
+        }
     };
-    const todayStr = getTodayStr();
     const startOfWeekDate = weekDates[0] ? format(weekDates[0], 'MMM d') : '-';
     const endOfWeekDate = weekDates[6] ? format(weekDates[6], 'MMM d') : '-';
 
     return (
         <View className="flex-1 bg-white" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
             {/* Grid Background */}
-            <View className="absolute inset-0 w-full h-full opacity-60">
-                <Svg width="100%" height="100%">
-                    <Defs>
-                        <Pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <Path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
-                        </Pattern>
-                    </Defs>
-                    <Rect width="100%" height="100%" fill="url(#grid)" />
-                </Svg>
-            </View>
+            <GridBackground />
 
-            {isLoading || !streakData ? (
+            {!streakData ? (
                 <StreakSkeleton />
             ) : (
                 <>
@@ -128,11 +179,7 @@ export default function Streak() {
                         <View className="mb-0">
                             <View className="items-center justify-center relative overflow-hidden min-h-[300px] mb-8 -mx-6 -mt-4">
                                 {/* Glow Behind Flame */}
-                                <View className="absolute items-center justify-center mb-14">
-                                    <View className="absolute w-[300px] h-[300px] rounded-full bg-[#FF3B30]/5 animate-pulse delay-150" />
-                                    <View className="absolute w-[260px] h-[260px] rounded-full bg-[#FF3B30]/10 animate-pulse delay-100" />
-                                    <View className="absolute w-[220px] h-[220px] rounded-full bg-[#FF3B30]/20 animate-pulse delay-50" />
-                                </View>
+                                <PulseRings />
                                 {/* Flame and Streak Text */}
                                 <View className="items-center z-10">
                                     <Text style={{ fontSize: 200 }}>🔥</Text>
@@ -150,36 +197,28 @@ export default function Streak() {
                                 <Text className="font-bold text-xs text-black tracking-widest">{startOfWeekDate} - {endOfWeekDate}</Text>
                             </View>
                             <View className="flex-row justify-between items-center bg-gray-50 p-4 rounded-3xl border border-gray-100">
-                                {weekDates.map((date, i) => {
-                                    const dateStr = format(date, 'yyyy-MM-dd');
-                                    const isToday = dateStr === todayStr;
-                                    const isCompleted = isCheckedInOnDate(date, streakData.checkIns);
-                                    const dayName = format(date, 'EEEE').charAt(0); // M, T, W, T, F, S, S
-                                    const dayDate = format(date, 'd');
+                                {displayWeekDates.map((item, i) => (
+                                    <View key={i} className="items-center">
+                                        <Text className="text-[10px] font-bold text-gray-400 mb-2">{item.dayName}</Text>
 
-                                    return (
-                                        <View key={i} className="items-center">
-                                            <Text className="text-[10px] font-bold text-gray-400 mb-2">{dayName}</Text>
-
-                                            {isCompleted ? (
-                                                <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center">
-                                                    <Ionicons name="checkmark" size={16} color="white" />
-                                                </View>
-                                            ) : (
-                                                <View
-                                                    className={`w-10 h-10 rounded-full items-center justify-center ${isToday ? 'border-2 border-black bg-white' : 'bg-gray-200'
-                                                        }`}
-                                                >
-                                                    {isToday ? (
-                                                        <View className="w-3 h-3 rounded-full bg-black" />
-                                                    ) : (
-                                                        <Text className="text-xs font-bold text-gray-400">{dayDate}</Text>
-                                                    )}
-                                                </View>
-                                            )}
-                                        </View>
-                                    );
-                                })}
+                                        {item.isCompleted ? (
+                                            <View className="w-10 h-10 rounded-full bg-swiss-red items-center justify-center">
+                                                <Ionicons name="checkmark" size={16} color="white" />
+                                            </View>
+                                        ) : (
+                                            <View
+                                                className={`w-10 h-10 rounded-full items-center justify-center ${item.isToday ? 'border-2 border-black bg-white' : 'bg-gray-200'
+                                                    }`}
+                                            >
+                                                {item.isToday ? (
+                                                    <View className="w-3 h-3 rounded-full bg-black" />
+                                                ) : (
+                                                    <Text className="text-xs font-bold text-gray-400">{item.dayDate}</Text>
+                                                )}
+                                            </View>
+                                        )}
+                                    </View>
+                                ))}
                             </View>
                         </View>
 
@@ -200,16 +239,12 @@ export default function Streak() {
                             <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 px-2">LAST 30 DAYS</Text>
                             <View className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <View className="flex-row flex-wrap gap-2">
-                                    {Array.from({ length: 30 }).map((_, i) => {
-                                        const date = subDays(new Date(), 29 - i);
-                                        const isCompleted = isCheckedInOnDate(date, streakData.checkIns);
-                                        return (
-                                            <View
-                                                key={i}
-                                                className={`w-6 h-6 rounded-md ${isCompleted ? 'bg-swiss-red' : 'bg-gray-200'} border border-black/5`}
-                                            />
-                                        );
-                                    })}
+                                    {heatmapSquares.map((sq) => (
+                                        <View
+                                            key={sq.id}
+                                            className={`w-6 h-6 rounded-md ${sq.isCompleted ? 'bg-swiss-red' : 'bg-gray-200'} border border-black/5`}
+                                        />
+                                    ))}
                                 </View>
                                 <View className="flex-row items-center gap-2 mt-4 ml-1">
                                     <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Missed</Text>
@@ -228,7 +263,7 @@ export default function Streak() {
                     >
                         <Pressable
                             onPress={handleCheckIn}
-                            disabled={checkedInToday}
+                            disabled={checkedInToday || isCheckingIn}
                             style={({ pressed }) => [
                                 { opacity: pressed ? 0.8 : 1 }
                             ]}

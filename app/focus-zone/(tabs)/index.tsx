@@ -8,8 +8,7 @@ import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
 import { TacticalCard } from '../../../components/milestones/MilestoneCard';
 import { EditMilestoneModal } from '../../../components/milestones/EditMilestoneModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, { FadeIn, FadeInDown, Layout } from 'react-native-reanimated';
+import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 
 interface ChatMessage {
   id: string;
@@ -21,10 +20,9 @@ interface ChatMessage {
 
 export default function TacticalBoard() {
   const router = useRouter();
-  const { goal, setDraftStack, draftStack } = useWarRoom();
+  const { goal, setDraftStack } = useWarRoom();
   const {
     generateManualMilestone,
-    isReady
   } = useOnDeviceAI();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);

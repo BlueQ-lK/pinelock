@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { differenceInSeconds, endOfYear } from 'date-fns';
 import Animated, {
@@ -6,18 +6,13 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
   withDelay,
-  Easing,
-  runOnJS
 } from 'react-native-reanimated';
 import { ScannerSprite } from '../dashboard/ScannerSprite';
 
 interface TimeLeftStepProps {
   onNext: () => void;
 }
-
-const { width, height } = Dimensions.get('window');
 
 export function TimeLeftStep({ onNext }: TimeLeftStepProps) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });

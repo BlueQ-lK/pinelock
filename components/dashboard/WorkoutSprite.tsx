@@ -18,11 +18,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface WorkoutSpriteProps {
     isActive: boolean;
+    isPaused?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export function WorkoutSprite({ isActive }: WorkoutSpriteProps) {
+export function WorkoutSprite({ isActive, isPaused = false }: WorkoutSpriteProps) {
     // We use a slightly smaller width than full screen to account for paddings
     const containerWidth = SCREEN_WIDTH - 64;
 
@@ -32,20 +33,24 @@ export function WorkoutSprite({ isActive }: WorkoutSpriteProps) {
             className="items-center justify-center h-48 rounded-3xl overflow-hidden bg-gray-50/50 border border-gray-100"
         >
             {!isActive ? (
-                <IdleSprite />
+                <IdleSprite isPaused={isPaused} />
             ) : (
-                <DinoGame />
+                <DinoGame isPaused={isPaused} />
             )}
         </View>
     );
 }
 
-function IdleSprite() {
+function IdleSprite({ isPaused }: { isPaused: boolean }) {
     const breath = useSharedValue(1);
     const pupilX = useSharedValue(0);
     const pupilY = useSharedValue(0);
 
     useEffect(() => {
+        if (isPaused) {
+            cancelAnimation(breath);
+            return;
+        }
         breath.value = withRepeat(
             withSequence(
                 withTiming(1.05, { duration: 2000, easing: Easing.inOut(Easing.quad) }),
@@ -60,8 +65,11 @@ function IdleSprite() {
             pupilX.value = withSpring(Math.random() * 4 - 2);
             pupilY.value = withSpring(Math.random() * 4 - 2);
         }, 2500);
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            clearInterval(interval);
+            cancelAnimation(breath);
+        };
+    }, [isPaused]);
 
     const style = useAnimatedStyle(() => ({
         transform: [{ scaleY: breath.value }] as any
@@ -95,7 +103,7 @@ function IdleSprite() {
 
 const OBSTACLE_SPEED = 100; // Even slower for maximum relaxation
 
-function DinoGame() {
+function DinoGame({ isPaused }: { isPaused: boolean }) {
     const spriteY = useSharedValue(0);
     const spriteHover = useSharedValue(0);
     const [obstacles, setObstacles] = useState<{ id: number; type: 'CACTUS_SMALL' | 'CACTUS_LARGE' | 'ROCK'; x: number }[]>([]);
@@ -104,6 +112,7 @@ function DinoGame() {
     const nextSpawnDelay = useRef(2000);
 
     useEffect(() => {
+        if (isPaused) return;
         let lastTime = Date.now();
         const loop = setInterval(() => {
             const now = Date.now();
@@ -134,9 +143,13 @@ function DinoGame() {
             });
         }, 16);
         return () => clearInterval(loop);
-    }, []);
+    }, [isPaused]);
 
     useEffect(() => {
+        if (isPaused) {
+            cancelAnimation(spriteHover);
+            return;
+        }
         spriteHover.value = withRepeat(
             withSequence(
                 withTiming(-3, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
@@ -145,7 +158,8 @@ function DinoGame() {
             -1,
             true
         );
-    }, []);
+        return () => cancelAnimation(spriteHover);
+    }, [isPaused]);
 
     useEffect(() => {
         const spriteX = 50;
@@ -172,12 +186,12 @@ function DinoGame() {
 
     return (
         <View className="w-full h-full relative">
-            <ParallaxCloud top={20} speed={15} scale={1} delay={0} />
-            <ParallaxCloud top={40} speed={25} scale={0.6} delay={2000} />
-            <ParallaxCloud top={15} speed={10} scale={0.8} delay={4000} />
+            <ParallaxCloud top={20} speed={15} scale={1} delay={0} isPaused={isPaused} />
+            <ParallaxCloud top={40} speed={25} scale={0.6} delay={2000} isPaused={isPaused} />
+            <ParallaxCloud top={15} speed={10} scale={0.8} delay={4000} isPaused={isPaused} />
 
             <View className="absolute bottom-10 w-full h-1">
-                <MovingGround />
+                <MovingGround isPaused={isPaused} />
             </View>
 
             <View className="absolute bottom-10 w-full">
@@ -263,17 +277,22 @@ function Obstacle({ type, x }: { type: 'CACTUS_SMALL' | 'CACTUS_LARGE' | 'ROCK',
     );
 }
 
-function MovingGround() {
+function MovingGround({ isPaused }: { isPaused: boolean }) {
     const offset = useSharedValue(0);
 
     useEffect(() => {
+        if (isPaused) {
+            cancelAnimation(offset);
+            return;
+        }
         // Seamless loop matching the pattern width
         offset.value = withRepeat(
             withTiming(-100, { duration: 1000, easing: Easing.linear }),
             -1,
             false
         );
-    }, []);
+        return () => cancelAnimation(offset);
+    }, [isPaused]);
 
     const style = useAnimatedStyle(() => ({
         transform: [{ translateX: offset.value }]
@@ -308,17 +327,22 @@ function MovingGround() {
     );
 }
 
-function ParallaxCloud({ top, speed, scale, delay }: { top: number, speed: number, scale: number, delay: number }) {
+function ParallaxCloud({ top, speed, scale, delay, isPaused }: { top: number, speed: number, scale: number, delay: number, isPaused: boolean }) {
     const x = useSharedValue(SCREEN_WIDTH + 100);
 
     useEffect(() => {
+        if (isPaused) {
+            cancelAnimation(x);
+            return;
+        }
         const duration = 20000 + (Math.random() * 10000); // 20-30s per pass
         x.value = withDelay(delay, withRepeat(
             withTiming(-150, { duration: duration / (speed / 10), easing: Easing.linear }),
             -1,
             false
         ));
-    }, []);
+        return () => cancelAnimation(x);
+    }, [isPaused]);
 
     const style = useAnimatedStyle(() => ({
         transform: [

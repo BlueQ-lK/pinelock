@@ -8,12 +8,9 @@ import Animated, {
     withSpring,
     Easing,
     ZoomIn,
-    FadeIn,
-    runOnJS,
-    withDelay
 } from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
-import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 type ScannerState = 'IDLE' | 'ANALYZING' | 'MOCKING' | 'APPROVED' | 'SEARCHING' | 'POINTING' | 'SEALING' | 'TYPING' | 'VALIDATING' | 'WITNESSING' | 'HAPPY';
 type MockingPhase = 'LAUGH' | 'SHOUT' | 'CLAP';

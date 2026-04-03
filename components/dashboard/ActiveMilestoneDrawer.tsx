@@ -1,7 +1,9 @@
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import Animated, { SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Milestone, Todo } from '../../types';
+import { Milestone } from '../../types';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface TacticalPlanDrawerProps {
   visible: boolean;
@@ -84,5 +86,3 @@ export function TacticalPlanDrawer({ visible, onClose, milestone, onToggleTodo }
     </Modal>
   );
 }
-
-import { SafeAreaView } from 'react-native-safe-area-context';

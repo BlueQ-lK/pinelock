@@ -14,7 +14,6 @@ export function CountdownTimer() {
 
   function getTimeLeft() {
     const now = new Date();
-    const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
     // If we are testing in 2025, we might want to target end of 2026 as per app name
     // But for "Lockin 2026", usually implies the year 2026 is the goal year.
     // Assuming we are preparing for 2026 or in 2026. 

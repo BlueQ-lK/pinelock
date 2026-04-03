@@ -3,11 +3,11 @@ import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, subHours, addYears, addMonths, addDays } from 'date-fns';
 import { useWarRoom } from '../_context';
-import { Milestone } from '../../../types';
-import { schedulePushNotification, scheduleNotificationAtDate } from '../../../services/notifications';
+import { Milestone, Todo } from '../../../types';
+import { scheduleNotificationAtDate } from '../../../services/notifications';
 import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 import { Ionicons } from '@expo/vector-icons';
-import { Todo } from '../../../types';
+
 
 export default function ManualEntry() {
     const { draftStack, setDraftStack, goal, deployedStack } = useWarRoom();
@@ -53,7 +53,6 @@ export default function ManualEntry() {
 
         // Use ISO format for storage
         const isoDeadline = manualDeadline.toISOString().split('T')[0];
-        const formattedDeadline = format(manualDeadline, 'MMM d, yyyy');
 
         // Extra validation for goal range
         if (goalEndDate && manualDeadline > goalEndDate) {

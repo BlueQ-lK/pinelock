@@ -8,20 +8,16 @@ import {
   ScrollView,
   ViewStyle,
 } from "react-native";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Animated, {
   FadeInDown,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
   withSequence,
   Easing,
   withSpring,
   withDelay,
-  interpolate,
-  runOnJS,
-  cancelAnimation,
 } from "react-native-reanimated";
 
 export type DurationUnit = "year" | "months" | "days";

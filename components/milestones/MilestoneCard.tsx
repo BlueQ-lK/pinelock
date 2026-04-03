@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Milestone } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 

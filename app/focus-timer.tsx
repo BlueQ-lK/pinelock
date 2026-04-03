@@ -1,15 +1,10 @@
-import { View, Text, TouchableOpacity, AppState, AppStateStatus, Platform, TextInput } from 'react-native';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withRepeat,
-    withTiming,
-    withSequence,
     FadeIn,
     FadeInDown,
     ZoomIn,
@@ -19,12 +14,18 @@ import * as Haptics from 'expo-haptics';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
-import { WorkoutSprite } from '../components/dashboard/WorkoutSprite';
+
+// ─── FT-3: Lazy-load sprite components ───────────────────────────────────────
+// Each module is only loaded when required by the active timer state.
 import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 import { MusicPlayer } from '../components/dashboard/MusicPlayer';
-import { BoatingSprite } from '../components/dashboard/BoatingSprite';
+const WorkoutSprite = lazy(() =>
+    import('../components/dashboard/WorkoutSprite').then(m => ({ default: m.WorkoutSprite }))
+);
+// ─────────────────────────────────────────────────────────────────────────────
 
 type TimerState = 'idle' | 'active' | 'complete';
+type TimerMode = 'open' | 'pomodoro';
 
 const MOTIVATIONAL_QUOTES = [
     "Small steps lead to big victories.",
@@ -41,8 +42,6 @@ const MOTIVATIONAL_QUOTES = [
     "This is how champions are made.",
 ];
 
-type TimerMode = 'open' | 'pomodoro';
-
 export default function FocusTimerScreen() {
     const router = useRouter();
     const [timerMode, setTimerMode] = useState<TimerMode>('open');
@@ -53,30 +52,81 @@ export default function FocusTimerScreen() {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [goal, setGoal] = useState('');
     const [quote, setQuote] = useState('');
+    const [isCapturing, setIsCapturing] = useState(false); // FT-4
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const shareCardRef = useRef<ViewShot>(null);
 
-    // Refs for safe background saving on unmount
-    const elapsedSecondsRef = useRef(0);
-    const sessionNoteRef = useRef('');
-    const timerStateRef = useRef<TimerState>('idle');
-    const hasSavedRef = useRef(false);
+    // ─── FT-2: Single ref object replaces 4 separate sync-to-ref useEffects ─
+    // Mutate directly; never need the sync effects.
+    const liveRef = useRef({
+        elapsedSeconds: 0,
+        sessionNote: '',
+        timerState: 'idle' as TimerState,
+        hasSaved: false,
+        startTime: null as number | null,
+        timerMode: 'open' as TimerMode,
+    });
+    // ────────────────────────────────────────────────────────────────────────
 
-    useEffect(() => {
-        elapsedSecondsRef.current = elapsedSeconds;
-    }, [elapsedSeconds]);
+    // ─── FT-1: handleEnd ref so the interval always calls the latest version ─
+    // We store the real implementation in a ref and update it on every render.
+    // The interval callback calls handleEndRef.current(), never closes over state.
+    const handleEndImpl = useCallback(async (forcedElapsed?: number) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
 
-    useEffect(() => {
-        sessionNoteRef.current = sessionNote;
-    }, [sessionNote]);
+        // Derive elapsed purely from the startTime ref — no stale state reads.
+        let finalElapsed = forcedElapsed;
+        if (finalElapsed === undefined) {
+            const st = liveRef.current.startTime;
+            finalElapsed = st ? Math.floor((Date.now() - st) / 1000) : 0;
+            if (liveRef.current.timerMode === 'pomodoro' && finalElapsed > 1500) {
+                finalElapsed = 1500;
+            }
+        }
 
-    useEffect(() => {
-        timerStateRef.current = timerState;
-    }, [timerState]);
+        await AsyncStorage.removeItem('focusStartTime');
 
+        liveRef.current.elapsedSeconds = finalElapsed;
+        liveRef.current.timerState = 'complete';
+        liveRef.current.hasSaved = false;
+
+        setElapsedSeconds(finalElapsed);
+        const randomQuote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+        setQuote(randomQuote);
+        setTimerState('complete');
+        setHasSaved(false);
+    }, []); // no state dependencies — reads only from liveRef
+
+    const handleEndRef = useRef(handleEndImpl);
     useEffect(() => {
-        hasSavedRef.current = hasSaved;
-    }, [hasSaved]);
+        handleEndRef.current = handleEndImpl;
+    }); // runs every render to keep ref fresh
+    // ────────────────────────────────────────────────────────────────────────
+
+    const saveSession = useCallback(async () => {
+        if (liveRef.current.timerState !== 'complete' || liveRef.current.hasSaved) return;
+
+        setHasSaved(true);
+        liveRef.current.hasSaved = true;
+
+        try {
+            const savedHistory = await AsyncStorage.getItem('focusSessionHistory');
+            const history = savedHistory ? JSON.parse(savedHistory) : [];
+            const newSession = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                duration: liveRef.current.elapsedSeconds,
+                note: liveRef.current.sessionNote.trim()
+            };
+            await AsyncStorage.setItem('focusSessionHistory', JSON.stringify([newSession, ...history]));
+        } catch (e) {
+            console.error('Failed to save session history', e);
+        }
+    }, []);
 
     const loadGoal = async () => {
         const savedGoal = await AsyncStorage.getItem('mainGoal');
@@ -88,63 +138,22 @@ export default function FocusTimerScreen() {
         if (savedStartTime) {
             const start = parseInt(savedStartTime, 10);
             const savedMode = await AsyncStorage.getItem('focusTimerMode') as TimerMode | null;
-            if (savedMode) setTimerMode(savedMode);
+            const mode: TimerMode = savedMode ?? 'open';
+            if (savedMode) setTimerMode(mode);
+            liveRef.current.startTime = start;
+            liveRef.current.timerMode = mode;
             setStartTime(start);
             setTimerState('active');
+            liveRef.current.timerState = 'active';
             const elapsed = Math.floor((Date.now() - start) / 1000);
             setElapsedSeconds(elapsed);
+            liveRef.current.elapsedSeconds = elapsed;
         }
     };
 
-    const handleEnd = useCallback(async (forcedElapsed?: number) => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-
-        let finalElapsed = forcedElapsed ?? elapsedSeconds;
-        if (!forcedElapsed && startTime) {
-            finalElapsed = Math.floor((Date.now() - startTime) / 1000);
-            if (timerMode === 'pomodoro' && finalElapsed > 1500) finalElapsed = 1500;
-        }
-
-        await AsyncStorage.removeItem('focusStartTime');
-
-        setElapsedSeconds(finalElapsed);
-        const randomQuote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
-        setQuote(randomQuote);
-        setTimerState('complete');
-        setHasSaved(false);
-    }, [elapsedSeconds, startTime, timerMode]);
-
-    const saveSession = useCallback(async () => {
-        if (timerStateRef.current !== 'complete' || hasSavedRef.current) return;
-
-        setHasSaved(true);
-        hasSavedRef.current = true;
-
-        try {
-            const savedHistory = await AsyncStorage.getItem('focusSessionHistory');
-            const history = savedHistory ? JSON.parse(savedHistory) : [];
-            const newSession = {
-                id: Date.now().toString(),
-                date: new Date().toISOString(),
-                duration: elapsedSecondsRef.current,
-                note: sessionNoteRef.current.trim()
-            };
-            await AsyncStorage.setItem('focusSessionHistory', JSON.stringify([newSession, ...history]));
-            console.log('Session saved successfully');
-        } catch (e) {
-            console.error('Failed to save session history', e);
-        }
-    }, []);
-
-    // Handle background saving on unmount (system gesture navigation)
+    // Handle background saving on unmount
     useEffect(() => {
-        return () => {
-            saveSession();
-        };
+        return () => { saveSession(); };
     }, [saveSession]);
 
     useEffect(() => {
@@ -155,16 +164,18 @@ export default function FocusTimerScreen() {
         };
     }, []);
 
+    // ─── FT-1: Interval calls handleEndRef.current() — always the latest fn ─
     useEffect(() => {
         if (timerState === 'active' && startTime) {
             intervalRef.current = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - startTime) / 1000);
-
-                if (timerMode === 'pomodoro' && elapsed >= 1500) {
+                if (liveRef.current.timerMode === 'pomodoro' && elapsed >= 1500) {
                     setElapsedSeconds(1500);
-                    handleEnd(1500);
+                    liveRef.current.elapsedSeconds = 1500;
+                    handleEndRef.current(1500); // always fresh, no stale closure
                 } else {
                     setElapsedSeconds(elapsed);
+                    liveRef.current.elapsedSeconds = elapsed;
                 }
             }, 1000);
         }
@@ -175,6 +186,7 @@ export default function FocusTimerScreen() {
             }
         };
     }, [timerState, startTime, timerMode]);
+    // ────────────────────────────────────────────────────────────────────────
 
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
@@ -193,6 +205,9 @@ export default function FocusTimerScreen() {
     const handleStart = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const now = Date.now();
+        liveRef.current.startTime = now;
+        liveRef.current.timerState = 'active';
+        liveRef.current.elapsedSeconds = 0;
         setStartTime(now);
         setTimerState('active');
         setElapsedSeconds(0);
@@ -202,15 +217,20 @@ export default function FocusTimerScreen() {
 
     const updateSessionNote = (text: string) => {
         setSessionNote(text);
+        liveRef.current.sessionNote = text; // FT-2: keep ref in sync directly
     };
 
+    // ─── FT-4: isCapturing spinner for blocking captureRef calls ─────────────
     const handleShare = async () => {
         try {
             if (shareCardRef.current) {
+                setIsCapturing(true);
                 const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
+                setIsCapturing(false);
                 await Sharing.shareAsync(uri);
             }
         } catch (e) {
+            setIsCapturing(false);
             console.error('Share failed:', e);
         }
     };
@@ -219,14 +239,18 @@ export default function FocusTimerScreen() {
         try {
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status === 'granted' && shareCardRef.current) {
+                setIsCapturing(true);
                 const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
+                setIsCapturing(false);
                 await MediaLibrary.saveToLibraryAsync(uri);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
         } catch (e) {
+            setIsCapturing(false);
             console.error('Save failed:', e);
         }
     };
+    // ────────────────────────────────────────────────────────────────────────
 
     const handleClose = async () => {
         await saveSession();
@@ -235,6 +259,11 @@ export default function FocusTimerScreen() {
 
     const handleNewSession = async () => {
         await saveSession();
+        liveRef.current.startTime = null;
+        liveRef.current.timerState = 'idle';
+        liveRef.current.elapsedSeconds = 0;
+        liveRef.current.sessionNote = '';
+        liveRef.current.hasSaved = false;
         setStartTime(null);
         setTimerState('idle');
         setElapsedSeconds(0);
@@ -242,11 +271,11 @@ export default function FocusTimerScreen() {
         setHasSaved(false);
     };
 
-    const today = new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
+    // ─── FT-5: Memoize — runs once, not every second ──────────────────────
+    const today = useMemo(() =>
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        , []);
+    // ────────────────────────────────────────────────────────────────────────
 
     return (
         <View className="flex-1 bg-white">
@@ -269,11 +298,11 @@ export default function FocusTimerScreen() {
 
                 {(timerState === 'idle' || timerState === 'active') && (
                     <Animated.View entering={FadeInUp} className='flex-row justify-center items-center z-10'>
-                        <MusicPlayer />
+                        <MusicPlayer isPaused={timerState !== 'active' && timerState !== 'idle'} />
                     </Animated.View>
                 )}
 
-                {/* IDLE STATE (Swiss-Bento Redesign) */}
+                {/* IDLE STATE */}
                 {timerState === 'idle' && (
                     <View className="flex-1 px-6 justify-center">
                         <Animated.View entering={FadeInDown.delay(200)}>
@@ -304,13 +333,13 @@ export default function FocusTimerScreen() {
                         <Animated.View entering={FadeInDown.delay(300)}>
                             <View className="mb-8 flex-row bg-gray-100 p-1 rounded-full self-start">
                                 <TouchableOpacity
-                                    onPress={() => setTimerMode('open')}
+                                    onPress={() => { setTimerMode('open'); liveRef.current.timerMode = 'open'; }}
                                     className={`px-6 py-3 rounded-full ${timerMode === 'open' ? 'bg-white border border-black/5' : ''}`}
                                 >
                                     <Text className={`font-bold text-xs ${timerMode === 'open' ? 'text-black' : 'text-gray-400'} tracking-widest uppercase`}>OPEN</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    onPress={() => setTimerMode('pomodoro')}
+                                    onPress={() => { setTimerMode('pomodoro'); liveRef.current.timerMode = 'pomodoro'; }}
                                     className={`px-6 py-3 rounded-full ${timerMode === 'pomodoro' ? 'bg-white border border-black/5' : ''}`}
                                 >
                                     <Text className={`font-bold text-xs ${timerMode === 'pomodoro' ? 'text-black' : 'text-gray-400'} tracking-widest uppercase`}>POMODORO</Text>
@@ -318,7 +347,7 @@ export default function FocusTimerScreen() {
                             </View>
                         </Animated.View>
 
-                        {/* Goal Bento Badge */}
+                        {/* Goal Badge */}
                         {goal && (
                             <Animated.View entering={FadeInDown.delay(500)}>
                                 <View className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4">
@@ -352,7 +381,6 @@ export default function FocusTimerScreen() {
                 {/* ACTIVE STATE */}
                 {timerState === 'active' && (
                     <View className="flex-1 justify-center items-center px-8">
-                        {/* Timer centered */}
                         <View className="items-center justify-center flex-1">
                             <Animated.View entering={FadeIn}>
                                 <Text className="text-black font-black text-8xl tracking-tighter leading-none italic">
@@ -360,15 +388,16 @@ export default function FocusTimerScreen() {
                                 </Text>
                             </Animated.View>
 
+                            {/* FT-3: lazy WorkoutSprite only loaded when active */}
                             <View className="mt-12">
-                                <WorkoutSprite isActive={true} />
+                                <Suspense fallback={<View style={{ width: 80, height: 80 }} />}>
+                                    <WorkoutSprite isActive={true} />
+                                </Suspense>
                             </View>
                         </View>
 
                         {goal && (
-                            <View
-                                className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4"
-                            >
+                            <View className="bg-white border-2 border-gray-100 rounded-[28px] p-6 mb-12 flex-row items-center gap-4">
                                 <View className="w-10 h-10 rounded-full bg-black items-center justify-center">
                                     <Ionicons name="flash" size={20} color="white" />
                                 </View>
@@ -380,7 +409,7 @@ export default function FocusTimerScreen() {
                         )}
 
                         <TouchableOpacity
-                            onPress={() => handleEnd()}
+                            onPress={() => handleEndRef.current()}
                             className="bg-black px-12 py-5 rounded-full mb-8 shadow-lg"
                         >
                             <Text className="text-white font-black tracking-widest">END SESSION</Text>
@@ -388,7 +417,7 @@ export default function FocusTimerScreen() {
                     </View>
                 )}
 
-                {/* COMPLETE STATE (Previous Red Design + New Buttons) */}
+                {/* COMPLETE STATE */}
                 {timerState === 'complete' && (
                     <View className="flex-1 px-6">
                         <Animated.View entering={FadeIn} className="flex-1 justify-center">
@@ -413,12 +442,12 @@ export default function FocusTimerScreen() {
 
                                     {sessionNote.trim().length > 0 && (
                                         <View className="bg-black/20 px-4 py-3 rounded-xl mb-6 w-full items-center">
-                                            <Text className="text-white font-bold text-sm text-center">"{sessionNote}"</Text>
+                                            <Text className="text-white font-bold text-sm text-center">&quot;{sessionNote}&quot;</Text>
                                         </View>
                                     )}
 
                                     <Text className="text-white font-medium text-lg text-center italic leading-6 mb-6">
-                                        "{quote}"
+                                        &quot;{quote}&quot;
                                     </Text>
 
                                     <View className="border-t border-white/20 pt-4 w-full items-center">
@@ -444,22 +473,37 @@ export default function FocusTimerScreen() {
                             </View>
                         </Animated.View>
 
+                        {/* FT-4: Capture spinner overlay + disabled buttons while capturing */}
                         <Animated.View entering={FadeInDown.delay(300)}>
                             <View className="pb-8">
                                 <View className="flex-row gap-3 mb-4">
                                     <TouchableOpacity
                                         onPress={handleSave}
+                                        disabled={isCapturing}
                                         className="flex-1 bg-white border-2 border-black py-4 rounded-xl items-center flex-row justify-center gap-2"
+                                        style={{ opacity: isCapturing ? 0.5 : 1 }}
                                     >
-                                        <Ionicons name="download-outline" size={20} color="black" />
-                                        <Text className="text-black font-black text-xs tracking-widest">SAVE</Text>
+                                        {isCapturing
+                                            ? <ActivityIndicator size="small" color="#000" />
+                                            : <>
+                                                <Ionicons name="download-outline" size={20} color="black" />
+                                                <Text className="text-black font-black text-xs tracking-widest">SAVE</Text>
+                                            </>
+                                        }
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={handleShare}
+                                        disabled={isCapturing}
                                         className="flex-1 bg-white border-2 border-black py-4 rounded-xl items-center flex-row justify-center gap-2"
+                                        style={{ opacity: isCapturing ? 0.5 : 1 }}
                                     >
-                                        <Ionicons name="share-outline" size={20} color="black" />
-                                        <Text className="text-black font-black text-xs tracking-widest">SHARE</Text>
+                                        {isCapturing
+                                            ? <ActivityIndicator size="small" color="#000" />
+                                            : <>
+                                                <Ionicons name="share-outline" size={20} color="black" />
+                                                <Text className="text-black font-black text-xs tracking-widest">SHARE</Text>
+                                            </>
+                                        }
                                     </TouchableOpacity>
                                 </View>
                                 <TouchableOpacity
@@ -472,10 +516,13 @@ export default function FocusTimerScreen() {
                         </Animated.View>
                     </View>
                 )}
+
                 {(timerState === 'idle' || timerState === 'active') && (
-                    <View className="absolute top-0 left-0 right-0 items-center" style={{ transform: [{ scaleY: -1 }] }}>
-                        <BoatingSprite isBoat={false} />
-                    </View>
+                    <Suspense fallback={null}>
+                        <View className="absolute top-0 left-0 right-0 items-center" style={{ transform: [{ scaleY: -1 }] }}>
+                            <Image source={require('../assets/images/waves2.png')} className='w-full' />
+                        </View>
+                    </Suspense>
                 )}
             </SafeAreaView>
         </View>

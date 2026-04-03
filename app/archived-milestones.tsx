@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/StorageService';
 import { Ionicons } from '@expo/vector-icons';
 import { Milestone } from '../types';
 
@@ -20,7 +21,7 @@ export default function ArchivedMilestonesScreen() {
 
     const loadData = async () => {
         try {
-            const savedStack = await AsyncStorage.getItem('milestoneStack');
+            const savedStack = await StorageService.getItem('milestoneStack');
             if (savedStack) {
                 const all: Milestone[] = JSON.parse(savedStack);
                 // Filter only archived
@@ -44,7 +45,7 @@ export default function ArchivedMilestonesScreen() {
                     text: "Restore",
                     onPress: async () => {
                         try {
-                            const savedStack = await AsyncStorage.getItem('milestoneStack');
+                            const savedStack = await StorageService.getItem('milestoneStack');
                             if (savedStack) {
                                 let all: Milestone[] = JSON.parse(savedStack);
                                 all = all.map(m => {
@@ -56,7 +57,7 @@ export default function ArchivedMilestonesScreen() {
                                     return m;
                                 });
 
-                                await AsyncStorage.setItem('milestoneStack', JSON.stringify(all));
+                                await StorageService.setItem('milestoneStack', JSON.stringify(all));
                                 loadData(); // Reload to refresh list
                             }
                         } catch (e) {

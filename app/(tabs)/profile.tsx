@@ -1,32 +1,96 @@
-import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator, Linking, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator, Linking, Share, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Milestone } from '../../types';
 import { useAI } from '../../contexts/AIContext';
 import { saveCustomApiKey, getCustomApiKey, testApiKey } from '../../services/gemini';
-import { loadStreakData } from '../../utils/streakUtils';
+import { StreakData } from '../../utils/streakUtils';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { StorageService } from '../../utils/StorageService';
 import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '../../services/notifications';
 
+// ─── P-4: Skeleton loader ────────────────────────────────────────────────────
+function SkeletonBox({ width, height, className }: { width?: number | string; height: number; className?: string }) {
+  return (
+    <View
+      style={{ width: width as any, height, borderRadius: 8, backgroundColor: '#E5E7EB' }}
+      className={className}
+    />
+  );
+}
 
+function ProfileSkeleton() {
+  return (
+    <View style={{ padding: 24 }}>
+      {/* Header */}
+      <View style={{ alignItems: 'center', marginBottom: 32 }}>
+        <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: '#E5E7EB', marginBottom: 16 }} />
+        <SkeletonBox width={160} height={28} />
+      </View>
+      {/* Mission card */}
+      <View style={{ height: 110, borderRadius: 16, backgroundColor: '#E5E7EB', marginBottom: 32 }} />
+      {/* Stats header */}
+      <SkeletonBox width="100%" height={44} className="mb-4" />
+      {/* Section label */}
+      <SkeletonBox width={80} height={12} className="mb-4" />
+      {/* Card */}
+      <View style={{ height: 120, borderRadius: 12, backgroundColor: '#E5E7EB', marginBottom: 32 }} />
+      <SkeletonBox width={100} height={12} className="mb-4" />
+      <View style={{ height: 88, borderRadius: 12, backgroundColor: '#E5E7EB', marginBottom: 32 }} />
+    </View>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DEFAULT_STREAK: StreakData = {
+  currentStreak: 0,
+  longestStreak: 0,
+  totalCheckIns: 0,
+  lastCheckedIn: null,
+  checkIns: [],
+};
+
+/** Parse raw streak JSON string exactly as loadStreakData does, without an extra storage read. */
+function parseStreakRaw(raw: string | null): StreakData {
+  if (!raw) return DEFAULT_STREAK;
+  try {
+    const parsed: StreakData = JSON.parse(raw);
+    if (!parsed.checkIns) parsed.checkIns = [];
+
+    if (parsed.lastCheckedIn) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const last = new Date(parsed.lastCheckedIn);
+      last.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil(Math.abs(today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays > 1) parsed.currentStreak = 0;
+    }
+    return parsed;
+  } catch {
+    return DEFAULT_STREAK;
+  }
+}
+
+// Stats panel animated height
+const STATS_PANEL_HEIGHT = 272; // approximate px for 3-row grid + gaps
 
 export default function Profile() {
   const router = useRouter();
   const { aiProvider, refreshProvider } = useAI();
 
   const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(true); // P-4
   const [userName, setUserName] = useState('LLockIN');
-  const [goal, setGoal] = useState('Loading...');
+  const [goal, setGoal] = useState('');
   const [motivation, setMotivation] = useState('');
   const [stats, setStats] = useState({ completed: 0, total: 0, daysActive: 0, currentStreak: 0, longestStreak: 0 });
-
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState({ hour: 21, minute: 0 });
@@ -39,26 +103,57 @@ export default function Profile() {
   const [hasExistingKey, setHasExistingKey] = useState(false);
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
+  // ─── P-1: Debounced name write ──────────────────────────────────────────
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const handleNameChange = (text: string) => {
+    setUserName(text);
+    if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+    nameDebounceRef.current = setTimeout(() => {
+      AsyncStorage.setItem(STORAGE_KEYS.USER_NAME, text);
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+    };
+  }, []);
+  // ────────────────────────────────────────────────────────────────────────
+
+  // ─── P-3: Reanimated stats panel ────────────────────────────────────────
+  const statsHeight = useSharedValue(0);
+
+  const animatedStatsStyle = useAnimatedStyle(() => ({
+    height: statsHeight.value,
+    overflow: 'hidden',
+  }));
+
+  const toggleStats = () => {
+    const next = !isStatsExpanded;
+    setIsStatsExpanded(next);
+    statsHeight.value = withTiming(next ? STATS_PANEL_HEIGHT : 0, {
+      duration: 260,
+      easing: Easing.inOut(Easing.ease),
+    });
+  };
+  // ────────────────────────────────────────────────────────────────────────
+
+  // ─── P-2: loadData – reads streak raw string in same Promise.all ────────
   const loadData = async () => {
     const [
       savedName,
       savedGoal,
       savedMotivation,
       savedNotifs,
-      streakData,
+      rawStreak,       // <-- raw string, not a nested call
       existingKey
     ] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.USER_NAME),
       AsyncStorage.getItem(STORAGE_KEYS.MAIN_GOAL),
       AsyncStorage.getItem(STORAGE_KEYS.MOTIVATION),
       AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED),
-      loadStreakData(),
+      AsyncStorage.getItem('streakData'),    // same key as streakUtils uses
       getCustomApiKey()
     ]);
 
@@ -78,9 +173,7 @@ export default function Profile() {
       StorageService.getJSON<Milestone[]>(STORAGE_KEYS.MILESTONE_STACK)
     ]);
 
-    if (savedTime) {
-      setReminderTime(savedTime);
-    }
+    if (savedTime) setReminderTime(savedTime);
 
     let completed = 0;
     let total = 0;
@@ -88,6 +181,9 @@ export default function Profile() {
       completed = savedStack.filter(m => m.status === 'COMPLETED').length;
       total = savedStack.length;
     }
+
+    // P-2: parse streak locally – no extra storage round-trip
+    const streakData = parseStreakRaw(rawStreak);
 
     setStats({
       completed,
@@ -97,46 +193,50 @@ export default function Profile() {
       longestStreak: streakData.longestStreak
     });
 
-    // Load custom API key status
     setHasExistingKey(!!existingKey);
     if (existingKey) {
-      // Show masked key
       setCustomApiKey('••••••••' + existingKey.slice(-4));
     }
+
+    setIsLoading(false); // P-4: reveal real UI
   };
+  // ────────────────────────────────────────────────────────────────────────
 
   useFocusEffect(
     useCallback(() => {
+      setIsLoading(true);
       loadData();
     }, [])
   );
 
-  const getProviderLabel = () => {
+  // ─── P-6: Memoized provider helpers ─────────────────────────────────────
+  const providerLabel = useMemo(() => {
     switch (aiProvider) {
       case 'ondevice': return 'On-Device AI';
       case 'gemini': return 'Gemini (Default)';
       case 'gemini-custom': return 'Gemini (Custom Key)';
       default: return 'Not Configured';
     }
-  };
+  }, [aiProvider]);
 
-  const getProviderDescription = () => {
+  const providerDescription = useMemo(() => {
     switch (aiProvider) {
       case 'ondevice': return 'Fastest & fully private.';
       case 'gemini': return 'Shared quota. Add your key to avoid limits.';
       case 'gemini-custom': return 'Using your personal Gemini Flash quota.';
       default: return 'No AI available. Add a key below.';
     }
-  };
+  }, [aiProvider]);
 
-  const getProviderColor = () => {
+  const providerColor = useMemo(() => {
     switch (aiProvider) {
-      case 'ondevice': return '#10B981'; // green
-      case 'gemini': return '#3B82F6'; // blue
-      case 'gemini-custom': return '#000000'; // black
-      default: return '#EF4444'; // red
+      case 'ondevice': return '#10B981';
+      case 'gemini': return '#3B82F6';
+      case 'gemini-custom': return '#000000';
+      default: return '#EF4444';
     }
-  };
+  }, [aiProvider]);
+  // ────────────────────────────────────────────────────────────────────────
 
   const handleTestKey = async () => {
     const keyToTest = customApiKey.startsWith('••') ? null : customApiKey;
@@ -144,7 +244,6 @@ export default function Profile() {
       Alert.alert('Enter Key', 'Please enter a new API key to test.');
       return;
     }
-
     setIsTestingKey(true);
     try {
       const result = await testApiKey(keyToTest);
@@ -162,29 +261,21 @@ export default function Profile() {
 
   const handleSaveKey = async () => {
     const keyToSave = customApiKey.startsWith('••') ? null : customApiKey.trim();
-
     if (!keyToSave) {
       Alert.alert('Enter Key', 'Please enter an API key to save.');
       return;
     }
-
     setIsSavingKey(true);
     try {
-      // Test first
       const result = await testApiKey(keyToSave);
       if (!result.valid) {
         Alert.alert('Invalid Key', result.error || 'Please enter a valid API key.');
         return;
       }
-
-      // Save the key
       await saveCustomApiKey(keyToSave);
       setHasExistingKey(true);
       setCustomApiKey('••••••••' + keyToSave.slice(-4));
-
-      // Refresh AI provider
       await refreshProvider();
-
       Alert.alert('Saved ✓', 'Your API key has been saved. AI is now using your key.');
     } catch (e) {
       Alert.alert('Error', 'Failed to save API key.');
@@ -237,14 +328,6 @@ export default function Profile() {
     );
   };
 
-  const handleNameChange = async (text: string) => {
-    setUserName(text);
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_NAME, text);
-  };
-
-  const handleColorChange = (color: string) => {
-    // Deprecated
-  };
 
   const handleToggleNotifications = async (value: boolean) => {
     if (value) {
@@ -272,7 +355,6 @@ export default function Profile() {
       const newTime = { hour, minute };
       setReminderTime(newTime);
       await AsyncStorage.setItem(STORAGE_KEYS.DAILY_REMINDER_TIME, JSON.stringify(newTime));
-
       if (notificationsEnabled) {
         await scheduleDailyStreakReminder(hour, minute);
       }
@@ -285,32 +367,50 @@ export default function Profile() {
     return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   };
 
+  // ─── P-5: Export via InteractionManager + compact JSON ──────────────────
   const handleExportData = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const items = await AsyncStorage.multiGet(keys);
 
-      const exportObj: Record<string, any> = {};
-      items.forEach(([key, value]) => {
-        if (value) {
-          try {
-            exportObj[key] = JSON.parse(value);
-          } catch {
-            exportObj[key] = value;
+      // Defer the CPU-heavy JSON work until after any pending interactions finish
+      InteractionManager.runAfterInteractions(() => {
+        const exportObj: Record<string, any> = {};
+        items.forEach(([key, value]) => {
+          if (value) {
+            try {
+              exportObj[key] = JSON.parse(value);
+            } catch {
+              exportObj[key] = value;
+            }
           }
-        }
-      });
+        });
 
-      const jsonString = JSON.stringify(exportObj, null, 2);
+        // P-5: compact stringify – no indentation to avoid UI jank
+        const jsonString = JSON.stringify(exportObj);
 
-      await Share.share({
-        message: jsonString,
-        title: 'LockIn Data Export',
+        Share.share({
+          message: jsonString,
+          title: 'LockIn Data Export',
+        }).catch(() => Alert.alert('Export Failed', 'Unable to export data.'));
       });
     } catch (e) {
       Alert.alert('Export Failed', 'Unable to export data.');
     }
   };
+  // ────────────────────────────────────────────────────────────────────────
+
+  // ─── P-4: Show skeleton until data is ready ──────────────────────────────
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+        <ScrollView className="flex-1">
+          <ProfileSkeleton />
+        </ScrollView>
+      </View>
+    );
+  }
+  // ────────────────────────────────────────────────────────────────────────
 
   return (
     <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
@@ -332,8 +432,6 @@ export default function Profile() {
             placeholder="Your Name"
             placeholderTextColor="#9CA3AF"
           />
-
-
         </View>
 
         {/* Mission Card */}
@@ -349,19 +447,16 @@ export default function Profile() {
           <Text className="text-white/80 text-xs italic">"{motivation}"</Text>
         </View>
 
-        {/* Stats Grid */}
+        {/* Stats Grid – P-3: Reanimated controlled panel */}
         <TouchableOpacity
-          onPress={() => {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setIsStatsExpanded(!isStatsExpanded);
-          }}
+          onPress={toggleStats}
           className="flex-row items-center justify-between border-b-2 border-gray-200 mb-4 py-4"
         >
           <Text className="font-bold text-xs text-black uppercase tracking-widest">Statistics</Text>
           <Ionicons name={isStatsExpanded ? "chevron-up" : "chevron-down"} size={16} color="black" />
         </TouchableOpacity>
 
-        {isStatsExpanded && (
+        <Animated.View style={animatedStatsStyle}>
           <View className="flex-row flex-wrap gap-4 mb-8">
             <View className="w-[47%] bg-gray-50 p-4 rounded-xl border border-gray-100 items-center">
               <Text className="font-black text-2xl">{stats.completed}</Text>
@@ -388,7 +483,7 @@ export default function Profile() {
               <Text className="text-[10px] font-bold text-gray-400 tracking-wider text-center mt-1">COMPLETION RATE</Text>
             </View>
           </View>
-        )}
+        </Animated.View>
 
         {!isStatsExpanded && <View className="mb-4" />}
 
@@ -404,11 +499,12 @@ export default function Profile() {
               </View>
               <View className="flex-1 pr-4">
                 <Text className="font-bold text-sm">AI Provider</Text>
-                <Text className="text-xs font-medium" style={{ color: getProviderColor() }}>{getProviderLabel()}</Text>
-                <Text className="text-[10px] text-gray-400 mt-1">{getProviderDescription()}</Text>
+                {/* P-6: memoized values used directly */}
+                <Text className="text-xs font-medium" style={{ color: providerColor }}>{providerLabel}</Text>
+                <Text className="text-[10px] text-gray-400 mt-1">{providerDescription}</Text>
               </View>
             </View>
-            <View className="w-3 h-3 rounded-full" style={{ backgroundColor: getProviderColor() }} />
+            <View className="w-3 h-3 rounded-full" style={{ backgroundColor: providerColor }} />
           </View>
 
           {/* Custom API Key Input */}

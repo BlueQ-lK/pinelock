@@ -2,8 +2,10 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, {
     FadeOut,
 } from 'react-native-reanimated';
-import React, { useState, useCallback } from 'react'; // Added React import for React.memo
-import { ScannerSprite } from './ScannerSprite';
+import React, { useState, useCallback, Suspense, lazy } from 'react';
+
+// C-1: Lazy load ScannerSprite
+const ScannerSprite = lazy(() => import('./ScannerSprite').then(m => ({ default: m.ScannerSprite })));
 
 function DayProgressWidgetCatComponent() { // Renamed the function
     // --- State Mapping ---
@@ -87,10 +89,12 @@ function DayProgressWidgetCatComponent() { // Renamed the function
                 >
                     <View>
                         {/* Scaled down slightly to fit the widget comfortable */}
-                        <ScannerSprite
-                            state={scannerState}
-                            showLabels={false}
-                        />
+                        <Suspense fallback={<View style={{ width: 100, height: 100 }} />}>
+                            <ScannerSprite
+                                state={scannerState}
+                                showLabels={false}
+                            />
+                        </Suspense>
                     </View>
                 </View>
             </TouchableOpacity>
