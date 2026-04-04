@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface SessionHistory {
@@ -15,11 +14,9 @@ interface SessionHistory {
     note: string;
 }
 
-// ─── FH-2: Fixed item heights for getItemLayout ───────────────────────────
-// mb-3 = 12px. Pill row: py-3 (12px top+bottom = 24px) + content ~28px ≈ 64px total with margin.
-// With note: adds divider (~1px) + note row (~32px) ≈ 97px total.
-const ITEM_BASE_HEIGHT = 64;    // row with no note (px, including mb-3)
-const ITEM_NOTE_HEIGHT = 97;    // row with note present
+// ─── FH-2: Updated item heights for new Mission Control style ───────────
+const ITEM_BASE_HEIGHT = 140;    // row with no note (px, including mb-4)
+const ITEM_NOTE_HEIGHT = 200;    // row with note present (px, including mb-4)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function FocusHistoryScreen() {
@@ -55,8 +52,9 @@ export default function FocusHistoryScreen() {
     const formatDate = (isoString: string): string => {
         const date = new Date(isoString);
         return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
         }).toUpperCase();
     };
 
@@ -79,87 +77,97 @@ export default function FocusHistoryScreen() {
         }),
         [history, itemLayout]
     );
-    // ──────────────────────────────────────────────────────────────────────
 
-    // ─── FH-1: Only animate the first 10 items ────────────────────────────
     const renderItem = useCallback(({ item, index }: { item: SessionHistory; index: number }) => (
         <Animated.View
             entering={index < 10 ? FadeInDown.delay(index * 50) : undefined}
-            className="mb-3 px-6 py-3 border-2 rounded-full"
-            style={{ backgroundColor: theme.surface, borderColor: theme.border }}
+            className="mb-4 p-6 rounded-[32px] border"
+            style={{
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 10,
+                elevation: 2
+            }}
         >
-            <View className="flex-row justify-between items-center">
-                <View className="flex-row items-center gap-3">
-                    <Text className="font-black text-xl tracking-widest uppercase" style={{ color: theme.text }}>{formatDate(item.date)}</Text>
-                </View>
+            <View className="mb-4">
+                <Text className="font-bold text-[10px] tracking-[0.2em] uppercase opacity-50 mb-1" style={{ color: theme.textSecondary }}>Mission Date</Text>
+                <Text className="font-black text-xs" style={{ color: theme.text }}>{formatDate(item.date)}</Text>
+            </View>
 
-                <View className="flex-row items-center gap-4">
-                    <Text className="font-black text-2xl tracking-tighter font-mono" style={{ color: theme.text }}>
+            <View className="flex-row justify-between items-end">
+                <View>
+                    <Text className="font-bold text-[10px] tracking-[0.2em] uppercase opacity-50 mb-1" style={{ color: theme.textSecondary }}>Focus Duration</Text>
+                    <Text className="font-black text-4xl tracking-tighter" style={{ color: theme.accent, fontFamily: 'monospace' }}>
                         {formatTime(item.duration)}
                     </Text>
                 </View>
+
+                <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
+                    <Ionicons name="flash-outline" size={20} color={theme.accent} />
+                </View>
             </View>
-            {item.note ? (
-                <View className="border-b" style={{ borderColor: theme.border }} />
-            ) : null}
-            {item.note ? (
-                <View className="px-3 rounded-full mx-auto" style={{ backgroundColor: theme.surfaceAlt }}>
-                    <Text className="text-sm font-bold italic" style={{ color: theme.textSecondary }}>
-                        {item.note}
+
+            {item.note && (
+                <View className="mt-4 p-4 rounded-2xl border-l-4" style={{ backgroundColor: theme.surfaceAlt, borderLeftColor: theme.accent }}>
+                    <Text className="font-bold text-[10px] tracking-widest opacity-50 mb-1 uppercase" style={{ color: theme.textSecondary }}>Mission Intel</Text>
+                    <Text className="text-sm font-medium leading-5 italic" style={{ color: theme.text }}>
+                        "{item.note}"
                     </Text>
                 </View>
-            ) : null}
+            )}
         </Animated.View>
     ), [theme]);
-    // ──────────────────────────────────────────────────────────────────────
 
     return (
-        <View className="flex-1">
-            {/* ─── FH-3: LinearGradient replaces two large rounded Views ───────
-                expo-linear-gradient runs on a single GPU pass with no overdraw,
-                eliminating the expensive mask pass of the two rounded Views.   */}
-            <LinearGradient
-                colors={[theme.blackBackground, theme.accent]}
-                locations={[0.42, 0.42]}
-                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            {/* ─────────────────────────────────────────────────────────────── */}
-
-            <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1">
-                {/* Header */}
-                <View className="flex-row items-center gap-4 px-6 py-4 z-10">
-                    <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full" style={{ backgroundColor: theme.accent }}>
-                        <Ionicons name="arrow-back" size={24} color={theme.accentForeground} />
+        <View className="flex-1" style={{ backgroundColor: theme.background }}>
+            {/* Header Area with Accent Background */}
+            <View
+                className="p-8 pb-12 rounded-b-[48px] shadow-lg mb-4 flex-row items-start gap-4"
+                style={{ backgroundColor: theme.accent, paddingTop: insets.top + 20 }}
+            >
+                <View className=" flex-row gap-4 items-center z-10">
+                    <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full" style={{ backgroundColor: theme.text }}>
+                        <Ionicons name="arrow-back" size={24} color={theme.background} />
                     </TouchableOpacity>
                     <View className="items-center">
-                        <Text className="font-black text-lg tracking-tight" style={{ color: theme.textAlt }}>SESSION LOG</Text>
+                        <Text className="font-black text-lg tracking-tight" style={{ color: theme.accentForeground }}>FOCUS LOG</Text>
                     </View>
+                    <View />
                 </View>
+            </View>
 
-                {/* Content */}
+
+
+            {/* List Content */}
+            <View className="flex-1 px-5">
                 {isLoading ? (
                     <View className="flex-1 items-center justify-center">
-                        <ActivityIndicator size="large" color={theme.text} />
+                        <ActivityIndicator size="large" color={theme.accent} />
                     </View>
                 ) : history.length === 0 ? (
                     <Animated.View entering={FadeIn} className="flex-1 items-center justify-center px-10">
-                        <Ionicons name="folder-open-outline" size={64} color={theme.surfaceAlt} className="mb-6" />
-                        <Text className="font-black text-2xl tracking-tight text-center mb-2 uppercase italic" style={{ color: theme.text }}>NO SESSIONS YET</Text>
-                        <Text className="font-bold text-center tracking-wide" style={{ color: theme.textSecondary }}>Complete a focus session to build your history.</Text>
+                        <View className="w-24 h-24 rounded-full items-center justify-center mb-6" style={{ backgroundColor: theme.surfaceAlt }}>
+                            <Ionicons name="folder-open-outline" size={48} color={theme.textSecondary} />
+                        </View>
+                        <Text className="font-black text-2xl tracking-tighter text-center mb-2 uppercase" style={{ color: theme.text }}>NO MISSIONS YET</Text>
+                        <Text className="font-bold text-center tracking-wide opacity-50" style={{ color: theme.textSecondary }}>Complete a focus session to build your history.</Text>
                     </Animated.View>
                 ) : (
                     <FlatList
                         data={history}
                         keyExtractor={item => item.id}
                         renderItem={renderItem}
-                        contentContainerStyle={{ padding: 20 }}
+                        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
                         showsVerticalScrollIndicator={false}
-                        getItemLayout={getItemLayout}  // FH-2
+                        getItemLayout={getItemLayout}
                         removeClippedSubviews={true}
                     />
                 )}
-
             </View>
         </View>
     );
 }
+

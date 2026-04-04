@@ -294,7 +294,6 @@ export default function Dashboard() {
             <MotivationCard
               goal={goal}
               motivation={motivation}
-              onEdit={() => router.push('/(onboarding)')}
             />
 
           </ScrollView>

@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator, Linking, Share, InteractionManager } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator, Linking, Share, InteractionManager, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, Suspense } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Constants from 'expo-constants';
@@ -16,6 +16,7 @@ import { StorageService } from '../../utils/StorageService';
 import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '../../services/notifications';
 import { useTheme, themes } from '../../contexts/ThemeContext';
 import { AppearanceTab } from '../../components/profile/appearance';
+import { BoatingSprite } from '../../components/dashboard/BoatingSprite';
 
 // ─── P-4: Skeleton loader ────────────────────────────────────────────────────
 function SkeletonBox({ width, height, className }: { width?: number | string; height: number; className?: string }) {
@@ -312,7 +313,7 @@ export default function Profile() {
   const renderContent = () => {
     if (activeTab === 'statistics') {
       return (
-        <View className="flex-1">
+        <View className="flex-1 p-6">
           <SubHeader title="STATISTICS" />
 
           <Text className="font-bold text-[10px] tracking-[0.2em] mb-4 ml-2 opacity-60" style={{ color: theme.text }}>OVERVIEW</Text>
@@ -368,7 +369,7 @@ export default function Profile() {
 
     if (activeTab === 'appearance') {
       return (
-        <View className="flex-1">
+        <View className="flex-1 p-6">
           <SubHeader title="APPEARANCE" />
           <AppearanceTab />
         </View>
@@ -377,7 +378,7 @@ export default function Profile() {
 
     if (activeTab === 'data') {
       return (
-        <View className="flex-1">
+        <View className="flex-1 p-6">
           <SubHeader title="Data and storage" />
           <TouchableOpacity
             onPress={handleExportData}
@@ -396,7 +397,7 @@ export default function Profile() {
 
     if (activeTab === 'security') {
       return (
-        <View className="flex-1">
+        <View className="flex-1 p-6">
           <SubHeader title="Security and privacy" />
 
           <Text className="font-bold text-xs uppercase tracking-widest mb-4 opacity-50" style={{ color: theme.text }}>Notifications</Text>
@@ -445,7 +446,7 @@ export default function Profile() {
 
     if (activeTab === 'about') {
       return (
-        <View className="flex-1">
+        <View className="flex-1 p-6">
           <SubHeader title="About" />
           <View className="rounded-3xl overflow-hidden" style={{ backgroundColor: theme.surfaceAlt }}>
             <View className="p-5 border-b flex-row justify-between items-center" style={{ borderBottomColor: theme.border }}>
@@ -471,86 +472,87 @@ export default function Profile() {
 
     return (
       <View className="flex-1">
-        {/* Header Section */}
-        <View className="flex-row justify-between items-center mb-10">
-          <View>
-            <Text className="font-black text-2xl tracking-tighter uppercase" style={{ color: theme.text }}>{userName || 'USER'}</Text>
-            <Text className="font-bold text-[10px] tracking-[0.2em]" style={{ color: theme.textSecondary }}>OPERATOR PROFILE</Text>
-          </View>
-          <TouchableOpacity
-            className="w-14 h-14 rounded-full items-center justify-center overflow-hidden border-2"
-            style={{ backgroundColor: theme.text, borderColor: theme.accent }}
-          >
-            <Text className="font-black text-2xl" style={{ color: theme.background }}>
-              {userName.charAt(0).toUpperCase() || 'L'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Motivation Card Styled Version */}
-        <View className="rounded-[32px] p-8 mb-8 border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <View className="flex-row justify-between items-start mb-6">
-            <View className="flex-row items-center gap-2 px-3 py-1 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
-              <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent }} />
-              <Text className="font-bold text-[10px] tracking-widest uppercase" style={{ color: theme.textSecondary }}>Active Commitment</Text>
+        {/* Full-width Accent Background Area */}
+        <View
+          className="p-8 pb-12 rounded-b-[48px] shadow-lg"
+          style={{ backgroundColor: theme.accent, paddingTop: insets.top + (24) }}
+        >
+          {/* Header Section */}
+          <View className="flex-row justify-between items-center mb-10" >
+            <View>
+              <Text className="font-black text-2xl tracking-tighter uppercase" style={{ color: theme.accentForeground }}>{userName || 'USER'}</Text>
+              <Text className="font-bold text-[10px] tracking-[0.2em] opacity-80" style={{ color: theme.accentForeground }}>OPERATOR PROFILE</Text>
             </View>
-            <Ionicons name="lock-closed" size={16} color={theme.text} />
-          </View>
-
-          <Text className="font-black text-3xl leading-9 mb-8 tracking-tighter" style={{ color: theme.text }}>
-            {goal || 'SET YOUR GOAL'}
-          </Text>
-
-          <View className="flex-row items-start gap-4">
-            <View className="w-[2px] h-10 rounded-full" style={{ backgroundColor: theme.accent, opacity: 0.3 }} />
-            <View className="flex-1">
-              <Text className="font-bold text-[10px] tracking-widest mb-1 uppercase" style={{ color: theme.textSecondary }}>THE PLEDGE</Text>
-              <Text className="font-medium text-sm leading-6 opacity-70" style={{ color: theme.text }}>
-                {motivation || 'Your motivation will appear here...'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <Text className="font-bold text-xs tracking-widest mb-4 ml-2 opacity-60" style={{ color: theme.textSecondary }}>PREFERENCES</Text>
-
-        {/* Vertical Tabs / Menu Items - matching War Path Summary Widget */}
-        <View className="gap-3">
-          {[
-            { id: 'appearance', label: 'APPEARANCE', icon: 'color-palette-outline' },
-            { id: 'data', label: 'DATA & STORAGE', icon: 'server-outline' },
-            { id: 'security', label: 'SECURITY & PRIVACY', icon: 'shield-checkmark-outline' },
-            { id: 'statistics', label: 'STATISTICS', icon: 'stats-chart-outline' },
-            { id: 'about', label: 'ABOUT LOCKIN', icon: 'information-circle-outline' },
-          ].map((item) => (
             <TouchableOpacity
-              key={item.id}
-              onPress={() => setActiveTab(item.id)}
-              className="p-5 rounded-2xl border flex-row justify-between items-center"
-              style={{ backgroundColor: theme.surface, borderColor: theme.border }}
+              className="w-14 h-14 rounded-full items-center justify-center overflow-hidden border-2"
+              style={{ backgroundColor: theme.accentForeground, borderColor: theme.accentForeground }}
             >
-              <View className="flex-row items-center gap-4">
-                <View className="w-12 h-12 rounded-xl items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
-                  <Ionicons name={item.icon as any} size={22} color={theme.accent} />
-                </View>
-                <View>
-                  <Text className="font-black text-lg tracking-tighter" style={{ color: theme.text }}>{item.label}</Text>
-                  <Text className="text-[10px] font-bold opacity-50 tracking-widest" style={{ color: theme.textSecondary }}>MANAGE SECTION</Text>
-                </View>
-              </View>
-              <View className="p-2 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
-                <Ionicons name="chevron-forward" size={18} color={theme.text} />
-              </View>
+              <Text className="font-black text-2xl" style={{ color: theme.accent }}>
+                {userName.charAt(0).toUpperCase() || 'L'}
+              </Text>
             </TouchableOpacity>
-          ))}
+          </View>
+
+          {/* Motivation Card Styled Version (On top of accent) */}
+          <View className="rounded-[32px] p-8 border" style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Text className="font-black text-3xl leading-9 mb-8 tracking-tighter" style={{ color: theme.accentForeground }}>
+              {goal || 'SET YOUR GOAL'}
+            </Text>
+
+            <View className="flex-row items-start gap-4">
+              <View className="w-[2px] h-10 rounded-full" style={{ backgroundColor: theme.accentForeground }} />
+              <View className="flex-1">
+                <Text className="font-bold text-[10px] tracking-widest mb-1 uppercase" style={{ color: theme.accentForeground, opacity: 0.8 }}>THE PLEDGE</Text>
+                <Text className="font-medium text-base leading-6" style={{ color: theme.accentForeground }}>
+                  {motivation || 'Your motivation will appear here...'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Preference Menu Section */}
+        <View className="p-2 px-6">
+          <Text className="font-bold text-base tracking-[0.5em] mb-6 ml-2 text-center" style={{ color: theme.text }}>PREFERENCES</Text>
+
+          {/* Vertical Tabs / Menu Items - matching War Path Summary Widget */}
+          <View className="gap-3">
+            {[
+              { id: 'appearance', label: 'APPEARANCE', icon: 'color-palette-outline' },
+              { id: 'data', label: 'DATA & STORAGE', icon: 'server-outline' },
+              { id: 'security', label: 'SECURITY & PRIVACY', icon: 'shield-checkmark-outline' },
+              { id: 'statistics', label: 'STATISTICS', icon: 'stats-chart-outline' },
+              { id: 'about', label: 'ABOUT LOCKIN', icon: 'information-circle-outline' },
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                onPress={() => setActiveTab(item.id)}
+                className="p-5 rounded-[32px] border flex-row justify-between items-center"
+                style={{ backgroundColor: theme.surface, borderColor: theme.border }}
+              >
+                <View className="flex-row items-center gap-4">
+                  <View className="w-12 h-12 rounded-full items-center justify-center" style={{ backgroundColor: theme.surfaceAlt }}>
+                    <Ionicons name={item.icon as any} size={22} color={theme.accent} />
+                  </View>
+                  <View>
+                    <Text className="font-black text-lg tracking-tighter" style={{ color: theme.text }}>{item.label}</Text>
+                    <Text className="text-[10px] font-bold opacity-50 tracking-widest" style={{ color: theme.textSecondary }}>MANAGE SECTION</Text>
+                  </View>
+                </View>
+                <View className="p-2 rounded-full" style={{ backgroundColor: theme.surfaceAlt }}>
+                  <Ionicons name="chevron-forward" size={18} color={theme.accent} />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </View>
     );
   };
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: theme.background }}>
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
+    <View className="flex-1" style={{ paddingTop: activeTab ? insets.top : 0, backgroundColor: theme.background }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         {renderContent()}
 
         {showTimePicker && (

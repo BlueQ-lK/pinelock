@@ -139,7 +139,7 @@ export const themes: Record<string, ThemeConfig> = {
     background: '#1C1B1F',
     surface: '#1C1C1E',
     surfaceAlt: '#2C2C2E',
-    border: '#3A3A3C',
+    border: '#3a3c3f',
     borderActive: '#FFFFFF',
     text: '#FFFFFF',
     textSecondary: '#8E8E93',
@@ -153,14 +153,14 @@ export const themes: Record<string, ThemeConfig> = {
     overlay: 'rgba(0,0,0,0.7)',
     surfaceVariant: '#3A3A3C',
     outline: '#FF453A',
-    blackBackground: '#1C1C1E',
+    blackBackground: '#3A3A3C',
     textAlt: '#FFFFFF',
   },
   catppuccinDark: {
     background: '#181825',
     surface: '#1E1E2E',
     surfaceAlt: '#313244',
-    border: '#585B70',
+    border: '#313336',
     borderActive: '#CBA6F7',
     text: '#CDD6F4',
     textSecondary: '#A6ADC8',
@@ -174,14 +174,14 @@ export const themes: Record<string, ThemeConfig> = {
     overlay: 'rgba(17, 17, 27, 0.8)',
     surfaceVariant: '#1E1E2E',
     outline: '#CBA6F7',
-    blackBackground: '#11111B',
-    textAlt: '#000000',
+    blackBackground: '#656b76',
+    textAlt: '#FFFFFF',
   },
   greenAppleDark: {
     background: '#0F1510',
     surface: '#1C211C',
     surfaceAlt: '#262B26',
-    border: '#3F493F',
+    border: '#303235',
     borderActive: '#7ADB8F',
     text: '#DFE4DB',
     textSecondary: '#BECABC',
@@ -195,14 +195,14 @@ export const themes: Record<string, ThemeConfig> = {
     overlay: 'rgba(0,0,0,0.7)',
     surfaceVariant: '#3F493F',
     outline: '#889487',
-    blackBackground: '#0A0F0B',
-    textAlt: '#000000',
+    blackBackground: '#656b76',
+    textAlt: '#FFFFFF',
   },
   midnightDuskDark: {
     background: '#16151D',
     surface: '#281624',
     surfaceAlt: '#2D1C2A',
-    border: '#251522',
+    border: '#303235',
     borderActive: '#F02475',
     text: '#E5E1E5',
     textSecondary: '#D6C1C4',
@@ -216,14 +216,14 @@ export const themes: Record<string, ThemeConfig> = {
     overlay: 'rgba(0,0,0,0.7)',
     surfaceVariant: '#281624',
     outline: '#9F8C8F',
-    blackBackground: '#221320',
-    textAlt: '#000000',
+    blackBackground: '#656b76',
+    textAlt: '#FFFFFF',
   },
   yinYangDark: {
     background: '#1E1E1E',
     surface: '#313131',
     surfaceAlt: '#383838',
-    border: '#2D2D2D',
+    border: '#303235+',
     borderActive: '#FFFFFF',
     text: '#E6E6E6',
     textSecondary: '#D1D1D1',
@@ -237,8 +237,8 @@ export const themes: Record<string, ThemeConfig> = {
     overlay: 'rgba(0,0,0,0.7)',
     surfaceVariant: '#313131',
     outline: '#999999',
-    blackBackground: '#2A2A2A',
-    textAlt: '#000000',
+    blackBackground: '#656b76',
+    textAlt: '#FFFFFF',
   }
 };
 
@@ -246,6 +246,7 @@ interface ThemeContextValue {
   theme: ThemeConfig;
   themeName: string;
   themeMode: ThemeMode;
+  isDark: boolean;
   setThemeName: (name: string) => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
 }
@@ -254,6 +255,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   theme: themes.catppuccin,
   themeName: 'catppuccin',
   themeMode: 'system',
+  isDark: false,
   setThemeName: async () => { },
   setThemeMode: async () => { },
 });
@@ -299,7 +301,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const currentTheme = (isDark && themes[`${themeName}Dark`]) ? themes[`${themeName}Dark`] : (themes[themeName] || themes.catppuccin);
 
   return (
-    <ThemeContext.Provider value={{ theme: currentTheme, themeName, themeMode, setThemeName, setThemeMode }}>
+    <ThemeContext.Provider value={{ theme: currentTheme, themeName, themeMode, isDark, setThemeName, setThemeMode }}>
       {children}
     </ThemeContext.Provider>
   );

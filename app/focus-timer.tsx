@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } fro
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/StorageService';
 import Animated, {
     FadeIn,
     FadeInDown,
@@ -91,7 +91,7 @@ export default function FocusTimerScreen() {
             }
         }
 
-        await AsyncStorage.removeItem('focusStartTime');
+        await StorageService.removeItem('focusStartTime');
 
         liveRef.current.elapsedSeconds = finalElapsed;
         liveRef.current.timerState = 'complete';
@@ -117,7 +117,7 @@ export default function FocusTimerScreen() {
         liveRef.current.hasSaved = true;
 
         try {
-            const savedHistory = await AsyncStorage.getItem('focusSessionHistory');
+            const savedHistory = await StorageService.getItem('focusSessionHistory');
             const history = savedHistory ? JSON.parse(savedHistory) : [];
             const newSession = {
                 id: Date.now().toString(),
@@ -125,22 +125,22 @@ export default function FocusTimerScreen() {
                 duration: liveRef.current.elapsedSeconds,
                 note: liveRef.current.sessionNote.trim()
             };
-            await AsyncStorage.setItem('focusSessionHistory', JSON.stringify([newSession, ...history]));
+            await StorageService.setItem('focusSessionHistory', JSON.stringify([newSession, ...history]));
         } catch (e) {
             console.error('Failed to save session history', e);
         }
     }, []);
 
     const loadGoal = async () => {
-        const savedGoal = await AsyncStorage.getItem('mainGoal');
+        const savedGoal = await StorageService.getItem('mainGoal');
         if (savedGoal) setGoal(savedGoal);
     };
 
     const checkActiveSession = async () => {
-        const savedStartTime = await AsyncStorage.getItem('focusStartTime');
+        const savedStartTime = await StorageService.getItem('focusStartTime');
         if (savedStartTime) {
             const start = parseInt(savedStartTime, 10);
-            const savedMode = await AsyncStorage.getItem('focusTimerMode') as TimerMode | null;
+            const savedMode = await StorageService.getItem('focusTimerMode') as TimerMode | null;
             const mode: TimerMode = savedMode ?? 'open';
             if (savedMode) setTimerMode(mode);
             liveRef.current.startTime = start;
@@ -214,8 +214,8 @@ export default function FocusTimerScreen() {
         setStartTime(now);
         setTimerState('active');
         setElapsedSeconds(0);
-        await AsyncStorage.setItem('focusStartTime', now.toString());
-        await AsyncStorage.setItem('focusTimerMode', timerMode);
+        await StorageService.setItem('focusStartTime', now.toString());
+        await StorageService.setItem('focusTimerMode', timerMode);
     };
 
     const updateSessionNote = (text: string) => {

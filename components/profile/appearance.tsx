@@ -44,8 +44,17 @@ export function AppearanceTab() {
                             key={mode}
                             onPress={() => setThemeMode(mode)}
                             activeOpacity={0.8}
-                            className={`flex-1 items-center justify-center py-2 rounded-lg ${isActive ? 'shadow-sm' : ''}`}
-                            style={{ backgroundColor: isActive ? theme.background : 'transparent' }}
+                            className={`flex-1 items-center justify-center py-2 rounded-lg`}
+                            style={{ 
+                                backgroundColor: isActive ? theme.background : 'transparent',
+                                ...(isActive && {
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 1,
+                                    elevation: 1,
+                                })
+                            }}
                         >
                             <Text
                                 className="font-semibold text-[13px] capitalize"

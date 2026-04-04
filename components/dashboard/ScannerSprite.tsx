@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 import Svg, { Path } from 'react-native-svg';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type ScannerState = 'IDLE' | 'ANALYZING' | 'MOCKING' | 'APPROVED' | 'SEARCHING' | 'POINTING' | 'SEALING' | 'TYPING' | 'VALIDATING' | 'WITNESSING' | 'HAPPY';
 type MockingPhase = 'LAUGH' | 'SHOUT' | 'CLAP';
@@ -30,6 +31,7 @@ interface ScannerSpriteProps {
 const DEFAULT_INSULTS = ["Bruh.", "Seriously?", "Nah.", "Try Again.", "Weak."];
 
 export function ScannerSprite({ state, mockeryText, showLabels = true, disableHover = false, reactionTrigger = 0, excitementLevel = 0, items }: ScannerSpriteProps) {
+    const { theme, isDark } = useTheme();
     // Shared Values
     const float = useSharedValue(0);
     const pupilX = useSharedValue(0);
@@ -514,8 +516,8 @@ export function ScannerSprite({ state, mockeryText, showLabels = true, disableHo
                     <View className="absolute top-4 w-full h-3 opacity-90 z-10" style={{ backgroundColor: '#FF3B30' }} />
                 )}
 
-                {/* Black Body Background */}
-                <View className="absolute w-full h-full bg-black rounded-full" />
+                {/* Themed Body Background */}
+                <View className="absolute w-full h-full rounded-full" style={{ backgroundColor: theme.blackBackground }} />
 
                 {/* Laser Scanner */}
                 <View className="absolute w-32 h-[100px] overflow-hidden -bottom-10 items-center justify-start pointer-events-none">
