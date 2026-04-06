@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export default function TabLayout() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   return (
     <Tabs
       screenOptions={{
@@ -18,8 +18,8 @@ export default function TabLayout() {
           elevation: 0,
           shadowOpacity: 0,
         },
-        tabBarActiveTintColor: theme.accent, // Default Swiss Red
-        tabBarInactiveTintColor: '#D1D5DB', // Gray-300
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: isDark ? '#D1D5DB' : '#000000',
         tabBarShowLabel: false,
       }}
     >
@@ -40,17 +40,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center gap-1">
               <Ionicons name={focused ? "flame" : "flame-outline"} size={24} color={color} />
-              {focused && <View className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.accent }} />}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="distractions"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center gap-1">
-              <Ionicons name={focused ? "time" : "time-outline"} size={26} color={color} />
               {focused && <View className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.accent }} />}
             </View>
           ),

@@ -16,6 +16,7 @@ import { StorageService } from '../../utils/StorageService';
 import { registerForPushNotificationsAsync, scheduleDailyStreakReminder } from '../../services/notifications';
 import { useTheme, themes } from '../../contexts/ThemeContext';
 import { AppearanceTab } from '../../components/profile/appearance';
+import { BackupTab } from '../../components/profile/backup/BackupTab';
 import { BoatingSprite } from '../../components/dashboard/BoatingSprite';
 
 // ─── P-4: Skeleton loader ────────────────────────────────────────────────────
@@ -380,17 +381,7 @@ export default function Profile() {
       return (
         <View className="flex-1 p-6">
           <SubHeader title="Data and storage" />
-          <TouchableOpacity
-            onPress={handleExportData}
-            className="flex-row items-center justify-between p-5 rounded-3xl mb-4"
-            style={{ backgroundColor: theme.surfaceAlt }}
-          >
-            <View className="flex-row items-center gap-4">
-              <Ionicons name="download-outline" size={24} color={theme.text} />
-              <Text className="font-bold text-lg" style={{ color: theme.text }}>Export My Data</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-          </TouchableOpacity>
+          <BackupTab />
         </View>
       );
     }

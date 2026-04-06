@@ -18,7 +18,7 @@ export function AppearanceTab() {
 
     const dynamicMocks = THEME_KEYS.map(({ key, label }) => {
         const targetTheme = (isDark && themes[`${key}Dark`]) ? themes[`${key}Dark`] : (themes[key] || themes.catppuccin);
-        
+
         return {
             key,
             label,
@@ -35,7 +35,10 @@ export function AppearanceTab() {
     });
 
     const renderModeToggle = () => (
-        <View className="mb-6 mx-2 mt-2">
+        <View className="mb-10 mx-2">
+            <Text className="font-bold text-[10px] tracking-[0.2em] mb-4 ml-2 opacity-60" style={{ color: theme.text }}>
+                THEME
+            </Text>
             <View className="flex-row rounded-xl p-1" style={{ backgroundColor: theme.surfaceAlt }}>
                 {(['system', 'light', 'dark'] as ThemeMode[]).map((mode) => {
                     const isActive = themeMode === mode;
@@ -45,7 +48,7 @@ export function AppearanceTab() {
                             onPress={() => setThemeMode(mode)}
                             activeOpacity={0.8}
                             className={`flex-1 items-center justify-center py-2 rounded-lg`}
-                            style={{ 
+                            style={{
                                 backgroundColor: isActive ? theme.background : 'transparent',
                                 ...(isActive && {
                                     shadowColor: '#000',
@@ -70,12 +73,8 @@ export function AppearanceTab() {
     );
 
     return (
-        <View className="mt-4">
+        <View className="">
             {renderModeToggle()}
-
-            <Text className="font-bold text-[10px] tracking-[0.2em] mb-4 ml-2 opacity-60" style={{ color: theme.text }}>
-                COLOR THEME
-            </Text>
 
             <ScrollView
                 horizontal

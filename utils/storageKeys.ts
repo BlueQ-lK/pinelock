@@ -12,4 +12,7 @@ export const STORAGE_KEYS = {
     AVATAR_COLOR: 'avatarColor',
     NOTIFICATIONS_ENABLED: 'notificationsEnabled',
     DAILY_REMINDER_TIME: 'dailyReminderTime',
+    BACKUP_FREQUENCY: 'backupFrequency',
+    LAST_BACKUP_DATE: 'lastBackupDate',
+    BACKUP_DIRECTORY_URI: 'backupDirectoryUri',
 };

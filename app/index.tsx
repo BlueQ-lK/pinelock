@@ -4,6 +4,7 @@ import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { isGoalEnded } from '../utils/goalStatus';
+import { BackupService } from '../utils/BackupService';
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +17,9 @@ export default function Index() {
 
   const checkStatus = async () => {
     try {
+      // Trigger background backup check silently
+      await BackupService.checkAutoBackup();
+
       const onboarded = await AsyncStorage.getItem('hasOnboarded');
       if (onboarded !== null) {
         // If onboarded, check if goal has ended
@@ -39,6 +43,7 @@ export default function Index() {
       </View>
     );
   }
+
 
   if (!hasOnboarded) {
     return <Redirect href="/(onboarding)" />;

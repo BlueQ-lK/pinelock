@@ -20,7 +20,6 @@
     "@expo-google-fonts/roboto-mono": "^0.4.1",
     "@expo/ngrok": "^4.1.0",
     "@expo/vector-icons": "^15.0.3",
-
     "@notifee/react-native": "^9.1.8",
     "@radix-ui/react-compose-refs": "^1.1.2",
     "@radix-ui/react-slot": "^1.2.4",
@@ -32,7 +31,6 @@
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
     "expo": "~54.0.33",
-
     "expo-android-usagestats": "^1.2.0",
     "expo-asset": "~12.0.12",
     "expo-audio": "^1.1.1",
@@ -42,6 +40,8 @@
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.20",
     "expo-device": "~8.0.10",
+    "expo-document-picker": "~14.0.8",
+    "expo-file-system": "~19.0.21",
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
     "expo-linear-gradient": "^15.0.8",

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useEffect, useState } from 'react';
 import { differenceInSeconds, endOfYear } from 'date-fns';
 import Animated, {
@@ -10,6 +10,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ScannerSprite } from '../dashboard/ScannerSprite';
 import { useTheme } from '../../contexts/ThemeContext';
+import { BackupService } from '../../utils/BackupService';
+import { router } from 'expo-router';
 
 interface TimeLeftStepProps {
   onNext: () => void;
@@ -20,6 +22,7 @@ export function TimeLeftStep({ onNext }: TimeLeftStepProps) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [spriteState, setSpriteState] = useState<'SEARCHING' | 'POINTING'>('SEARCHING');
   const [buttonLayout, setButtonLayout] = useState<{ y: number; height: number; width: number } | null>(null);
+  
 
   // Sprite Animation Values
   const spriteX = useSharedValue(200); // Roughly above "S" in WAITS, beside TIME
@@ -61,6 +64,15 @@ export function TimeLeftStep({ onNext }: TimeLeftStepProps) {
     ],
     opacity: spriteOpacity.value
   } as any));
+
+  const handleRestoreBackup = async () => {
+    const success = await BackupService.restoreBackup();
+    if (success) {
+      router.replace('/(tabs)');
+    } else {
+      Alert.alert('Error', 'Failed to restore backup.');
+    }
+  };
 
   return (
     <View className="flex-1 justify-between py-10 px-6 relative" style={{ backgroundColor: theme.background }}>
@@ -119,6 +131,9 @@ export function TimeLeftStep({ onNext }: TimeLeftStepProps) {
           style={{ backgroundColor: theme.text }}
         >
           <Text className="font-bold text-lg tracking-widest" style={{ color: theme.background }}>BEGIN PROTOCOL</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleRestoreBackup}>
+          <Text className="tracking-widest text-center underline font-medium text-sm" style={{ color: theme.accent }}>Restore Backup</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

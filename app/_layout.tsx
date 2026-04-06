@@ -54,7 +54,6 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(focus)" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
             <Stack.Screen name="focus-zone" options={{ headerShown: false }} />
             <Stack.Screen name="milestones" options={{ headerShown: false }} />
             <Stack.Screen name="active-milestone" options={{ presentation: 'modal', headerTitle: 'Tactical Plan' }} />
